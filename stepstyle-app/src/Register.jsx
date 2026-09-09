@@ -7,7 +7,7 @@ function Register(){
             <div className="grid grid-row-3 w-1/2 relative overflow-hidden bg-gradient-to-br from-neutral-900 to-orange-900">
                 <div
                 className="absolute inset-0 bg-cover bg-center opacity-30"
-                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format)` }}
+                style={{ backgroundImage: `url(https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&fit=crop&auto=format)` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 to-slate-900/90" />
 
