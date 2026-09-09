@@ -61,7 +61,7 @@ function Login(){
                         <button className="mt-4 w-full flex items-center justify-center p-4 bg-orange-500 text-white font-bold rounded-xl">Đăng nhập</button>
                     </form>
 
-                    <p className="flex items-center justify-center mt-4">Chưa có tài khoản? <span className="ml-2 text-orange-400 font-bold">Đăng kí ngay</span></p>
+                    <p className="flex items-center justify-center mt-4">Chưa có tài khoản? <Link to="/register" className="ml-2 text-orange-400 font-bold">Đăng kí ngay</Link></p>
                 </div>
             </div>
         </div>
