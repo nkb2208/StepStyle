@@ -1,5 +1,9 @@
+import { useState } from 'react';
 import {Link } from 'react-router-dom';
 function NavBar(){
+
+    const [switchPage, setSwitchPage] = useState('home');
+
     return(
         <div className='border border-b border-gray-300'>
             <div className="flex items-center justify-center text-white w-full bg-orange-400 text-xs p-2">
@@ -22,8 +26,8 @@ function NavBar(){
                 </Link>
 
                 <div className='flex gap-3 font-bold'>
-                    <Link to='/home' className=''>Trang chủ</Link>
-                    <Link to='/product' className=''>Sản phẩm</Link>
+                    <Link to='/home' onClick={()=> setSwitchPage('home')} className={switchPage === 'home'?'text-orange-400 p-3':'p-3'}>Trang chủ</Link>
+                    <Link to='/product' onClick={()=> setSwitchPage('product')} className={switchPage === 'product'?'text-orange-400 p-3':'p-3'}>Sản phẩm</Link>
                 </div>
 
                 <div className='flex items-center gap-4'>
