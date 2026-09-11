@@ -7,6 +7,7 @@ import Heels from "../pages/products/Heels";
 import Loafers from "../pages/products/Loafers";
 import {Link, BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { useState } from "react";
+import Footer from "../layouts/Footer";
 function ProductPage(){
     const [switchPage, setSwitchPage] = useState('all');
 
@@ -24,7 +25,7 @@ function ProductPage(){
                     <p className='text-gray-500'><span>12</span> sản phẩm</p>
                 </div>
 
-                <div className='flex mt-4 mr-10 ml-10'>
+                <div className='flex mt-10 mr-10 ml-10'>
                     <div className='w-1/6'>
                         <div className="bg-white p-5 rounded-2xl">
                             <p className="text-md font-bold">Danh mục</p>
@@ -60,6 +61,40 @@ function ProductPage(){
                     </div>
 
                     <div className='w-5/6'>
+                        <div className="pr-10 pl-10 flex items-center gap-3">
+                            <form className="w-5/6">
+                                <div className="flex items-center">
+                                    <div className="rounded-l-xl border-t border-b border-l border-gray-300 p-2 pr-3 pl-3">
+                                        <svg className="" xmlns="http://w3.org" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                    </div>
+                                    <input className="w-full p-2 pr-3 pl-3 border-gray-300 rounded-r-xl border-r border-b border-t bg-gray-100" type="text" placeholder="Tìm kiếm giày..."/>
+                                </div>
+                            </form>
+                            <div className="w-1/6">
+                                <form className="" action="">
+                                    <select className="rounded-xl bg-gray-100 border-orange-400 border p-2 pr-3 w-full" name="" id="">
+                                        <option value="">
+                                            Phổ biến nhất
+                                        </option>
+
+                                        <option value="">
+                                            Giá giảm dần
+                                        </option>
+
+                                        <option value="">
+                                            Giá tăng dần
+                                        </option>
+
+                                        <option value="">
+                                            Đánh giá cao
+                                        </option>
+                                    </select>
+                                </form>
+                            </div>
+                        </div>
                         <Routes>
                             <Route path="/" element={<AllProduct />} />
                             <Route path="/all" element={<AllProduct/>} />
@@ -72,6 +107,8 @@ function ProductPage(){
                     </div>
                 </div>
             </div>
+
+            <Footer/>
         </div>
     );
 }
