@@ -22,7 +22,7 @@ function NavBar(){
     }, []);
 
     return(
-        <div ref={dropdownRef} className='border border-b border-gray-300'>
+        <div ref={dropdownRef} className='border border-b border-gray-300 bg-white'>
             <div className="flex items-center justify-center text-white w-full bg-orange-400 text-xs p-2">
                 <p className="flex items-center gap-3">
                     <svg xmlns="http://w3.org" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
