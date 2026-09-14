@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import ProductPage from './pages/ProductPage';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
+import Order from './pages/Order';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/product/*" element= {<ProductPage/>}/>
         <Route path='/cart' element= {<Cart/>}/>
         <Route path='/profile' element= {<Profile/>}/>
+        <Route path='/order' element={<Order/>}/>
       </Routes>
     </BrowserRouter>
 

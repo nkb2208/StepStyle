@@ -75,7 +75,7 @@ function NavBar(){
                                     </svg>
                                     <p>Hồ sơ</p>
                                 </Link>
-                                <Link className='hover:bg-gray-100 p-2 rounded-xl mt-4 flex gap-2 items-center' to='/order'>
+                                <Link to='/order' className='hover:bg-gray-100 p-2 rounded-xl mt-4 flex gap-2 items-center'>
                                     <svg xmlns="http://w3.org" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                         <polyline points="14 2 14 8 20 8"></polyline>
