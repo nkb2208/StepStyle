@@ -83,7 +83,7 @@ function Cart(){
                             </div>
 
 
-                            <button className="mt-4 rounded-xl w-full text-white bg-orange-500 flex items-center justify-center pr-3 pl-3 p-2">Tiến hành thanh toán</button>
+                            <Link to='/checkout' className="mt-4 rounded-xl w-full text-white bg-orange-500 flex items-center justify-center pr-3 pl-3 p-2">Tiến hành thanh toán</Link>
                             <Link to='/product' className="mt-4 text-gray-400 hover:text-orange-400 flex items-center justify-center">Tiếp tục mua sắm</Link>
                         </div>
                     </div>
