@@ -75,7 +75,7 @@ function ProductPage(){
                             </form>
                             <div className="w-1/6">
                                 <form className="" action="">
-                                    <select className="rounded-xl bg-gray-100 border-orange-400 border p-2 pr-3 w-full" name="" id="">
+                                    <select className="bg-white rounded-xl bg-gray-100 border-orange-400 border p-2 pr-3 w-full" name="" id="">
                                         <option value="">
                                             Phổ biến nhất
                                         </option>

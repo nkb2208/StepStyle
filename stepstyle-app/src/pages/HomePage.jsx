@@ -133,7 +133,11 @@ function HomePage(){
                     </div>
                     {/* Hot Product */}
                     <div className='mt-10 p-10'>
-                        <p className='text-2xl font-bold pl-10 pr-10'>Nổi bật</p>
+                        <div className = "w-full pr-10 flex items-center justify-between">
+                            <p className='text-2xl font-bold pl-10 pr-10'>Nổi bật</p>
+                            <Link className='text-md font-bold text-orange-400 hover:underline underline-offset-1' to='/product'>Xem tất cả</Link>
+                        </div>
+ 
 
                         <div className='flex gap-4 mt-4 grid grid-cols-5 pl-10 pr-10'>
                             <div className='hover:shadow-md hover:scale-105 transition duration-300 col-span-1 rounded-xl bg-white'>
@@ -381,7 +385,10 @@ function HomePage(){
 
                     {/* Best Seller */}
                     <div className='p-10'>
-                        <p className='text-2xl font-bold pl-10 pr-10'>Bán chạy nhất</p>
+                        <div className = "w-full pr-10 flex items-center justify-between">
+                            <p className='text-2xl font-bold pl-10 pr-10'>Bán chạy nhất</p>
+                            <Link className='text-md font-bold text-orange-400 hover:underline underline-offset-1' to='/product'>Xem tất cả</Link>
+                        </div>
 
                         <div className='flex gap-4 mt-4 grid grid-cols-5 pl-10 pr-10'>
                             <div className='hover:shadow-md hover:scale-105 transition duration-300 col-span-1 rounded-xl bg-white'>
