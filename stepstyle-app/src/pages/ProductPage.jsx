@@ -30,29 +30,29 @@ function ProductPage(){
                         <div className="bg-white p-5 rounded-2xl">
                             <p className="text-md font-bold">Danh mục</p>
                             <div className=" p-1 grid grid-cols-1">
-                                <Link to='/product/all' onClick={()=>setSwitchPage('all')} className={switchPage === 'all'?'transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
+                                <button onClick={()=>setSwitchPage('all')} className={switchPage === 'all'?'flex items-center justify-start transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'flex items-center justify-start mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
                                     Tất cả
-                                </Link>
+                                </button>
 
-                                <Link to='/product/sneakers' onClick={()=>setSwitchPage('sneakers')} className={switchPage === 'sneakers'?'transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
+                                <button onClick={()=>setSwitchPage('sneakers')} className={switchPage === 'sneakers'?'flex items-center justify-start transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'flex items-center justify-start mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
                                     Sneaker
-                                </Link>
+                                </button>
 
-                                <Link to='/product/boots' onClick={()=>setSwitchPage('boots')} className={switchPage === 'boots'?' transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
+                                <button onClick={()=>setSwitchPage('boots')} className={switchPage === 'boots'?'flex items-center justify-start transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'flex items-center justify-start mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
                                     Boots
-                                </Link>
+                                </button>
 
-                                <Link to='/product/sandals' onClick={()=>setSwitchPage('sandals')} className={switchPage === 'sandals'?'transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
+                                <button onClick={()=>setSwitchPage('sandals')} className={switchPage === 'sandals'?' flex items-center justify-starttransition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'flex items-center justify-start mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
                                     Sandals
-                                </Link>
+                                </button>
 
-                                <Link to='/product/heels' onClick={()=>setSwitchPage('heels')} className={switchPage === 'heels'?'transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
+                                <button onClick={()=>setSwitchPage('heels')} className={switchPage === 'heels'?' flex items-center justify-start transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'flex items-center justify-start mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
                                     Heels
-                                </Link>
+                                </button>
 
-                                <Link to='/product/loafers' onClick={()=>setSwitchPage('loafers')} className={switchPage === 'loafers'?'transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
+                                <button onClick={()=>setSwitchPage('loafers')} className={switchPage === 'loafers'?'flex items-center justify-start transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl' :'flex items-center justify-start mt-4 p-2 pr-3 pl-3 font-bold rounded-xl'}>
                                     Loafers
-                                </Link>
+                                </button>
                             </div>
 
                             <p className="mt-4 text-md font-bold">Giá tối đa</p>
@@ -95,15 +95,16 @@ function ProductPage(){
                                 </form>
                             </div>
                         </div>
-                        <Routes>
-                            <Route path="/" element={<AllProduct />} />
-                            <Route path="/all" element={<AllProduct/>} />
-                            <Route path='/sneakers' element= {<Sneakers/>}/>
-                            <Route path="/boots" element={<Boots />} />
-                            <Route path="/sandals" element= {<Sandals/>}/>
-                            <Route path="/heels" element={<Heels />} />
-                            <Route path="/loafers" element= {<Loafers/>}/>
-                        </Routes>
+
+
+                        <div>
+                            {switchPage === 'all'?<AllProduct/>:""}
+                            {switchPage === 'sneakers'?<Sneakers/>:""}
+                            {switchPage === 'boots'?<Boots/>:""}
+                            {switchPage === 'sandals'?<Sandals/>:""}
+                            {switchPage === 'heels'?<Heels/>:""}
+                            {switchPage === 'loafers'?<Loafers/>:""}
+                        </div>
                     </div>
                 </div>
             </div>

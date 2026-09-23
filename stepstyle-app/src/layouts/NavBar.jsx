@@ -44,7 +44,7 @@ function NavBar(){
 
                 <div className='flex gap-3 font-bold'>
                     <Link to='/home' onClick={()=> setSwitchPage('home')} className={switchPage === 'home'?'text-orange-400 p-3':'p-3'}>Trang chủ</Link>
-                    <Link to='/product' onClick={()=> setSwitchPage('product')} className={switchPage === 'product'?'text-orange-400 p-3':'p-3'}>Sản phẩm</Link>
+                    <Link to='/products' onClick={()=> setSwitchPage('product')} className={switchPage === 'product'?'text-orange-400 p-3':'p-3'}>Sản phẩm</Link>
                 </div>
 
                 <div className='flex relative items-center gap-4'>
