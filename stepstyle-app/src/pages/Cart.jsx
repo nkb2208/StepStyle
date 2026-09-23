@@ -3,6 +3,21 @@ import NavBar from "../layouts/NavBar";
 import { Link } from "react-router-dom";
 
 function Cart(){
+    let [quantity, setQuantity] = useState(1);
+
+    const handleIncreaseQuantity = () =>{
+        quantity= quantity+1;
+        setQuantity(quantity);
+    }
+
+    const handleReduceQuantity = () =>{
+        quantity-=1;
+        if(quantity <1){
+            quantity =1;
+        }
+        setQuantity(quantity);
+    }
+
     return( 
         <div className="bg-gray-100 flex flex-col min-h-screen">
             <div>
@@ -44,9 +59,9 @@ function Cart(){
                                 <div className="mt-4 flex items-center justify-between w-full">
                                     {/* Quantity */}
                                     <div className="w-24 flex items-center gap-2 border border-gray-300 rounded-md pr-2 pl-2">
-                                        <button className="border-r w-1/4">-</button>
-                                        <p className="flex items-center justify-center w-2/4">1</p>
-                                        <button className="border-l w-1/4">+</button>
+                                        <button onClick={handleReduceQuantity} className="border-r w-1/4">-</button>
+                                        <p className="flex items-center justify-center w-2/4">{quantity}</p>
+                                        <button onClick={handleIncreaseQuantity} className="border-l w-1/4">+</button>
                                     </div>
 
                                     <div className="text-orange-400 font-bold">

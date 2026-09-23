@@ -9,6 +9,21 @@ function ProDuctDetail(){
 
     const [size, setSize] = useState('38');
 
+    let [quantity, setQuantity] = useState(1);
+
+    const handleIncreaseQuantity = () =>{
+        quantity= quantity+1;
+        setQuantity(quantity);
+    }
+
+    const handleReduceQuantity = () =>{
+        quantity-=1;
+        if(quantity <1){
+            quantity =1;
+        }
+        setQuantity(quantity);
+    }
+
     return(
         <div className="flex flex-col min-h-screen bg-gray-100">
             <div>       
@@ -98,9 +113,9 @@ function ProDuctDetail(){
                                 <p className="font-bold">Số lượng:</p>
 
                                 <div className="w-24 flex items-center gap-2 border border-gray-500 rounded-md p-2 pr-3 pl-3 font-bold">
-                                    <button className="border-r w-1/4">-</button>
-                                    <p className="flex items-center justify-center w-2/4">1</p>
-                                    <button className="border-l w-1/4">+</button>
+                                    <button onClick={handleReduceQuantity} className="border-r w-1/4">-</button>
+                                    <p className="flex items-center justify-center w-2/4">{quantity}</p>
+                                    <button onClick={handleIncreaseQuantity} className="border-l w-1/4">+</button>
                                 </div>
 
                                 <p className="text-gray-400">Còn 45 sản phẩm</p>
