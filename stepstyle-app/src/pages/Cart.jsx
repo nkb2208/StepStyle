@@ -2,7 +2,6 @@ import Footer from "../layouts/Footer";
 import NavBar from "../layouts/NavBar";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-
 function Cart(){
     let [quantity, setQuantity] = useState(1);
 
