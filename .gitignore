@@ -1,6 +1,10 @@
 # dependencies (bun install)
 node_modules
 
+# generated JWT signing keys — never commit private keys
+config/*.key
+*.pem
+
 # output
 out
 dist
