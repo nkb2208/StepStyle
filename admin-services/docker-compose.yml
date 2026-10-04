@@ -1,0 +1,48 @@
+name: stepstyle-admin
+
+services:
+  db:
+    image: mysql:8.4
+    container_name: stepstyle-admin-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: stepstyle_db
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3306:3306"
+    volumes:
+      - admin-mysql-data:/var/lib/mysql
+      # Schema comes straight from the shared StepStyle SQL dump.
+      - ./StepStyle-v2.sql:/docker-entrypoint-initdb.d/stepstyle-v2.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stepstyle-admin-api
+    ports:
+      - "4004:4004"
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: mysql+aiomysql://root:${MYSQL_ROOT_PASSWORD:-root}@db:3306/stepstyle_db
+      # The auth service runs in the StepStyle compose (port 4000 on the host).
+      JWKS_URL: ${JWKS_URL:-http://host.docker.internal:4000/.well-known/jwks.json}
+      JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api.yourdomain.com}
+      JWKS_FAIL_FAST: ${JWKS_FAIL_FAST:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:4000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  admin-mysql-data:
