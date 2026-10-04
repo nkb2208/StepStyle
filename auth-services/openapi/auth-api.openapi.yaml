@@ -1,0 +1,809 @@
+openapi: 3.1.0
+info:
+  title: NgocAnh Auth Service API
+  version: 1.0.0
+  description: |
+    Centralized Authentication & Authorization microservice.
+
+    - **Stateless access tokens**: RS256 JWTs signed by this service; downstream
+      services verify them via the JWKS endpoint (`/.well-known/jwks.json`).
+    - **Refresh rotation**: opaque `rt_` tokens with reuse detection.
+    - **RBAC**: roles `ADMIN | SELLER | CUSTOMER` with wildcard permissions.
+    - **M2M**: OAuth2-style `client_credentials` grant for service callers.
+
+    Error envelope (all endpoints):
+
+    ```json
+    { "success": false, "error": { "code": "SNAKE_CASE_CODE", "message": "..." } }
+    ```
+servers:
+  - url: http://localhost:4000
+    description: Local development
+
+tags:
+  - name: Authentication
+    description: Registration, login, token lifecycle, password & email flows
+  - name: Users
+    description: User management (protected by RBAC)
+  - name: Service Clients
+    description: M2M client management and token issuance
+  - name: Discovery
+    description: Health and JWKS
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [Discovery]
+      summary: Service health check
+      operationId: getHealth
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  service: { type: string, example: auth-service }
+                  timestamp: { type: string, format: date-time }
+                  version: { type: string, example: "1.0.0" }
+
+  /.well-known/jwks.json:
+    get:
+      tags: [Discovery]
+      summary: JSON Web Key Set for stateless RS256 verification
+      description: Downstream services fetch and cache this document to verify access tokens without calling the auth service per request.
+      operationId: getJwks
+      security: []
+      responses:
+        "200":
+          description: JWKS document
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        kty: { type: string, example: RSA }
+                        kid: { type: string }
+                        use: { type: string, example: sig }
+                        alg: { type: string, example: RS256 }
+                        n: { type: string }
+                        e: { type: string }
+
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user (CUSTOMER or SELLER only)
+      description: |
+        Creates the account via Better Auth (scrypt password hashing) and returns a JWT pair.
+        ADMIN accounts are provisioned by an administrator (`POST /api/users`) or via the
+        `BOOTSTRAP_ADMIN_*` environment variables.
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name]
+              properties:
+                email: { type: string, format: email, maxLength: 254 }
+                password: { type: string, minLength: 8, maxLength: 128 }
+                name: { type: string, minLength: 2, maxLength: 50 }
+                role: { type: string, enum: [CUSTOMER, SELLER], default: CUSTOMER }
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/AuthSuccess"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user: { $ref: "#/components/schemas/UserProfile" }
+                          accessToken: { type: string }
+                          refreshToken: { type: string }
+                          tokenType: { type: string, example: Bearer }
+                          expiresIn: { type: integer, example: 900 }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example:
+                success: false
+                error: { code: EMAIL_EXISTS, message: "An account with this email already exists" }
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate with email and password
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/AuthSuccess"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user: { $ref: "#/components/schemas/UserProfile" }
+                          accessToken: { type: string }
+                          refreshToken: { type: string }
+                          tokenType: { type: string, example: Bearer }
+                          expiresIn: { type: integer }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401":
+          description: Invalid credentials (same response for unknown email — no user enumeration)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example:
+                success: false
+                error: { code: INVALID_CREDENTIALS, message: "Invalid email or password" }
+
+  /api/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Revoke the current access token and optionally the refresh family
+      operationId: logout
+      parameters:
+        - $ref: "#/components/parameters/BearerToken"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken: { type: string, description: When provided, the whole refresh-token family is revoked }
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string, example: Logged out successfully }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Rotate a refresh token into a new token pair
+      description: |
+        Refresh tokens are single-use. Presenting an already-used token revokes the
+        entire token family (reuse detection) and returns `REFRESH_TOKEN_REUSED`.
+      operationId: refresh
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string, example: rt_abc123... }
+      responses:
+        "200":
+          description: Rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      accessToken: { type: string }
+                      refreshToken: { type: string }
+                      tokenType: { type: string, example: Bearer }
+                      expiresIn: { type: integer }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401":
+          description: Invalid, expired or reused refresh token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              examples:
+                invalid: { value: { success: false, error: { code: INVALID_REFRESH_TOKEN, message: "Invalid refresh token" } } }
+                reused: { value: { success: false, error: { code: REFRESH_TOKEN_REUSED, message: "Refresh token reuse detected" } } }
+
+  /api/auth/me:
+    get:
+      tags: [Authentication]
+      summary: Authenticated user profile
+      operationId: getMe
+      parameters:
+        - $ref: "#/components/parameters/BearerToken"
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      user: { $ref: "#/components/schemas/UserProfile" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Service (M2M) principals cannot access this endpoint
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Authentication]
+      summary: Request a password reset email
+      description: Always returns the same generic message regardless of whether the account exists.
+      operationId: forgotPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200":
+          description: Generic acknowledgement
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string, example: "If an account exists for this email, password reset instructions have been sent." }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+  /api/auth/reset-password:
+    post:
+      tags: [Authentication]
+      summary: Reset a password using the emailed token
+      description: Consumes the one-time token, revokes all refresh tokens and notifies the user by email.
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 8, maxLength: 128 }
+      responses:
+        "200":
+          description: Password reset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string, example: Password has been reset successfully }
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/auth/change-password:
+    post:
+      tags: [Authentication]
+      summary: Change the password of the authenticated user
+      description: Validates the current password, stores the new scrypt hash, revokes refresh tokens and sends a notification email.
+      operationId: changePassword
+      parameters:
+        - $ref: "#/components/parameters/BearerToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string }
+                newPassword: { type: string, minLength: 8, maxLength: 128 }
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string, example: Password changed successfully }
+        "400":
+          description: New password equals current password
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example:
+                success: false
+                error: { code: SAME_PASSWORD, message: "New password must be different from the current password" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: No credential account
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/auth/verify-email:
+    post:
+      tags: [Authentication]
+      summary: Verify an email address with the emailed token
+      operationId: verifyEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "200":
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string, example: Email verified successfully }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401":
+          description: Invalid or expired verification token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/auth/token:
+    post:
+      tags: [Service Clients]
+      summary: OAuth2 client_credentials grant (service-to-service)
+      description: "Exchanges a client_id / client_secret pair for a short-lived RS256 JWT with `type: service`."
+      operationId: clientCredentials
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [grant_type, client_id, client_secret]
+              properties:
+                grant_type: { type: string, enum: [client_credentials] }
+                client_id: { type: string, example: svc_abc123 }
+                client_secret: { type: string }
+                scope: { type: string, description: Space-separated subset of the client's registered scopes }
+      responses:
+        "200":
+          description: Service access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      accessToken: { type: string }
+                      tokenType: { type: string, example: Bearer }
+                      expiresIn: { type: integer, example: 900 }
+                      scopes:
+                        type: array
+                        items: { type: string }
+        "401":
+          description: Unknown client or wrong secret
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example:
+                success: false
+                error: { code: INVALID_CLIENT, message: "Invalid client credentials" }
+        "403":
+          description: Requested scope not registered for the client
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/users:
+    get:
+      tags: [Users]
+      summary: List users (ADMIN only)
+      operationId: listUsers
+      parameters:
+        - $ref: "#/components/parameters/BearerToken"
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Paginated users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      users:
+                        type: array
+                        items: { $ref: "#/components/schemas/UserProfile" }
+                      pagination: { $ref: "#/components/schemas/Pagination" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Users]
+      summary: Create a user with an arbitrary role (requires user:create)
+      operationId: createUser
+      parameters:
+        - $ref: "#/components/parameters/BearerToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8, maxLength: 128 }
+                name: { type: string, minLength: 2, maxLength: 50 }
+                role: { type: string, enum: [ADMIN, SELLER, CUSTOMER], default: CUSTOMER }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      user: { $ref: "#/components/schemas/UserProfile" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: Duplicate email }
+
+  /api/users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    patch:
+      tags: [Users]
+      summary: Update name, role or emailVerified (requires user:update)
+      description: A role change revokes all of the target user's refresh tokens and publishes `user.role.changed`.
+      operationId: updateUser
+      parameters:
+        - $ref: "#/components/parameters/BearerToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                name: { type: string, minLength: 2, maxLength: 50 }
+                role: { type: string, enum: [ADMIN, SELLER, CUSTOMER] }
+                emailVerified: { type: boolean }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      user: { $ref: "#/components/schemas/UserProfile" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: User not found }
+    delete:
+      tags: [Users]
+      summary: Delete a user (requires user:delete)
+      description: Cannot delete your own account (`SELF_OPERATION`).
+      operationId: deleteUser
+      parameters:
+        - $ref: "#/components/parameters/BearerToken"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string, example: User deleted successfully }
+        "400":
+          description: Self-deletion blocked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example:
+                success: false
+                error: { code: SELF_OPERATION, message: "You cannot delete your own account" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: User not found }
+
+  /api/services:
+    get:
+      tags: [Service Clients]
+      summary: List registered service clients (ADMIN only)
+      operationId: listServiceClients
+      parameters:
+        - $ref: "#/components/parameters/BearerToken"
+      responses:
+        "200":
+          description: Service clients
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      clients:
+                        type: array
+                        items: { $ref: "#/components/schemas/ServiceClient" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Service Clients]
+      summary: Register a service client (ADMIN only)
+      description: The `clientSecret` is returned exactly once and stored only as a scrypt hash.
+      operationId: createServiceClient
+      parameters:
+        - $ref: "#/components/parameters/BearerToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, scopes]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 100 }
+                scopes:
+                  type: array
+                  minItems: 1
+                  maxItems: 50
+                  items: { type: string, pattern: "^[a-z][a-z0-9_-]*:(\\*|[a-z][a-z0-9_-]*)$", example: product:read }
+      responses:
+        "201":
+          description: Created (secret shown once)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      client:
+                        allOf:
+                          - $ref: "#/components/schemas/ServiceClient"
+                          - type: object
+                            properties:
+                              clientSecret: { type: string, example: cs_... }
+                      note: { type: string }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/services/{clientId}:
+    delete:
+      tags: [Service Clients]
+      summary: Revoke a service client (ADMIN only)
+      operationId: revokeServiceClient
+      parameters:
+        - $ref: "#/components/parameters/BearerToken"
+        - name: clientId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string, example: Service client revoked }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Already revoked or unknown }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        RS256 access token issued by this service. Verify the signature using the
+        public keys from `GET /.well-known/jwks.json` — do not call this service
+        on every request. Claims: `sub`, `iss`, `aud`, `jti`, `exp`, `type`,
+        `role`, `permissions[]`, `emailVerified` (no PII in the token).
+
+  parameters:
+    BearerToken:
+      name: Authorization
+      in: header
+      required: true
+      schema: { type: string }
+      description: "Bearer <accessToken>"
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+
+  responses:
+    Unauthorized:
+      description: Missing, invalid, expired or revoked access token
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Authenticated but lacking the required role/permission
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example:
+            success: false
+            error: { code: FORBIDDEN, message: "Missing required permissions for this resource" }
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example:
+            success: false
+            error: { code: VALIDATION_ERROR, message: "Validation error on field 'email': Invalid email" }
+
+  schemas:
+    Error:
+      type: object
+      required: [success, error]
+      properties:
+        success: { type: boolean, enum: [false] }
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, example: UNAUTHORIZED }
+            message: { type: string }
+
+    AuthSuccess:
+      type: object
+      properties:
+        success: { type: boolean, enum: [true] }
+        data: { type: object }
+
+    UserProfile:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        name: { type: string }
+        role: { type: string, enum: [ADMIN, SELLER, CUSTOMER] }
+        emailVerified: { type: boolean }
+        permissions:
+          type: array
+          items: { type: string, example: product:read }
+        createdAt: { type: string, format: date-time }
+
+    Pagination:
+      type: object
+      properties:
+        page: { type: integer, example: 1 }
+        limit: { type: integer, example: 20 }
+        total: { type: integer, example: 42 }
+
+    ServiceClient:
+      type: object
+      properties:
+        clientId: { type: string, example: svc_abc123 }
+        name: { type: string, example: order-service }
+        scopes:
+          type: array
+          items: { type: string, example: product:read }
+        createdAt: { type: string, format: date-time }
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
