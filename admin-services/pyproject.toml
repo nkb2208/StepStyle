@@ -1,0 +1,62 @@
+[project]
+name = "adminfeat"
+version = "0.1.0"
+description = "StepStyle admin microservice: FastAPI CRUD over stepstyle_db, authenticated with the StepStyle auth service (RS256 + JWKS)."
+readme = "README.md"
+authors = [
+    { name = "Nguyễn Huỳnh Anh Khoa", email = "noreply-git@anhkhoakz.simplelogin.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "aiomysql>=0.3.2",
+    "bcrypt>=5.0.0",
+    "email-validator>=2.3.0",
+    "fastapi>=0.142.2",
+    "httpx>=0.28.1",
+    "pydantic-settings>=2.15.0",
+    "pyjwt[crypto]>=2.15.1",
+    "sqlalchemy[asyncio]>=2.1.3",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+adminfeat = "adminfeat:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.10",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = [
+    "ignore::DeprecationWarning:aiomysql",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = [
+    # FastAPI idiom: Depends()/Query() values live in the defaults.
+    "B008",
+    # MySQL DATETIME columns are naive by schema design; timestamps are
+    # intentionally compared in local (server) time.
+    "DTZ001",
+    "DTZ005",
+    # Re-raises / try-except-pass are clearer than contextlib.suppress here.
+    "SIM105",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# The smoke script is a linear scenario, not a library module.
+"scripts/*" = ["E501"]
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"

@@ -1,0 +1,20 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Tooling caches
+.ruff_cache/
+.pytest_cache/
+
+# Local configuration (copy from .env.example)
+.env
+
+# OS noise
+.DS_Store
