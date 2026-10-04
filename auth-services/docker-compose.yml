@@ -1,0 +1,115 @@
+name: ngocanh-auth
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: auth-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: auth-mailpit
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+    restart: unless-stopped
+
+  auth:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: auth-service
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      MONGODB_URI: mongodb://mongodb:27017/auth-db
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-only-secret-change-me-before-deploying-32}
+      BETTER_AUTH_URL: http://localhost:4000
+      FRONTEND_URL: http://localhost:4000
+      JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api.yourdomain.com}
+      ACCESS_TOKEN_EXPIRES_IN: 15m
+      REFRESH_TOKEN_EXPIRES_IN: 7d
+      CORS_ORIGINS: http://localhost:3000,http://localhost:4000
+      MAIL_TRANSPORT: smtp
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      MAIL_FROM: "Auth System <noreply@auth.example.com>"
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  product:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: product-service
+    command: ["bun", "run", "services/product-service/src/server.ts"]
+    ports:
+      - "4002:4002"
+    environment:
+      PORT: 4002
+      PRODUCT_MONGODB_URI: mongodb://mongodb:27017/product-db
+      JWKS_URL: http://auth:4000/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api.yourdomain.com}
+      CORS_ORIGINS: http://localhost:3000
+    depends_on:
+      auth:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  order:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: order-service
+    command: ["bun", "run", "services/order-service/src/server.ts"]
+    ports:
+      - "4003:4003"
+    environment:
+      PORT: 4003
+      ORDER_MONGODB_URI: mongodb://mongodb:27017/order-db
+      JWKS_URL: http://auth:4000/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api.yourdomain.com}
+      # Optional M2M integration (order → product via client_credentials):
+      AUTH_SERVICE_URL: http://auth:4000
+      PRODUCT_SERVICE_URL: http://product:4002
+      PRODUCT_SERVICE_CLIENT_ID: ${PRODUCT_SERVICE_CLIENT_ID:-}
+      PRODUCT_SERVICE_CLIENT_SECRET: ${PRODUCT_SERVICE_CLIENT_SECRET:-}
+      CORS_ORIGINS: http://localhost:3000
+    depends_on:
+      auth:
+        condition: service_healthy
+      product:
+        condition: service_started
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mongodb-data:
