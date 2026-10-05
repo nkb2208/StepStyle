@@ -23,6 +23,7 @@ from adminfeat.models import (
     ThanhToan,
 )
 from adminfeat.routers.payments import to_dict as payment_to_dict
+from adminfeat.routers.store import calculate_shipping_fee
 from adminfeat.schemas import OrderCreate, OrderStatusUpdate, OrderUpdate
 from adminfeat.security import require_permission
 
@@ -218,7 +219,16 @@ async def create_order(
     if payload.discount_id is not None:
         _, discount_amount = await _apply_discount(session, payload.discount_id, subtotal)
 
-    total = subtotal - discount_amount + Decimal(payload.shipping_fee)
+    # ── Shipping ───────────────────────────────────────────────────────────
+    # An explicit `shipping_fee` is honoured as before; when it is omitted the
+    # store settings decide (free shipping from the configured threshold).
+    order_value = subtotal - discount_amount
+    shipping_fee = (
+        payload.shipping_fee
+        if payload.shipping_fee is not None
+        else await calculate_shipping_fee(session, order_value)
+    )
+    total = order_value + shipping_fee
 
     order = DonHang(
         ma_nguoi_dung=payload.customer_id,
@@ -227,7 +237,7 @@ async def create_order(
         dia_chi_giao_hang=payload.address,
         tong_tien_hang=subtotal,
         tien_giam_gia=discount_amount,
-        phi_van_chuyen=Decimal(payload.shipping_fee),
+        phi_van_chuyen=shipping_fee,
         tong_thanh_toan=total,
         trang_thai_don_hang="PENDING",
         ma_giam_gia=payload.discount_id,

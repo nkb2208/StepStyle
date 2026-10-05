@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import (
     BaseModel,
@@ -12,15 +12,18 @@ from pydantic import (
     EmailStr,
     Field,
     StringConstraints,
+    field_validator,
     model_validator,
 )
 
 from adminfeat.models import (
     DiscountType,
     OrderStatus,
+    PaymentMethodCode,
     PaymentStatus,
     ProductStatus,
     Role,
+    ShippingPartnerCode,
 )
 
 # ── Reusable annotated primitives ───────────────────────────────────────────
@@ -185,7 +188,9 @@ class OrderCreate(_Strict):
     recipient_name: ShortText
     phone: PhoneText
     address: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
-    shipping_fee: Money = Decimal(0)
+    # Omitted → the fee is derived from the store settings (base fee / free
+    # shipping threshold). Sent → the explicit amount wins, as before.
+    shipping_fee: Money | None = None
     discount_id: int | None = None
     note: OptionalText = None
     items: list[OrderItemCreate] = Field(min_length=1, max_length=100)
@@ -245,3 +250,112 @@ class UserUpdate(_Strict):
 
 class UserPasswordUpdate(_Strict):
     password: Annotated[str, StringConstraints(min_length=8, max_length=72)]
+
+
+# ── Store settings ──────────────────────────────────────────────────────────
+
+# Vietnamese numbers: 0xxxxxxxxx (10 or 11 digits) or +84xxxxxxxxx.
+VN_PHONE_PATTERN = r"^(?:\+84|0)\d{8,10}$"
+
+AddressText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
+AreaText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)]
+StorePhone = Annotated[
+    str, StringConstraints(strip_whitespace=True, max_length=20, pattern=VN_PHONE_PATTERN)
+]
+
+
+class WarehouseAddressUpdate(_Strict):
+    """Primary warehouse address — only the segments present in the payload change."""
+
+    detail: AddressText | None = None
+    ward: AreaText | None = None
+    district: AreaText | None = None
+    province: AreaText | None = None
+
+    @field_validator("detail", "ward", "district", "province", mode="before")
+    @classmethod
+    def blank_clears_segment(cls, value: Any) -> Any:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+
+class PaymentMethodSettingUpdate(_Strict):
+    """Toggle of one payment method, keyed by its stable code."""
+
+    code: PaymentMethodCode
+    enabled: bool
+
+
+class ShippingPartnerSettingUpdate(_Strict):
+    """Toggle of one shipping carrier, keyed by its stable code."""
+
+    code: ShippingPartnerCode
+    enabled: bool
+
+
+class StoreSettingsUpdate(_Strict):
+    """Partial update of the store settings: fields left out keep their value."""
+
+    store_name: ShortText | None = None
+    contact_email: EmailStr | None = None
+    phone: StorePhone | None = None
+    warehouse_address: WarehouseAddressUpdate | None = None
+    base_shipping_fee: Money | None = None
+    free_shipping_threshold: Money | None = None
+    payment_methods: list[PaymentMethodSettingUpdate] | None = None
+    shipping_partners: list[ShippingPartnerSettingUpdate] | None = None
+
+    @field_validator("contact_email", mode="before")
+    @classmethod
+    def blank_email_is_unset(cls, value: Any) -> Any:
+        return None if isinstance(value, str) and not value.strip() else value
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def normalize_phone(cls, value: Any) -> Any:
+        # Whitespace is the only thing normalised ("0901 234 567" → "0901234567").
+        if isinstance(value, str):
+            return "".join(value.split()) or None
+        return value
+
+    @field_validator("base_shipping_fee", "free_shipping_threshold", mode="before")
+    @classmethod
+    def money_must_be_a_number(cls, value: Any) -> Any:
+        # Formatted strings such as "35.000" must never reach the database.
+        if isinstance(value, bool) or not isinstance(value, int | float | Decimal):
+            raise ValueError("must be a number of whole VND, e.g. 35000")
+        return value
+
+    @model_validator(mode="after")
+    def check_not_null(self) -> StoreSettingsUpdate:
+        """Only email/phone/address segments are clearable with an explicit null."""
+        for name in (
+            "store_name",
+            "warehouse_address",
+            "base_shipping_fee",
+            "free_shipping_threshold",
+            "payment_methods",
+            "shipping_partners",
+        ):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f"{name} cannot be null")
+        return self
+
+    @model_validator(mode="after")
+    def check_whole_amounts(self) -> StoreSettingsUpdate:
+        # VND has no subdivision: the columns are DECIMAL(15, 0) integers.
+        for name in ("base_shipping_fee", "free_shipping_threshold"):
+            value = getattr(self, name)
+            if value is not None and value != value.to_integral_value():
+                raise ValueError(f"{name} must be a whole VND amount")
+        return self
+
+    @model_validator(mode="after")
+    def check_unique_codes(self) -> StoreSettingsUpdate:
+        for name in ("payment_methods", "shipping_partners"):
+            items = getattr(self, name) or []
+            codes = [item.code for item in items]
+            if len(codes) != len(set(codes)):
+                raise ValueError(f"{name} must not contain duplicate codes")
+        return self

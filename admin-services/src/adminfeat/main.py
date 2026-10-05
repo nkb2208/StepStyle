@@ -23,6 +23,7 @@ from adminfeat.routers import (
     payment_methods,
     payments,
     products,
+    store,
     users,
     variants,
 )
@@ -117,6 +118,7 @@ def create_app() -> FastAPI:
     app.include_router(variants.router, prefix=API_PREFIX)
     app.include_router(discounts.router, prefix=API_PREFIX)
     app.include_router(payment_methods.router, prefix=API_PREFIX)
+    app.include_router(store.router, prefix=API_PREFIX)
     app.include_router(orders.router, prefix=API_PREFIX)
     app.include_router(payments.router, prefix=API_PREFIX)
     app.include_router(users.router, prefix=API_PREFIX)

@@ -676,6 +676,203 @@ def scenario(client: TestClient, headers: dict, key) -> None:
     )
     check("low_stock" in body, "low-stock report present", body.get("low_stock"))
 
+    section("store settings")
+    initial_settings = client.get("/api/admin/store/settings", headers=headers)
+    defaults = data(initial_settings)["store_settings"]
+    check(initial_settings.status_code == 200, "GET store settings", initial_settings.text)
+    check(
+        defaults["store_name"] == "Not configured"
+        and defaults["contact_email"] is None
+        and defaults["phone"] is None
+        and defaults["base_shipping_fee"] == 35_000
+        and defaults["free_shipping_threshold"] == 500_000
+        and set(defaults["warehouse_address"].values()) == {None},
+        "fresh database starts from the documented defaults",
+        defaults,
+    )
+    check(
+        [item["code"] for item in defaults["payment_methods"]]
+        == ["cod", "card", "momo", "zalopay", "vnpay", "bank_transfer"]
+        and all(item["name"] for item in defaults["payment_methods"])
+        and not any(item["enabled"] for item in defaults["payment_methods"]),
+        "payment methods default to disabled and carry display names",
+        defaults["payment_methods"],
+    )
+    check(
+        [item["code"] for item in defaults["shipping_partners"]]
+        == ["ghtk", "ghn", "jnt", "viettelpost"]
+        and not any(item["enabled"] for item in defaults["shipping_partners"]),
+        "shipping partners default to disabled",
+        defaults["shipping_partners"],
+    )
+
+    updated_settings = client.patch(
+        "/api/admin/store/settings",
+        headers=headers,
+        json={
+            "store_name": "StepStyle Store",
+            "contact_email": "contact@stepstyle.vn",
+            "phone": "0901 234 567",
+            "warehouse_address": {
+                "detail": "12 Nguyen Hue",
+                "ward": "Ben Nghe",
+                "district": "Quan 1",
+                "province": "Ho Chi Minh",
+            },
+            "base_shipping_fee": 45_000,
+            "free_shipping_threshold": 10_000_000,
+            "payment_methods": [
+                {"code": "cod", "enabled": True},
+                {"code": "momo", "enabled": True},
+            ],
+            "shipping_partners": [{"code": "ghtk", "enabled": True}],
+        },
+    )
+    persisted = data(updated_settings)["store_settings"]
+    check(updated_settings.status_code == 200, "update store settings", updated_settings.text)
+    check(
+        persisted["store_name"] == "StepStyle Store"
+        and persisted["contact_email"] == "contact@stepstyle.vn"
+        and persisted["phone"] == "0901234567"  # whitespace normalised, digits kept
+        and persisted["base_shipping_fee"] == 45_000
+        and persisted["free_shipping_threshold"] == 10_000_000
+        and persisted["warehouse_address"]
+        == {
+            "detail": "12 Nguyen Hue",
+            "ward": "Ben Nghe",
+            "district": "Quan 1",
+            "province": "Ho Chi Minh",
+        },
+        "store info, warehouse address and money round-trip as integers",
+        persisted,
+    )
+    check(
+        {item["code"]: item["enabled"] for item in persisted["payment_methods"]}
+        == {
+            "cod": True,
+            "card": False,
+            "momo": True,
+            "zalopay": False,
+            "vnpay": False,
+            "bank_transfer": False,
+        }
+        and [item["code"] for item in persisted["shipping_partners"] if item["enabled"]]
+        == ["ghtk"],
+        "toggles persist per stable code, untouched entries keep their state",
+        persisted["payment_methods"],
+    )
+
+    reloaded = data(client.get("/api/admin/store/settings", headers=headers))["store_settings"]
+    check(
+        reloaded["store_name"] == "StepStyle Store" and reloaded["base_shipping_fee"] == 45_000,
+        "settings survive a reload (stored in the database)",
+        reloaded,
+    )
+
+    partial_address = client.patch(
+        "/api/admin/store/settings",
+        headers=headers,
+        json={"warehouse_address": {"detail": "48 Le Loi"}},
+    )
+    check(
+        partial_address.status_code == 200
+        and data(partial_address)["store_settings"]["warehouse_address"]
+        == {
+            "detail": "48 Le Loi",
+            "ward": "Ben Nghe",
+            "district": "Quan 1",
+            "province": "Ho Chi Minh",
+        },
+        "a partial address update leaves the other segments untouched",
+        partial_address.text,
+    )
+
+    for label, invalid in (
+        ("empty store name", {"store_name": "   "}),
+        ("null store name", {"store_name": None}),
+        ("malformed email", {"contact_email": "not-an-email"}),
+        ("non-Vietnamese phone", {"phone": "12345"}),
+        ("negative shipping fee", {"base_shipping_fee": -1}),
+        ("formatted money string", {"base_shipping_fee": "35.000"}),
+        ("fractional amount", {"free_shipping_threshold": 500_000.5}),
+        ("unknown payment method", {"payment_methods": [{"code": "paypal", "enabled": True}]}),
+        ("unknown shipping partner", {"shipping_partners": [{"code": "best", "enabled": True}]}),
+        ("undocumented field", {"api_secret": "hunter2"}),
+    ):
+        rejected = client.patch("/api/admin/store/settings", headers=headers, json=invalid)
+        check(rejected.status_code == 422, f"{label} → 422", rejected.text)
+
+    # ── The order flow consumes the very same settings ──────────────────────
+    below_threshold = client.post(
+        "/api/admin/orders",
+        headers=headers,
+        json={
+            "recipient_name": "X",
+            "phone": "0900000001",
+            "address": "12 Nguyen Hue",
+            "items": [{"variant_id": variant_id, "quantity": 1}],
+        },
+    )
+    paid_order = data(below_threshold)["order"]
+    check(below_threshold.status_code == 201, "order without a shipping fee", below_threshold.text)
+    check(
+        paid_order["shipping_fee"] == 45_000 and paid_order["total"] == 1_990_000 + 45_000,
+        "below free_shipping_threshold the base shipping fee applies",
+        paid_order,
+    )
+
+    free_threshold = client.patch(
+        "/api/admin/store/settings",
+        headers=headers,
+        json={"free_shipping_threshold": 1_000},
+    )
+    check(
+        free_threshold.status_code == 200,
+        "free shipping threshold can be lowered",
+        free_threshold.text,
+    )
+
+    at_threshold = client.post(
+        "/api/admin/orders",
+        headers=headers,
+        json={
+            "recipient_name": "X",
+            "phone": "0900000001",
+            "address": "12 Nguyen Hue",
+            "items": [{"variant_id": variant_id, "quantity": 1}],
+        },
+    )
+    free_order = data(at_threshold)["order"]
+    check(at_threshold.status_code == 201, "order at/above the threshold", at_threshold.text)
+    check(
+        free_order["shipping_fee"] == 0 and free_order["total"] == 1_990_000,
+        "orders at/above free_shipping_threshold ship free",
+        free_order,
+    )
+
+    explicit_fee = client.post(
+        "/api/admin/orders",
+        headers=headers,
+        json={
+            "recipient_name": "X",
+            "phone": "0900000001",
+            "address": "12 Nguyen Hue",
+            "shipping_fee": 20_000,
+            "items": [{"variant_id": variant2_id, "quantity": 1}],
+        },
+    )
+    overridden = data(explicit_fee)["order"]
+    check(explicit_fee.status_code == 201, "order with an explicit fee", explicit_fee.text)
+    check(
+        overridden["shipping_fee"] == 20_000 and overridden["total"] == 1_990_000 + 20_000,
+        "an explicit shipping_fee still wins over the settings",
+        overridden,
+    )
+
+    for created_order_id in (paid_order["id"], free_order["id"], overridden["id"]):
+        removed = client.delete(f"/api/admin/orders/{created_order_id}", headers=headers)
+        check(removed.status_code == 200, f"cleanup: delete order {created_order_id}", removed.text)
+
     section("RBAC")
     customer_token = access_token(
         key, sub="smoke-customer", role="CUSTOMER", permissions=["product:read"]
@@ -693,7 +890,81 @@ def scenario(client: TestClient, headers: dict, key) -> None:
     )
     check(allowed.status_code == 200, "CUSTOMER token may read products", allowed.text)
 
+    settings_forbidden = client.get(
+        "/api/admin/store/settings", headers={"Authorization": f"Bearer {customer_token}"}
+    )
+    check(
+        settings_forbidden.status_code == 403,
+        "CUSTOMER token forbidden from store settings → 403",
+        settings_forbidden.text,
+    )
+    settings_write_forbidden = client.patch(
+        "/api/admin/store/settings",
+        headers={"Authorization": f"Bearer {customer_token}"},
+        json={"store_name": "Hijacked"},
+    )
+    check(
+        settings_write_forbidden.status_code == 403,
+        "CUSTOMER token cannot update store settings → 403",
+        settings_write_forbidden.text,
+    )
+
+    reader_token = access_token(
+        key, sub="smoke-reader", role="STAFF", permissions=["store_setting:read"]
+    )
+    readable = client.get(
+        "/api/admin/store/settings", headers={"Authorization": f"Bearer {reader_token}"}
+    )
+    check(readable.status_code == 200, "store_setting:read may read the settings", readable.text)
+    check(
+        data(readable)["store_settings"]["store_name"] == "StepStyle Store",
+        "the read-only token sees the configured value",
+        readable.text,
+    )
+    unwritable = client.patch(
+        "/api/admin/store/settings",
+        headers={"Authorization": f"Bearer {reader_token}"},
+        json={"store_name": "Hijacked"},
+    )
+    check(
+        unwritable.status_code == 403,
+        "store_setting:read may not update the settings → 403",
+        unwritable.text,
+    )
+
     section("cleanup")
+    reset_settings = client.patch(
+        "/api/admin/store/settings",
+        headers=headers,
+        json={
+            "store_name": "Not configured",
+            "contact_email": None,
+            "phone": None,
+            "warehouse_address": {
+                "detail": None,
+                "ward": None,
+                "district": None,
+                "province": None,
+            },
+            "base_shipping_fee": 35_000,
+            "free_shipping_threshold": 500_000,
+            "payment_methods": [
+                {"code": code, "enabled": False}
+                for code in ("cod", "card", "momo", "zalopay", "vnpay", "bank_transfer")
+            ],
+            "shipping_partners": [
+                {"code": code, "enabled": False}
+                for code in ("ghtk", "ghn", "jnt", "viettelpost")
+            ],
+        },
+    )
+    check(
+        reset_settings.status_code == 200
+        and data(reset_settings)["store_settings"]["base_shipping_fee"] == 35_000,
+        "cleanup: store settings restored to their defaults",
+        reset_settings.text,
+    )
+
     for path in (
         f"/api/admin/payments/{payment_id}",
         f"/api/admin/orders/{second_order_id}",
@@ -747,6 +1018,8 @@ def pre_clean() -> None:
                 "DELETE FROM magiamgia WHERE code_giam_gia IN ('SMOKE10','CRAZY','BACKWARDS')",
                 "DELETE FROM phuongthucthanhtoan WHERE ten_phuong_thuc='COD'",
                 "DELETE FROM nguoidung WHERE email LIKE '%smoke@example.com'",
+                # Store settings start from the documented defaults every run.
+                "DELETE FROM caidatcuahang",
             ):
                 cursor.execute(statement)
         connection.commit()

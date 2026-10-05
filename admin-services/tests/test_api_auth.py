@@ -6,8 +6,12 @@ from typing import TYPE_CHECKING
 
 from fastapi.testclient import TestClient
 
+from adminfeat.security import Principal
+
 if TYPE_CHECKING:
     from tests.conftest import PrincipalHolder
+
+STORE_SETTINGS = "/api/admin/store/settings"
 
 
 def test_health_is_public(client: TestClient) -> None:
@@ -88,3 +92,64 @@ def test_method_not_allowed_uses_the_error_envelope(client: TestClient) -> None:
     response = client.delete("/health")
     assert response.status_code == 405
     assert response.json()["error"]["code"] == "METHOD_NOT_ALLOWED"
+
+
+def test_store_settings_require_authentication(client: TestClient) -> None:
+    assert client.get(STORE_SETTINGS).status_code == 401
+    assert client.patch(STORE_SETTINGS, json={}).status_code == 401
+
+
+def test_customer_is_forbidden_from_store_settings(
+    client: TestClient, holder: PrincipalHolder
+) -> None:
+    holder.as_customer()
+    assert client.get(STORE_SETTINGS).status_code == 403
+    update = client.patch(STORE_SETTINGS, json={"store_name": "Hacked"})
+    assert update.status_code == 403
+    assert update.json()["error"]["code"] == "FORBIDDEN"
+
+
+def test_seller_is_forbidden_from_store_settings(
+    client: TestClient, holder: PrincipalHolder
+) -> None:
+    holder.as_seller()
+    assert client.get(STORE_SETTINGS).status_code == 403
+    assert client.patch(STORE_SETTINGS, json={"store_name": "Hacked"}).status_code == 403
+
+
+def test_store_setting_read_does_not_grant_update(
+    client: TestClient, holder: PrincipalHolder
+) -> None:
+    holder.principal = Principal(
+        type="user",
+        user_id="65f1c2staff",
+        role="STAFF",
+        permissions=("store_setting:read",),
+        email_verified=True,
+    )
+    update = client.patch(STORE_SETTINGS, json={"store_name": "X"})
+    assert update.status_code == 403
+    assert update.json()["error"]["code"] == "FORBIDDEN"
+
+
+def test_admin_update_is_validated_before_reaching_the_database(
+    client: TestClient, holder: PrincipalHolder
+) -> None:
+    holder.as_admin()
+
+    empty_name = client.patch(STORE_SETTINGS, json={"store_name": "   "})
+    assert empty_name.status_code == 422
+    assert empty_name.json()["error"]["code"] == "VALIDATION_ERROR"
+
+    unknown_method = client.patch(
+        STORE_SETTINGS, json={"payment_methods": [{"code": "paypal", "enabled": True}]}
+    )
+    assert unknown_method.status_code == 422
+
+    unknown_carrier = client.patch(
+        STORE_SETTINGS, json={"shipping_partners": [{"code": "best", "enabled": True}]}
+    )
+    assert unknown_carrier.status_code == 422
+
+    bad_money = client.patch(STORE_SETTINGS, json={"base_shipping_fee": -1})
+    assert bad_money.status_code == 422
