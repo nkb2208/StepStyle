@@ -1,20 +1,13 @@
 {
-    "name":  "ngocanh-auth",
+    "name":  "auth-services",
     "version":  "1.0.0",
     "description":  "Centralized Authentication \u0026 Authorization microservice (Node.js, TypeScript, Express, MongoDB, Better Auth) with JWKS-based stateless JWT verification for downstream services",
     "type":  "module",
     "private":  true,
-    "workspaces":  [
-                       "apps/*",
-                       "packages/*",
-                       "services/*"
-                   ],
     "scripts":  {
-                    "dev":  "bun --watch services/auth-services/src/server.ts",
-                    "start":  "bun run services/auth-services/src/server.ts",
-                    "dev:product":  "bun run services/product-service/src/server.ts",
-                    "dev:order":  "bun run services/order-service/src/server.ts",
-                    "build":  "bun build services/auth-services/src/server.ts --outdir dist --target node",
+                    "dev":  "bun --watch src/server.ts",
+                    "start":  "bun run src/server.ts",
+                    "build":  "bun build src/server.ts --outdir dist --target node",
                     "test":  "bun test",
                     "test:watch":  "bun test --watch",
                     "typecheck":  "tsc --noEmit"
