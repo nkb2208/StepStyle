@@ -138,12 +138,17 @@ export default function Products() {
 
   const handleDelete = async (id) => {
     if (!confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
+    
+    // Cập nhật UI ngay lập tức (Optimistic Update) để sản phẩm biến mất lập tức
+    setProducts(prevProducts => prevProducts.filter(p => p.id !== id));
+    
     try {
       await deleteProduct(id);
       fetchProducts();
     } catch (error) {
       console.error("Lỗi xóa sản phẩm:", error);
       alert("Xóa sản phẩm thất bại!");
+      fetchProducts(); // Phục hồi lại dữ liệu nếu lỗi
     }
   };
 

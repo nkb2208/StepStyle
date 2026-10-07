@@ -1,7 +1,9 @@
 import adminApiClient from './adminApiClient';
 
-export const getUsers = async (params) => {
-  const response = await adminApiClient.get('/users', { params });
+export const getUsers = async (params = {}) => {
+  const response = await adminApiClient.get('/users', { 
+    params: { ...params, _t: new Date().getTime() } 
+  });
   return response.data;
 };
 

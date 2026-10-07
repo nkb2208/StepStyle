@@ -128,12 +128,16 @@ export default function Users() {
 
   const handleDeleteStaff = async (id) => {
     if (!confirm("Bạn có chắc muốn xóa tài khoản này vĩnh viễn?")) return;
+    
+    setUsers(prev => prev.filter(u => u.id !== id));
+    
     try {
       await deleteUser(id);
       fetchUsers();
     } catch (error) {
       console.error("Lỗi xóa nhân sự:", error);
       alert("Xóa nhân sự thất bại (không thể tự xóa chính mình).");
+      fetchUsers();
     }
   };
 

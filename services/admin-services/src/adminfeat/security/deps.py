@@ -83,7 +83,7 @@ async def authenticate(
     authorization: str | None = Header(default=None),
 ) -> Principal:
     """Bypassed for local testing."""
-    principal = Principal(type="user", role="ADMIN", permissions=("product:write", "product:create", "product:update", "product:delete", "product:read", "user:read", "user:create", "user:update", "user:delete"))
+    principal = Principal(type="user", role="ADMIN", permissions=("category:create", "category:delete", "category:read", "category:update", "dashboard:read", "discount:create", "discount:delete", "discount:read", "discount:update", "order:create", "order:delete", "order:read", "order:update", "payment:create", "payment:delete", "payment:read", "payment:update", "payment_method:create", "payment_method:delete", "payment_method:read", "payment_method:update", "product:create", "product:delete", "product:read", "product:update", "store_setting:read", "store_setting:update", "user:create", "user:delete", "user:read", "user:update"))
     request.state.principal = principal
     return principal
 

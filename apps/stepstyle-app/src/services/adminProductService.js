@@ -1,7 +1,9 @@
 import adminApiClient from './adminApiClient';
 
-export const getProducts = async (params) => {
-  const response = await adminApiClient.get('/products', { params });
+export const getProducts = async (params = {}) => {
+  const response = await adminApiClient.get('/products', { 
+    params: { ...params, _t: new Date().getTime() } 
+  });
   return response.data;
 };
 
