@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedInteger('ma_nguoi_dung')->nullable();
             $table->string('ten_nguoi_nhan', 255);
             $table->string('so_dien_thoai_nhan', 20);
-            $table->text('dia_chi_giao_hang',15,0)->default(0);
+            $table->text('dia_chi_giao_hang');
             $table->decimal('tong_tien_hang',15,0)->default(0);
             $table->decimal('tien_giam_gia',15,0)->default(0);
             $table->decimal('phi_van_chuyen',15,0)->default(0);
