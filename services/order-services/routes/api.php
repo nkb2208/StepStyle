@@ -9,4 +9,10 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-Route::post('/cart/add', [CartController::class, 'addToCart']);
+
+Route::prefix('cart')->group(function(){
+    Route::post('/cart/add', [CartController::class, 'addToCart']);
+    Route::get('/{userID}', [CartController::class, 'getCart']);
+    Route::put('/update', [CartController::class, 'updateQuantity']);
+    Route::delete('/delete', [CartController::class, 'deleteItem']);
+});
