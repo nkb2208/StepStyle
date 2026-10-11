@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\CartItem;
+use Illuminate\Support\Facades\Http;
 
 class OrderController extends Controller
 {
@@ -42,9 +43,12 @@ class OrderController extends Controller
             foreach($request -> items as $item){
                 $total_product_cost+=$item['so_luong'] * $item['don_gia'];
             }
-
             $ship_cost = $request->phi_van_chuyen ?? 0;
-            $sale_cost = $request->tien_giam_gia ?? 0;
+
+            $vipPercent = $this->getVipDiscountPercent($request, $request->ma_nguoi_dung);
+            $vipDiscountAmount = ($total_product_cost * $vipPercent) / 100;
+            $voucherDiscountAmount = $request->tien_giam_gia ?? 0;
+            $sale_cost = $vipDiscountAmount+$voucherDiscountAmount;
 
             $total_cost = $total_product_cost+ $ship_cost-$sale_cost;
 
@@ -108,6 +112,26 @@ class OrderController extends Controller
                 'error'=> $e->getMessage()
             ],500);
         }
+    }
+
+    private function getVipDiscountPercent(Request $request, $userId)
+    {
+        try {
+            $userServiceUrl = env('USER_SERVICE_URL', 'http://127.0.0.1:8002');
+            $token = $request->bearerToken(); // Lấy JWT Token từ Header (do Service 1 cấp)
+
+            $response = Http::timeout(3)
+                ->withToken($token)
+                ->get("{$userServiceUrl}/api/users/{$userId}/vip-benefits");
+
+            if ($response->successful()) {
+                return $response->json('discount_percent') ?? 0;
+            }
+        } catch (\Exception $e) {
+            return 0;
+        }
+
+        return 0;
     }
 
     public function getOrders($userID){
