@@ -7,7 +7,6 @@ COPY packages/auth-types/package.json packages/auth-types/
 COPY packages/auth-express/package.json packages/auth-express/
 COPY services/auth-services/package.json services/auth-services/
 COPY services/product-service/package.json services/product-service/
-COPY services/order-service/package.json services/order-service/
 RUN bun install --frozen-lockfile
 
 FROM deps AS build

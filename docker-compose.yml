@@ -82,34 +82,5 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  order:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    container_name: order-service
-    command: ["bun", "run", "services/order-service/src/server.ts"]
-    ports:
-      - "4003:4003"
-    environment:
-      PORT: 4003
-      ORDER_MONGODB_URI: mongodb://mongodb:27017/order-db
-      JWKS_URL: http://auth:4000/.well-known/jwks.json
-      JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
-      JWT_AUDIENCE: ${JWT_AUDIENCE:-api.yourdomain.com}
-      # Optional M2M integration (order → product via client_credentials):
-      AUTH_SERVICE_URL: http://auth:4000
-      PRODUCT_SERVICE_URL: http://product:4002
-      PRODUCT_SERVICE_CLIENT_ID: ${PRODUCT_SERVICE_CLIENT_ID:-}
-      PRODUCT_SERVICE_CLIENT_SECRET: ${PRODUCT_SERVICE_CLIENT_SECRET:-}
-      CORS_ORIGINS: http://localhost:3000
-    depends_on:
-      auth:
-        condition: service_healthy
-      product:
-        condition: service_started
-      mongodb:
-        condition: service_healthy
-    restart: unless-stopped
-
 volumes:
   mongodb-data:
