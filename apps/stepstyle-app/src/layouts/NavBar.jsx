@@ -1,8 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import {Link } from 'react-router-dom';
-function NavBar(){
+import { Link, useLocation } from 'react-router-dom';
 
-    const [switchPage, setSwitchPage] = useState('home');
+function NavBar(){
+    const location = useLocation();
+    const currentPath = location.pathname;
+    const isProduct = currentPath.startsWith('/product');
+    const isHome = currentPath === '/home' || currentPath === '/';
+
     const [isOpen, setIsOpen] = useState(false);
 
     const handleDropDownMenu = ()=>{
@@ -10,7 +14,6 @@ function NavBar(){
     }
 
     const dropdownRef = useRef(null);
-
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -25,7 +28,7 @@ function NavBar(){
         <div ref={dropdownRef} className='border border-b border-gray-300 bg-white'>
             <div className="flex items-center justify-center text-white w-full bg-orange-400 text-xs p-2">
                 <p className="flex items-center gap-3">
-                    <svg xmlns="http://w3.org" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                         <path d="M3 3h11v10h-11v-10zm13 3h4l3 3v4h-7v-7zm-13 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm13 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
                     </svg>
                     Miễn phí vận chuyển cho đơn hàng trên 500.000đ | Đổi trả trong 30 ngày
@@ -43,13 +46,13 @@ function NavBar(){
                 </Link>
 
                 <div className='flex gap-3 font-bold'>
-                    <Link to='/home' onClick={()=> setSwitchPage('home')} className={switchPage === 'home'?'text-orange-400 p-3':'p-3'}>Trang chủ</Link>
-                    <Link to='/products' onClick={()=> setSwitchPage('product')} className={switchPage === 'product'?'text-orange-400 p-3':'p-3'}>Sản phẩm</Link>
+                    <Link to='/home' className={isHome ? 'text-orange-400 p-3' : 'p-3'}>Trang chủ </Link>
+                    <Link to='/products' className={isProduct ? 'text-orange-400 p-3' : 'p-3'}>Sản phẩm</Link>
                 </div>
 
                 <div className='flex relative items-center gap-4'>
                     <Link to="/cart" className='hover:text-orange-500'>
-                        <svg xmlns="http://w3.org" className='w-5 h-5' width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" className='w-5 h-5' width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
                         </svg>                
                     </Link>
@@ -67,7 +70,7 @@ function NavBar(){
                     </button>
 
                     {isOpen && (
-                        <div className="absolute right-0 mt-60 w-48 bg-white border border-gray-300 rounded-xl">
+                        <div className="absolute right-0 mt-60 w-48 bg-white border border-gray-300 rounded-xl z-50">
                             <div className="grid grid-cols-1 p-3">
                                 <Link className='hover:bg-gray-100 p-2 rounded-xl flex gap-2 items-center' to='/profile'>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
@@ -76,7 +79,7 @@ function NavBar(){
                                     <p>Hồ sơ</p>
                                 </Link>
                                 <Link to='/order' className='hover:bg-gray-100 p-2 rounded-xl mt-4 flex gap-2 items-center'>
-                                    <svg xmlns="http://w3.org" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                         <polyline points="14 2 14 8 20 8"></polyline>
                                         <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -87,7 +90,7 @@ function NavBar(){
                                 </Link>
 
                                 <Link className='hover:bg-red-200 p-2 rounded-xl text-red-400 mt-4 flex gap-2 items-center' to='/home'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                                         <polyline points="16 17 21 12 16 7"></polyline>
                                         <line x1="21" y1="12" x2="9" y2="12"></line>

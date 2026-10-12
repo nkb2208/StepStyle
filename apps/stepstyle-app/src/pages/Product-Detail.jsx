@@ -1,8 +1,9 @@
 import { useState } from "react";
 import Footer from "../layouts/Footer";
 import NavBar from "../layouts/NavBar";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AllProduct from "./products/AllProduct";
+import { addToCart } from "../services/orderApiService";
 
 function ProDuctDetail(){
     const [color, setColor] = useState('no');
@@ -10,6 +11,28 @@ function ProDuctDetail(){
     const [size, setSize] = useState('38');
 
     let [quantity, setQuantity] = useState(1);
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+
+    const handleAddToCart = async () => {
+        try {
+            setLoading(true);
+            const userId = localStorage.getItem("userId") || 1;
+            const variantId = 1; // Giả lập
+            const response = await addToCart(userId, 1, variantId, quantity, 2890000);
+            alert(response.message || "Đã thêm vào giỏ hàng");
+        } catch (error) {
+            console.error("Lỗi thêm giỏ hàng:", error);
+            alert("Có lỗi xảy ra!");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBuyNow = async () => {
+        await handleAddToCart();
+        navigate("/cart");
+    };
 
     const handleIncreaseQuantity = () =>{
         quantity= quantity+1;
@@ -123,13 +146,13 @@ function ProDuctDetail(){
 
                             {/* Btn add to cart and purchase */}
                             <div className="mt-4 flex items-center gap-3">
-                                <button className="w-1/2 bg-orange-500 rounded-xl hover:bg-orange-600 text-white font-bold text-xl p-5">
+                                <button onClick={handleAddToCart} disabled={loading} className="w-1/2 bg-orange-500 rounded-xl hover:bg-orange-600 text-white font-bold text-xl p-5 disabled:opacity-50">
                                     Thêm vào giỏ hàng
                                 </button>
 
 
 
-                                <button className="text-orange-500 border border-orange-500 w-1/2 font-bold text-xl p-5 rounded-xl hover:bg-orange-50">
+                                <button onClick={handleBuyNow} disabled={loading} className="text-orange-500 border border-orange-500 w-1/2 font-bold text-xl p-5 rounded-xl hover:bg-orange-50 disabled:opacity-50">
                                     Mua ngay
                                 </button>
                             </div>

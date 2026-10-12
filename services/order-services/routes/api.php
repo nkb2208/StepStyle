@@ -12,10 +12,10 @@ Route::get('/user', function (Request $request) {
 
 
 Route::prefix('cart')->group(function(){
-    Route::post('/cart/add', [CartController::class, 'addToCart']);
+    Route::post('/add', [CartController::class, 'addToCart']);
     Route::get('/{userID}', [CartController::class, 'getCart']);
     Route::put('/update', [CartController::class, 'updateQuantity']);
-    Route::delete('/delete', [CartController::class, 'deleteItem']);
+    Route::delete('/remove', [CartController::class, 'deleteItem']);
 });
 
 Route::prefix('orders')->group(function () {

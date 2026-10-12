@@ -1,3 +1,4 @@
+import { quickAddToCart } from '../../utils/cartHelper';
 function Sandals(){
     return(
         <div className='flex gap-4 mt-4 grid grid-cols-4 pl-10 pr-10'>
@@ -23,7 +24,7 @@ function Sandals(){
                         {/* Price and button add to cart */}
                         <div className='mt-5 flex items-center justify-between'>
                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                            <button onClick={() => quickAddToCart({"ma_bien_the":29,"ten_san_pham":"Sản phẩm 29","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                         </div>
                     </div>
                 </div>
@@ -51,7 +52,7 @@ function Sandals(){
                         {/* Price and button add to cart */}
                         <div className='mt-5 flex items-center justify-between'>
                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                            <button onClick={() => quickAddToCart({"ma_bien_the":30,"ten_san_pham":"Sản phẩm 30","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                         </div>
                     </div>
                 </div>
@@ -79,7 +80,7 @@ function Sandals(){
                         {/* Price and button add to cart */}
                         <div className='mt-5 flex items-center justify-between'>
                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                            <button onClick={() => quickAddToCart({"ma_bien_the":31,"ten_san_pham":"Sản phẩm 31","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                         </div>
                     </div>
                 </div>
@@ -107,7 +108,7 @@ function Sandals(){
                         {/* Price and button add to cart */}
                         <div className='mt-5 flex items-center justify-between'>
                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                            <button onClick={() => quickAddToCart({"ma_bien_the":32,"ten_san_pham":"Sản phẩm 32","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                         </div>
                     </div>
                 </div>

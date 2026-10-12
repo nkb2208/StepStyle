@@ -127,7 +127,7 @@ public function updateQuantity(Request $request)
             ],404);
         }
 
-        $deleteItem = CartItem::where('ma_gio_hang', $request->ma_gio_hang)->where('ma_bien_the', $request->ma_bien_the)->delete();
+        $deleteItem = CartItem::where('ma_gio_hang', $cart->ma_gio_hang)->where('ma_bien_the', $request->ma_bien_the)->delete();
         if($deleteItem){
             $cart->update([
                 'ngay_cap_nhat'=>now()

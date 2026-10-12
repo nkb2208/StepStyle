@@ -1,4 +1,5 @@
-import Footer from '../layouts/Footer';
+import Footer from '../layouts/Footer'; 
+import { quickAddToCart } from "../utils/cartHelper";
 import NavBar from '../layouts/NavBar';
 import { Link } from 'react-router-dom';
 
@@ -135,7 +136,7 @@ function HomePage(){
                     <div className='mt-10 p-10'>
                         <div className = "w-full pr-10 flex items-center justify-between">
                             <p className='text-2xl font-bold pl-10 pr-10'>Nổi bật</p>
-                            <Link className='text-md font-bold text-orange-400 hover:underline underline-offset-1' to='/product'>Xem tất cả</Link>
+                            <Link className='text-md font-bold text-orange-400 hover:underline underline-offset-1' to='/products'>Xem tất cả</Link>
                         </div>
  
 
@@ -162,7 +163,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":1,"ten_san_pham":"Sản phẩm 1","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -190,7 +191,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":2,"ten_san_pham":"Sản phẩm 2","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -218,7 +219,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":3,"ten_san_pham":"Sản phẩm 3","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -246,7 +247,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":4,"ten_san_pham":"Sản phẩm 4","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -274,7 +275,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":5,"ten_san_pham":"Sản phẩm 5","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -302,7 +303,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":6,"ten_san_pham":"Sản phẩm 6","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -330,7 +331,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":7,"ten_san_pham":"Sản phẩm 7","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -358,7 +359,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":8,"ten_san_pham":"Sản phẩm 8","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -387,7 +388,7 @@ function HomePage(){
                     <div className='p-10'>
                         <div className = "w-full pr-10 flex items-center justify-between">
                             <p className='text-2xl font-bold pl-10 pr-10'>Bán chạy nhất</p>
-                            <Link className='text-md font-bold text-orange-400 hover:underline underline-offset-1' to='/product'>Xem tất cả</Link>
+                            <Link className='text-md font-bold text-orange-400 hover:underline underline-offset-1' to='/products'>Xem tất cả</Link>
                         </div>
 
                         <div className='flex gap-4 mt-4 grid grid-cols-5 pl-10 pr-10'>
@@ -413,7 +414,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":9,"ten_san_pham":"Sản phẩm 9","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -441,7 +442,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":10,"ten_san_pham":"Sản phẩm 10","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -469,7 +470,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":11,"ten_san_pham":"Sản phẩm 11","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -497,7 +498,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":12,"ten_san_pham":"Sản phẩm 12","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -525,7 +526,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":13,"ten_san_pham":"Sản phẩm 13","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -553,7 +554,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":14,"ten_san_pham":"Sản phẩm 14","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -581,7 +582,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":15,"ten_san_pham":"Sản phẩm 15","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
@@ -609,7 +610,7 @@ function HomePage(){
                                         {/* Price and button add to cart */}
                                         <div className='mt-5 flex items-center justify-between'>
                                             <div className='w-2/3 text-xl font-bold text-orange-400'>2.890.000đ</div>
-                                            <button className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
+                                            <button onClick={() => quickAddToCart({"ma_bien_the":16,"ten_san_pham":"Sản phẩm 16","thuong_hieu":"StepStyle","don_gia":2890000,"kich_co":"38","mau_sac":"Trắng","hinh_anh":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format"})} className='w-1/3 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center w-1/5 text-white font-bold rounded-md'>+ Giỏ</button>
                                         </div>
                                     </div>
                                 </div>
