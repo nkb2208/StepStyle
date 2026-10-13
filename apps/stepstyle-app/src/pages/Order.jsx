@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Footer from "../layouts/Footer";
 import NavBar from "../layouts/NavBar";
-import { getUserOrders, cancelOrder } from "../services/orderApiService";
+import { getUserOrders, cancelOrder, createMomoPayment, createVnpayPayment, updatePaymentStatus } from "../services/orderApiService";
 
 
     const getPaymentName = (methodId) => {
@@ -9,7 +9,36 @@ import { getUserOrders, cancelOrder } from "../services/orderApiService";
         if (methodId === 2) return 'Thẻ Tín dụng/Ghi nợ';
         if (methodId === 3) return 'Thanh toán qua Momo';
         if (methodId === 4) return 'Chuyển khoản ngân hàng';
+        if (methodId === 5) return 'Thanh toán qua VNPAY';
         return 'Chưa xác định';
+    };
+
+    const getOrderStatusText = (status) => {
+        const statusMap = {
+            PENDING: 'Chờ xác nhận',
+            PROCESSING: 'Đang xử lý',
+            SHIPPED: 'Đang giao hàng',
+            DELIVERED: 'Đã giao hàng',
+            CANCELLED: 'Đã hủy',
+        };
+        return statusMap[status] || status;
+    };
+
+    const getOrderStatusColor = (status) => {
+        switch (status) {
+            case 'PENDING':
+                return 'bg-yellow-100 text-yellow-600';
+            case 'PROCESSING':
+                return 'bg-blue-100 text-blue-600';
+            case 'SHIPPED':
+                return 'bg-purple-100 text-purple-600';
+            case 'DELIVERED':
+                return 'bg-green-100 text-green-600';
+            case 'CANCELLED':
+                return 'bg-red-100 text-red-500';
+            default:
+                return 'bg-gray-100 text-gray-600';
+        }
     };
 
 function Order() {
@@ -32,11 +61,79 @@ function Order() {
     };
 
     useEffect(() => {
-        loadOrders();
+        const checkPaymentReturn = async () => {
+            const params = new URLSearchParams(window.location.search);
+            
+            // Check MoMo callback
+            const resultCode = params.get('resultCode');
+            const momoOrderId = params.get('orderId');
+            const momoTransId = params.get('transId');
+
+            if (momoOrderId && resultCode !== null) {
+                const realOrderId = momoOrderId.split('_')[0];
+                if (resultCode === '0') {
+                    try {
+                        await updatePaymentStatus(realOrderId, 'SUCCESS', momoTransId);
+                    } catch (e) {
+                        console.error("Lỗi cập nhật trạng thái thanh toán MoMo:", e);
+                    }
+                }
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            // Check VNPAY callback
+            const vnpResponseCode = params.get('vnp_ResponseCode');
+            const vnpTxnRef = params.get('vnp_TxnRef');
+            const vnpTransactionNo = params.get('vnp_TransactionNo');
+
+            if (vnpTxnRef && vnpResponseCode !== null) {
+                const realOrderId = vnpTxnRef.split('_')[0];
+                if (vnpResponseCode === '00') {
+                    try {
+                        await updatePaymentStatus(realOrderId, 'SUCCESS', vnpTransactionNo);
+                    } catch (e) {
+                        console.error("Lỗi cập nhật trạng thái thanh toán VNPAY:", e);
+                    }
+                }
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            loadOrders();
+        };
+
+        checkPaymentReturn();
     }, []);
 
     const handleToggleOrder = (orderId) => {
         setOpenOrderId(prev => prev === orderId ? null : orderId);
+    };
+
+    const handlePayMomo = async (orderId) => {
+        try {
+            const res = await createMomoPayment(orderId);
+            if (res?.payUrl) {
+                window.location.href = res.payUrl;
+            } else {
+                alert("Không tạo được link thanh toán MoMo");
+            }
+        } catch (error) {
+            console.error("Lỗi kết nối MoMo:", error);
+            alert("Lỗi khi kết nối tới cổng thanh toán MoMo");
+        }
+    };
+
+    const handlePayVnpay = async (orderId) => {
+        try {
+            const res = await createVnpayPayment(orderId);
+            if (res?.payUrl) {
+                window.location.href = res.payUrl;
+            } else {
+                alert("Không tạo được link thanh toán VNPAY");
+            }
+        } catch (error) {
+            console.error("Lỗi kết nối VNPAY:", error);
+            alert("Lỗi khi kết nối tới cổng thanh toán VNPAY");
+        }
     };
 
     const handleCancelOrder = async (orderId) => {
@@ -76,7 +173,7 @@ function Order() {
                                         <div>
                                             <div className="flex items-center gap-3">
                                                 <p className="text-md font-bold">ORDER-{order.ma_don_hang}</p>
-                                                <div className={`p-1 pr-2 pl-2 rounded-xl text-xs font-bold ${order.trang_thai_don_hang === 'CANCELLED' ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-500'}`}>{order.trang_thai_don_hang}</div>
+                                                <div className={`p-1 pr-2 pl-2 rounded-xl text-xs font-bold ${getOrderStatusColor(order.trang_thai_don_hang)}`}>{getOrderStatusText(order.trang_thai_don_hang)}</div>
                                             </div>
 
                                             <div className="mt-3 flex items-center gap-3 text-gray-500 font-bold text-md">
@@ -103,36 +200,47 @@ function Order() {
 
                                     {openOrderId === order.ma_don_hang && (
                                         <div className=" w-full p-3 bg-white flex flex-col gap-2 border-t border-gray-100  rounded-xl rounded-t-none shadow-lg">
-                                            {order.items?.map(item => (
-                                                <div>
-                                                    <div key={item.ma_chi_tiet} className="flex items-center justify-between border-b border-gray-100 pb-2">
-                                                        <div className=" flex items-center gap-3">
-                                                            <img className="w-20 h-20 rounded-xl" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format" alt="" />
-                                                            <div>
-                                                                <p>{item.ten_san_pham}</p>
-                                                                <p className="text-xs text-gray-500">Size {item.kich_co} • {item.mau_sac} • x{item.so_luong}</p>
-                                                            </div>
-                                                        </div>
-                                                        <p className="font-bold">{Number(item.don_gia).toLocaleString('vi-VN')} đ</p>
-                                                    </div>
-
-                                                    <div className="mt-4 flex items-center justify-between ">
+                                            {order.items?.map((item, idx) => (
+                                                <div key={item.ma_chi_tiet || item.ma_bien_the || idx} className="flex items-center justify-between border-b border-gray-100 pb-2">
+                                                    <div className=" flex items-center gap-3">
+                                                        <img className="w-20 h-20 rounded-xl" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format" alt="" />
                                                         <div>
-                                                            <p className="text-gray-500">Giao đến: { order.dia_chi_giao_hang}</p>
-                                                            <p className="text-gray-500">Thanh toán: {getPaymentName(order.payment?.ma_phuong_thuc)}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p className="flex items-center justify-end text-md text-gray-500">Tổng cộng</p>
-                                                            <p className="text-xl font-bold text-orange-400">{Number(order.tong_thanh_toan).toLocaleString('vi-VN')}đ</p>
+                                                            <p>{item.ten_san_pham}</p>
+                                                            <p className="text-xs text-gray-500">Size {item.kich_co} • {item.mau_sac} • x{item.so_luong}</p>
                                                         </div>
                                                     </div>
-
-                                                    {order.trang_thai_don_hang === 'PENDING' && (
-                                                        <button onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.ma_don_hang); }} className="mt-4 w-full font-bold p-4 bg-red-400 text-white text-md hover:cursor-pointer hover:bg-red-500 rounded-xl">Hủy đơn</button>
-                                                    )}
+                                                    <p className="font-bold">{Number(item.don_gia).toLocaleString('vi-VN')} đ</p>
                                                 </div>
                                             ))}
+
+                                            <div className="mt-4 flex items-center justify-between ">
+                                                <div>
+                                                    <p className="text-gray-500">Giao đến: { order.dia_chi_giao_hang}</p>
+                                                    <p className="text-gray-500">
+                                                        Thanh toán: {getPaymentName(order.payment?.ma_phuong_thuc)}
+                                                        <span className={`ml-2 text-xs font-bold px-2 py-0.5 rounded-md ${order.payment?.trang_thai_thanh_toan === 'SUCCESS' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-500'}`}>
+                                                            {order.payment?.trang_thai_thanh_toan === 'SUCCESS' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                                                        </span>
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <p className="flex items-center justify-end text-md text-gray-500">Tổng cộng</p>
+                                                    <p className="text-xl font-bold text-orange-400">{Number(order.tong_thanh_toan).toLocaleString('vi-VN')}đ</p>
+                                                </div>
+                                            </div>
+
+                                            {order.payment?.ma_phuong_thuc === 3 && order.payment?.trang_thai_thanh_toan !== 'SUCCESS' && order.trang_thai_don_hang === 'PENDING' && (
+                                                <button onClick={(e) => { e.stopPropagation(); handlePayMomo(order.ma_don_hang); }} className="mt-4 w-full font-bold p-3 bg-pink-500 hover:bg-pink-600 text-white text-md rounded-xl">Thanh toán MoMo ngay</button>
+                                            )}
+
+                                            {order.payment?.ma_phuong_thuc === 5 && order.payment?.trang_thai_thanh_toan !== 'SUCCESS' && order.trang_thai_don_hang === 'PENDING' && (
+                                                <button onClick={(e) => { e.stopPropagation(); handlePayVnpay(order.ma_don_hang); }} className="mt-4 w-full font-bold p-3 bg-blue-600 hover:bg-blue-700 text-white text-md rounded-xl">Thanh toán VNPAY ngay</button>
+                                            )}
+
+                                            {order.trang_thai_don_hang === 'PENDING' && (
+                                                <button onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.ma_don_hang); }} className="mt-2 w-full font-bold p-4 bg-red-400 text-white text-md hover:cursor-pointer hover:bg-red-500 rounded-xl">Hủy đơn</button>
+                                            )}
                                         </div>
                                     )}
                                 </div>

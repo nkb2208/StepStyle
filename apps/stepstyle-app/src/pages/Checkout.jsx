@@ -2,7 +2,7 @@ import Footer from "../layouts/Footer";
 import NavBar from "../layouts/NavBar";
 import { Link, Route, Routes, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { getCart, checkout } from "../services/orderApiService";
+import { getCart, checkout, createMomoPayment, createVnpayPayment } from "../services/orderApiService";
 
 const getMeta = (ma_bien_the) => {
     let metadata = {};
@@ -10,30 +10,77 @@ const getMeta = (ma_bien_the) => {
         const stored = localStorage.getItem('variant_metadata');
         if (stored) metadata = JSON.parse(stored);
     } catch (e) {}
-    return metadata[ma_bien_the] || {
+    return {
         ten_san_pham: 'Sản phẩm ' + ma_bien_the,
         thuong_hieu: 'StepStyle',
+        don_gia: 2890000,
         kich_co: '38',
         mau_sac: 'Trắng',
-        hinh_anh: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format'
+        hinh_anh: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format',
+        ...(metadata[ma_bien_the] || {})
     };
 };
 
 function CustomerInfo({ info, setInfo }) {
+    const navigate = useNavigate();
+    const [errors, setErrors] = useState({});
+
+    const handleChange = (field, value) => {
+        setInfo({ ...info, [field]: value });
+        if (errors[field]) {
+            setErrors(prev => ({ ...prev, [field]: null }));
+        }
+    };
+
+    const handleNext = (e) => {
+        e.preventDefault();
+        const newErrors = {};
+
+        if (!info.ten_nguoi_nhan || !info.ten_nguoi_nhan.trim()) {
+            newErrors.ten_nguoi_nhan = "Vui lòng nhập họ và tên";
+        }
+        if (!info.so_dien_thoai_nhan || !info.so_dien_thoai_nhan.trim()) {
+            newErrors.so_dien_thoai_nhan = "Vui lòng nhập số điện thoại";
+        }
+        if (!info.dia_chi_giao_hang || !info.dia_chi_giao_hang.trim()) {
+            newErrors.dia_chi_giao_hang = "Vui lòng nhập địa chỉ giao hàng";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        setErrors({});
+        navigate('/checkout/purchase');
+    };
+
     return(
         <>
-            <form action="">
+            <form onSubmit={handleNext}>
                 <p className="font-bold">Thông tin giao hàng</p>
 
-                <div className="flex justify-between items-center mt-4">
+                <div className="flex justify-between items-start mt-4">
                     <div className="w-[49%]">
-                        <label className="text-xs" htmlFor="">Họ và tên</label> <br />
-                        <input value={info.ten_nguoi_nhan} onChange={e => setInfo({...info, ten_nguoi_nhan: e.target.value})} className="border border-gray-600 rounded-xl w-full p-2" type="text" />
+                        <label className={`text-xs ${errors.ten_nguoi_nhan ? 'text-red-500 font-bold' : ''}`} htmlFor="">Họ và tên *</label> <br />
+                        <input 
+                            value={info.ten_nguoi_nhan} 
+                            onChange={e => handleChange('ten_nguoi_nhan', e.target.value)} 
+                            className={`border rounded-xl w-full p-2 outline-none transition-colors ${errors.ten_nguoi_nhan ? 'border-red-500 bg-red-50 ring-1 ring-red-500' : 'border-gray-600 focus:border-orange-400'}`} 
+                            type="text" 
+                        />
+                        {errors.ten_nguoi_nhan && <p className="text-red-500 text-xs mt-1">{errors.ten_nguoi_nhan}</p>}
                     </div>
 
                     <div className="w-[49%]">
-                        <label className="text-xs" htmlFor="">Số điện thoại</label> <br />
-                        <input value={info.so_dien_thoai_nhan} onChange={e => setInfo({...info, so_dien_thoai_nhan: e.target.value})} className="border border-gray-600 rounded-xl w-full p-2" type="text" />
+                        <label className={`text-xs ${errors.so_dien_thoai_nhan ? 'text-red-500 font-bold' : ''}`} htmlFor="">Số điện thoại *</label> <br />
+                        <input 
+                            value={info.so_dien_thoai_nhan} 
+                            onChange={e => handleChange('so_dien_thoai_nhan', e.target.value)} 
+                            className={`border rounded-xl w-full p-2 outline-none transition-colors ${errors.so_dien_thoai_nhan ? 'border-red-500 bg-red-50 ring-1 ring-red-500' : 'border-gray-600 focus:border-orange-400'}`} 
+                            type="text" 
+                        />
+                        {errors.so_dien_thoai_nhan && <p className="text-red-500 text-xs mt-1">{errors.so_dien_thoai_nhan}</p>}
                     </div>
                 </div>
 
@@ -43,8 +90,15 @@ function CustomerInfo({ info, setInfo }) {
                 </div>
 
                 <div className="mt-4">
-                    <label className="text-xs" htmlFor="">Địa chỉ</label> <br />
-                    <input value={info.dia_chi_giao_hang} onChange={e => setInfo({...info, dia_chi_giao_hang: e.target.value})} className="border border-gray-600 rounded-xl w-full p-2" placeholder="Số nhà, tên đường, phường/xã" type="text" />
+                    <label className={`text-xs ${errors.dia_chi_giao_hang ? 'text-red-500 font-bold' : ''}`} htmlFor="">Địa chỉ *</label> <br />
+                    <input 
+                        value={info.dia_chi_giao_hang} 
+                        onChange={e => handleChange('dia_chi_giao_hang', e.target.value)} 
+                        className={`border rounded-xl w-full p-2 outline-none transition-colors ${errors.dia_chi_giao_hang ? 'border-red-500 bg-red-50 ring-1 ring-red-500' : 'border-gray-600 focus:border-orange-400'}`} 
+                        placeholder="Số nhà, tên đường, phường/xã" 
+                        type="text" 
+                    />
+                    {errors.dia_chi_giao_hang && <p className="text-red-500 text-xs mt-1">{errors.dia_chi_giao_hang}</p>}
                 </div>
 
                 <div className="mt-4">
@@ -59,7 +113,7 @@ function CustomerInfo({ info, setInfo }) {
                     <textarea value={info.ghi_chu} onChange={e => setInfo({...info, ghi_chu: e.target.value})} className="border border-gray-600 rounded-xl w-full p-2 text-xs h-20" placeholder="Yêu cầu đặc biệt..."></textarea>
                 </div>
 
-                <Link to='/checkout/purchase' className="mt-4 p-3 bg-orange-400 rounded-xl text-white font-bold flex justify-center items-center">Tiếp tục</Link>
+                <button type="submit" className="mt-4 p-3 bg-orange-400 hover:bg-orange-500 rounded-xl text-white font-bold flex justify-center items-center w-full">Tiếp tục</button>
             </form>
         </>
     );
@@ -86,8 +140,8 @@ function Purchase({ paymentMethod, setPaymentMethod }) {
                 </div>
 
                 <div className="flex items-center gap-3 mt-4">
-                    <input type="radio" name="payment" id="bank" checked={paymentMethod === 'bank'} onChange={() => setPaymentMethod('bank')} />
-                    <label htmlFor="bank">Chuyển khoản ngân hàng</label>
+                    <input type="radio" name="payment" id="vnpay" checked={paymentMethod === 'vnpay'} onChange={() => setPaymentMethod('vnpay')} />
+                    <label htmlFor="vnpay">Thanh toán qua VNPAY</label>
                 </div>
 
                 {paymentMethod === 'creditcard' && (
@@ -115,10 +169,10 @@ function Purchase({ paymentMethod, setPaymentMethod }) {
 
 function Confirmation({ info, paymentMethod, cartItems, handleCheckout }) {
     const getPaymentName = () => {
-        if (paymentMethod === 'cod') return 'Thanh toán khi nhận hàng (COD)';
-        if (paymentMethod === 'creditcard') return 'Thẻ Tín dụng/Ghi nợ';
-        if (paymentMethod === 'momo') return 'Momo';
-        if (paymentMethod === 'bank') return 'Chuyển khoản ngân hàng';
+        if(paymentMethod === 'cod') return 'Thanh toán khi nhận hàng (COD)';
+        if(paymentMethod === 'creditcard') return 'Thẻ Tín dụng/Ghi nợ';
+        if(paymentMethod === 'momo') return 'Momo';
+        if(paymentMethod === 'vnpay') return 'VNPAY';
         return '';
     };
 
@@ -139,7 +193,7 @@ function Confirmation({ info, paymentMethod, cartItems, handleCheckout }) {
                             </div>
 
                             <div>
-                                {(item.so_luong * 2890000).toLocaleString('vi-VN')} đ
+                                {(item.so_luong * item.don_gia).toLocaleString('vi-VN')} đ
                             </div>
                         </div>
                     );
@@ -157,7 +211,7 @@ function Confirmation({ info, paymentMethod, cartItems, handleCheckout }) {
 
                 <div className="flex mt-4 gap-3">
                     <Link to='/checkout/purchase' className="w-1/2 flex items-center justify-center p-3 border border-gray-300 rounded-xl font-bold"> Quay lại </Link>
-                    <button onClick={handleCheckout} className="w-1/2 flex items-center justify-center p-3 bg-orange-400 rounded-xl text-white font-bold">Hoàn tất</button>
+                    <button onClick={handleCheckout} className="w-1/2 hover:cursor-pointer flex items-center justify-center p-3 bg-orange-400 rounded-xl text-white font-bold">Đặt hàng</button>
                 </div>
             </div>
         </>
@@ -179,9 +233,12 @@ function CheckOut(){
         fetchCart();
     }, []);
 
-    const cartItems = cart?.items || [];
+    const cartItems = (cart?.items || []).map(item => ({
+        ...item,
+        don_gia: Number(item.don_gia ?? getMeta(item.ma_bien_the).don_gia ?? 2890000)
+    }));
     const totalItems = cartItems.reduce((acc, item) => acc + item.so_luong, 0);
-    const totalPrice = cartItems.reduce((acc, item) => acc + (item.so_luong * 2890000), 0);
+    const totalPrice = cartItems.reduce((acc, item) => acc + (item.so_luong * item.don_gia), 0);
 
     const handleCheckout = async () => {
         if (cartItems.length === 0) {
@@ -195,6 +252,7 @@ function CheckOut(){
             if (paymentMethod === 'creditcard') ma_phuong_thuc = 2;
             else if (paymentMethod === 'momo') ma_phuong_thuc = 3;
             else if (paymentMethod === 'bank') ma_phuong_thuc = 4;
+            else if (paymentMethod === 'vnpay') ma_phuong_thuc = 5;
 
             const items = cartItems.map(i => { 
                 const meta = getMeta(i.ma_bien_the); 
@@ -204,7 +262,7 @@ function CheckOut(){
                     kich_co: meta.kich_co,
                     mau_sac: meta.mau_sac,
                     so_luong: i.so_luong,
-                    don_gia: 2890000
+                    don_gia: i.don_gia
                 };
             });
 
@@ -221,7 +279,35 @@ function CheckOut(){
                 items
             };
 
-            await checkout(payload);
+            const res = await checkout(payload);
+            const createdOrder = res?.data;
+
+            if(paymentMethod === 'momo' && createdOrder?.ma_don_hang){
+                try{
+                    const momoRes = await createMomoPayment(createdOrder.ma_don_hang);
+                    if(momoRes?.payUrl){
+                        window.location.href = momoRes.payUrl;
+                        return;
+                    }
+                }catch(momoErr) {
+                    console.error("Lỗi tạo thanh toán MoMo:", momoErr);
+                    alert("Không thể chuyển hướng đến cổng MoMo. Đơn hàng đã được lưu!");
+                }
+            }
+
+            if(paymentMethod === 'vnpay' && createdOrder?.ma_don_hang){
+                try {
+                    const vnpayRes = await createVnpayPayment(createdOrder.ma_don_hang);
+                    if(vnpayRes?.payUrl){
+                        window.location.href = vnpayRes.payUrl;
+                        return;
+                    }
+                } catch (vnpayErr){
+                    console.error("Lỗi tạo thanh toán VNPAY:", vnpayErr);
+                    alert("Không thể chuyển hướng đến cổng VNPAY. Đơn hàng đã được lưu!");
+                }
+            }
+
             navigate("/order");
         } catch (error) {
             console.error("Lỗi đặt hàng:", error);
@@ -258,7 +344,7 @@ function CheckOut(){
                                     return (
                                         <div key={idx} className="flex items-center justify-between">
                                             <p>{meta.ten_san_pham} x<span>{item.so_luong}</span></p>
-                                            <p>{(item.so_luong * 2890000).toLocaleString('vi-VN')} đ</p>
+                                            <p>{(item.so_luong * item.don_gia).toLocaleString('vi-VN')} đ</p>
                                         </div>
                                     );
                                 })}

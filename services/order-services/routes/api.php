@@ -25,5 +25,7 @@ Route::prefix('orders')->group(function () {
     Route::get('/{orderId}', [OrderController::class, 'getOrderDetail']);         
     Route::put('/{orderId}/cancel', [OrderController::class, 'cancelOrder']);
     Route::put('/{orderId}/status', [OrderController::class, 'updateOrderStatus']); 
-    Route::put('/{orderId}/payment', [OrderController::class, 'updatePaymentStatus']);     
+    Route::put('/{orderId}/payment', [OrderController::class, 'updatePaymentStatus']);  
+    Route::post('/{orderId}/momo', [OrderController::class, 'payment_momo']); 
+    Route::post('/{orderId}/vnpay', [OrderController::class, 'payment_vnpay']);  
 });

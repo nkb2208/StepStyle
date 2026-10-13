@@ -59,4 +59,22 @@ export const cancelOrder = async (orderId) => {
   return response.data;
 };
 
+export const createMomoPayment = async (orderId) => {
+  const response = await orderApiClient.post(`/orders/${orderId}/momo`);
+  return response.data;
+};
+
+export const createVnpayPayment = async (orderId) => {
+  const response = await orderApiClient.post(`/orders/${orderId}/vnpay`);
+  return response.data;
+};
+
+export const updatePaymentStatus = async (orderId, status, transId = null) => {
+  const response = await orderApiClient.put(`/orders/${orderId}/payment`, {
+    trang_thai_thanh_toan: status,
+    ma_giao_dich_thanh_cong: transId
+  });
+  return response.data;
+};
+
 export default orderApiClient;

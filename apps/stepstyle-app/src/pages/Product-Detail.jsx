@@ -4,6 +4,7 @@ import NavBar from "../layouts/NavBar";
 import { Link, useNavigate } from "react-router-dom";
 import AllProduct from "./products/AllProduct";
 import { addToCart } from "../services/orderApiService";
+import { showToast } from "../utils/cartHelper";
 
 function ProDuctDetail(){
     const [color, setColor] = useState('no');
@@ -18,12 +19,12 @@ function ProDuctDetail(){
         try {
             setLoading(true);
             const userId = localStorage.getItem("userId") || 1;
-            const variantId = 1; // Giả lập
+            const variantId = 1; 
             const response = await addToCart(userId, 1, variantId, quantity, 2890000);
-            alert(response.message || "Đã thêm vào giỏ hàng");
+            showToast("Đã thêm vào giỏ hàng");
         } catch (error) {
             console.error("Lỗi thêm giỏ hàng:", error);
-            alert("Có lỗi xảy ra!");
+            showToast("Có lỗi xảy ra!", "error");
         } finally {
             setLoading(false);
         }

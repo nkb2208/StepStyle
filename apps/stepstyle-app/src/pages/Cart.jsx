@@ -45,23 +45,24 @@ function Cart(){
         }
     };
 
-    const totalItems = cart?.items?.reduce((acc, item) => acc + item.so_luong, 0) || 0;
-    const totalPrice = cart?.items?.reduce((acc, item) => acc + item.so_luong * 2890000, 0) || 0;
-
-    
     let metadata = {};
     try {
         const stored = localStorage.getItem('variant_metadata');
         if (stored) metadata = JSON.parse(stored);
     } catch (e) {}
 
-    const getMeta = (ma_bien_the) => metadata[ma_bien_the] || {
+    const getMeta = (ma_bien_the) => ({
         ten_san_pham: 'Sản phẩm ' + ma_bien_the,
         thuong_hieu: 'StepStyle',
+        don_gia: 2890000,
         kich_co: '38',
         mau_sac: 'Trắng',
-        hinh_anh: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format'
-    };
+        hinh_anh: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format',
+        ...(metadata[ma_bien_the] || {})
+    });
+
+    const totalItems = cart?.items?.reduce((acc, item) => acc + item.so_luong, 0) || 0;
+    const totalPrice = cart?.items?.reduce((acc, item) => acc + item.so_luong * Number(item.don_gia ?? getMeta(item.ma_bien_the).don_gia ?? 2890000), 0) || 0;
 
     return( 
         <div className="bg-gray-100 flex flex-col min-h-screen">
@@ -109,7 +110,7 @@ function Cart(){
                                             </div>
 
                                             <div className="text-orange-400 font-bold">
-                                                {(item.so_luong * 2890000).toLocaleString('vi-VN')} đ
+                                                {(item.so_luong * Number(item.don_gia ?? getMeta(item.ma_bien_the).don_gia ?? 2890000)).toLocaleString('vi-VN')} đ
                                             </div>
                                         </div>
                                     </div>
