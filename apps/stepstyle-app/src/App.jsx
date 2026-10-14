@@ -1,4 +1,4 @@
-﻿import Login from './pages/Login';
+import Login from './pages/Login';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import Register from './pages/Register';
 import HomePage from './pages/HomePage';
@@ -9,6 +9,7 @@ import Order from './pages/Order';
 import CheckOut from './pages/Checkout';
 import ProDuctDetail from './pages/Product-Detail';
 import Admin from './pages/admin/Admin';
+import AdminLogin from './pages/admin/AdminLogin';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path='/checkout/*' element={<CheckOut/>}/>
         <Route path='/detail' element={<ProDuctDetail/>}/>
         
+        <Route path='/admin/login' element={<AdminLogin/>}/>
         <Route path='/admin/*' element={<Admin/>}/>
       </Routes>
     </BrowserRouter>
