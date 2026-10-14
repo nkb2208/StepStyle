@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { formatPrice } from '../../data';
-import { getProducts, createProduct, deleteProduct, updateProduct } from '../../services/adminProductService';
+import React, { useState } from 'react';
+import { formatPrice, PRODUCTS } from '../../data';
 
 export default function Products() {
   const [showAddProduct, setShowAddProduct] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [products, setProducts] = useState(
+    PRODUCTS.map(p => ({
+      ...p,
+      original_price: p.original_price ?? p.price ?? 0,
+      category_name: p.category_name ?? p.category ?? '-',
+      status: p.status ?? (p.featured ? 'ACTIVE' : 'INACTIVE')
+    }))
+  );
+  const [loading] = useState(false);
+  const [error] = useState(null);
   
   // Add Product form state
   const [newProduct, setNewProduct] = useState({
@@ -46,46 +52,28 @@ export default function Products() {
       alert("Vui lòng nhập tên và giá sản phẩm");
       return;
     }
-    try {
-      setIsSubmitting(true);
-      const payload = {
-        name: editingProduct.name,
-        original_price: parseInt(String(editingProduct.original_price).replace(/\D/g, '')),
-        status: editingProduct.status,
-        description: editingProduct.description,
-        image: editingProduct.image,
-        category_id: editingProduct.category_id || null,
-      };
-      
-      await updateProduct(editingProduct.id, payload);
-      setShowEditProduct(false);
-      setEditingProduct(null);
-      fetchProducts();
-    } catch (error) {
-      console.error("Lỗi sửa sản phẩm:", error);
-      alert("Cập nhật sản phẩm thất bại!");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsSubmitting(true);
+    const updatedPrice = parseInt(String(editingProduct.original_price).replace(/\D/g, ''), 10) || 0;
+    setProducts(prev =>
+      prev.map(p =>
+        String(p.id) === String(editingProduct.id)
+          ? {
+              ...p,
+              name: editingProduct.name,
+              original_price: updatedPrice,
+              price: updatedPrice,
+              status: editingProduct.status,
+              description: editingProduct.description,
+              image: editingProduct.image,
+              category_id: editingProduct.category_id || null
+            }
+          : p
+      )
+    );
+    setShowEditProduct(false);
+    setEditingProduct(null);
+    setIsSubmitting(false);
   };
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const data = await getProducts();
-      // data from getProducts() returns either array or { items: [] } depending on pagination
-      setProducts(data.items || data || []);
-    } catch (err) {
-      console.error("Lỗi lấy danh sách sản phẩm", err);
-      setError("Không thể tải dữ liệu sản phẩm");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -103,37 +91,31 @@ export default function Products() {
       alert("Vui lòng nhập tên và giá sản phẩm");
       return;
     }
-    try {
-      setIsSubmitting(true);
-      const payload = {
-        name: newProduct.name,
-        original_price: parseInt(newProduct.original_price.replace(/\D/g, '')),
-        status: newProduct.status,
-        description: newProduct.description,
-        image: newProduct.image
-      };
-      
-      await createProduct(payload);
-      
-      // Reset form and close
-      setNewProduct({
-        name: '',
-        original_price: '',
-        status: 'ACTIVE',
-        category_id: null,
-        image: '',
-        description: ''
-      });
-      setShowAddProduct(false);
-      
-      // Refresh list
-      fetchProducts();
-    } catch (error) {
-      console.error("Lỗi thêm sản phẩm:", error);
-      alert("Thêm sản phẩm thất bại!");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsSubmitting(true);
+    const priceValue = parseInt(newProduct.original_price.replace(/\D/g, ''), 10) || 0;
+    const createdItem = {
+      id: String(Date.now()),
+      name: newProduct.name,
+      original_price: priceValue,
+      price: priceValue,
+      status: newProduct.status,
+      description: newProduct.description,
+      image: newProduct.image,
+      category_id: newProduct.category_id || null,
+      stock: 0
+    };
+    setProducts(prev => [createdItem, ...prev]);
+
+    setNewProduct({
+      name: '',
+      original_price: '',
+      status: 'ACTIVE',
+      category_id: null,
+      image: '',
+      description: ''
+    });
+    setShowAddProduct(false);
+    setIsSubmitting(false);
   };
 
   const [deletingProduct, setDeletingProduct] = useState(null);
@@ -151,17 +133,7 @@ export default function Products() {
     if (!deletingProduct) return;
     const id = deletingProduct.id;
     setDeletingProduct(null);
-
     setProducts(prevProducts => prevProducts.filter(p => String(p.id) !== String(id)));
-
-    try {
-      await deleteProduct(id);
-      setProducts(prevProducts => prevProducts.filter(p => String(p.id) !== String(id)));
-    } catch (error) {
-      console.error("Lỗi xóa sản phẩm:", error);
-      alert("Xóa sản phẩm thất bại!");
-      fetchProducts();
-    }
   };
 
   return (

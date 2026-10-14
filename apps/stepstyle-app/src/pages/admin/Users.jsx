@@ -1,10 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { getUsers, createUser, updateUser, deleteUser } from '../../services/adminUserService';
+import React, { useState } from 'react';
+import { USERS } from '../../data';
 
 export default function Users() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [users, setUsers] = useState(
+    USERS.map(u => ({
+      ...u,
+      role: u.role === 'admin' ? 'ADMIN' : u.role === 'buyer' ? 'CUSTOMER' : 'STAFF',
+      created_at: u.created_at ?? u.createdAt ?? null
+    }))
+  );
+  const [loading] = useState(false);
+  const [error] = useState(null);
 
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,23 +23,6 @@ export default function Users() {
     role: 'STAFF',
     active: true
   });
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const data = await getUsers();
-      setUsers(data.items || data || []);
-    } catch (err) {
-      console.error("Lỗi tải người dùng", err);
-      setError("Không thể tải danh sách người dùng");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
   const getRoleCount = (roleMatch) => {
     return users.filter(u => String(u.role).toUpperCase() === roleMatch.toUpperCase()).length;
@@ -57,26 +46,29 @@ export default function Users() {
       alert("Vui lòng nhập họ tên, email và mật khẩu");
       return;
     }
-    try {
-      setIsSubmitting(true);
-      await createUser(newStaff);
-      setNewStaff({
-        name: '',
-        email: '',
-        password: '',
-        phone: '',
-        address: '',
-        role: 'STAFF',
-        active: true
-      });
-      setShowAddStaff(false);
-      fetchUsers();
-    } catch (error) {
-      console.error("Lỗi thêm nhân sự:", error);
-      alert("Thêm nhân sự thất bại. Có thể email đã tồn tại!");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsSubmitting(true);
+    const createdStaff = {
+      id: `u_${Date.now()}`,
+      name: newStaff.name,
+      email: newStaff.email,
+      phone: newStaff.phone,
+      address: newStaff.address,
+      role: newStaff.role,
+      active: newStaff.active,
+      created_at: new Date().toISOString()
+    };
+    setUsers(prev => [createdStaff, ...prev]);
+    setNewStaff({
+      name: '',
+      email: '',
+      password: '',
+      phone: '',
+      address: '',
+      role: 'STAFF',
+      active: true
+    });
+    setShowAddStaff(false);
+    setIsSubmitting(false);
   };
 
   const [showEditStaff, setShowEditStaff] = useState(false);
@@ -105,40 +97,30 @@ export default function Users() {
       alert("Vui lòng nhập họ tên và email");
       return;
     }
-    try {
-      setIsSubmitting(true);
-      await updateUser(editingStaff.id, {
-        name: editingStaff.name,
-        email: editingStaff.email,
-        phone: editingStaff.phone,
-        address: editingStaff.address,
-        role: editingStaff.role,
-        active: editingStaff.active
-      });
-      setShowEditStaff(false);
-      setEditingStaff(null);
-      fetchUsers();
-    } catch (error) {
-      console.error("Lỗi sửa nhân sự:", error);
-      alert("Cập nhật nhân sự thất bại!");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsSubmitting(true);
+    setUsers(prev =>
+      prev.map(u =>
+        String(u.id) === String(editingStaff.id)
+          ? {
+              ...u,
+              name: editingStaff.name,
+              email: editingStaff.email,
+              phone: editingStaff.phone,
+              address: editingStaff.address,
+              role: editingStaff.role,
+              active: editingStaff.active
+            }
+          : u
+      )
+    );
+    setShowEditStaff(false);
+    setEditingStaff(null);
+    setIsSubmitting(false);
   };
 
   const handleDeleteStaff = async (id) => {
     if (!confirm("Bạn có chắc muốn xóa tài khoản này vĩnh viễn?")) return;
-    
     setUsers(prev => prev.filter(u => u.id !== id));
-    
-    try {
-      await deleteUser(id);
-      fetchUsers();
-    } catch (error) {
-      console.error("Lỗi xóa nhân sự:", error);
-      alert("Xóa nhân sự thất bại (không thể tự xóa chính mình).");
-      fetchUsers();
-    }
   };
 
   return (

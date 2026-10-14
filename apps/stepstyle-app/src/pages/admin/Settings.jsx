@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { getSettings, updateSettings } from '../../services/adminSettingService';
+import React, { useState } from 'react';
 
 export default function Settings() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading] = useState(false);
   const [saving, setSaving] = useState(false);
   
   const [settings, setSettings] = useState({
@@ -32,25 +30,6 @@ export default function Settings() {
     }
   });
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        setLoading(true);
-        const data = await getSettings();
-        setSettings(prev => ({
-          ...prev,
-          ...data
-        }));
-      } catch (err) {
-        console.error("Lỗi tải cài đặt", err);
-        // Fallback silently if API not implemented
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSettings();
-  }, []);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setSettings(prev => ({ ...prev, [name]: value }));
@@ -71,16 +50,9 @@ export default function Settings() {
   };
 
   const handleSave = async () => {
-    try {
-      setSaving(true);
-      await updateSettings(settings);
-      alert('Đã lưu thay đổi thành công!');
-    } catch (err) {
-      console.error("Lỗi lưu cài đặt", err);
-      alert('Có lỗi xảy ra khi lưu thay đổi!');
-    } finally {
-      setSaving(false);
-    }
+    setSaving(true);
+    alert('Đã lưu thay đổi thành công!');
+    setSaving(false);
   };
 
   if (loading) return <div className="p-8 text-center text-slate-500 animate-pulse">Đang tải cài đặt...</div>;

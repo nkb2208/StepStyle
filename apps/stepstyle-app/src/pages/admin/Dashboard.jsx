@@ -1,50 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { formatPrice } from '../../data';
-import { getDashboardStats } from '../../services/adminDashboardService';
+import React, { useState } from 'react';
+import { formatPrice, ORDERS, USERS } from '../../data';
 
 export default function Dashboard({ MONTHLY, maxRev }) {
-  const [stats, setStats] = useState({
-    totalRevenue: 0,
-    buyers: 0,
-    staff: 0,
-    cancelRate: 0,
+  const [stats] = useState({
+    totalRevenue: ORDERS.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0),
+    buyers: USERS.filter(u => u.role === 'buyer').length,
+    staff: USERS.filter(u => u.role !== 'buyer').length,
+    cancelRate: ORDERS.length ? Math.round((ORDERS.filter(o => o.status === 'cancelled').length / ORDERS.length) * 100) : 0,
     monthly: MONTHLY || [],
     maxRev: maxRev || 100,
-    userRoles: { admin: 0, warehouse: 0, care: 0, buyer: 0 },
-    totalUsers: 1
+    userRoles: {
+      admin: USERS.filter(u => u.role === 'admin').length,
+      warehouse: USERS.filter(u => u.role === 'warehouse').length,
+      care: USERS.filter(u => u.role === 'care').length,
+      buyer: USERS.filter(u => u.role === 'buyer').length
+    },
+    totalUsers: USERS.length || 1
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        // If your API returns data differently, you can map it here.
-        // We'll try to use API data if available, otherwise fallback to default empty values mapped below.
-        const data = await getDashboardStats();
-        
-        setStats(prev => ({
-          ...prev,
-          totalRevenue: data.totalRevenue ?? data.revenue ?? 0,
-          buyers: data.buyers ?? data.customers ?? 0,
-          staff: data.staff ?? data.employees ?? 0,
-          cancelRate: data.cancelRate ?? 0,
-          // Merge with any monthly stats from API
-          monthly: data.monthly ?? prev.monthly,
-          maxRev: data.maxRev ?? prev.maxRev,
-          userRoles: data.userRoles ?? prev.userRoles,
-          totalUsers: data.totalUsers ?? 1
-        }));
-      } catch (err) {
-        console.error("Failed to load dashboard stats", err);
-        setError("Không thể tải dữ liệu tổng quan");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
+  const [loading] = useState(false);
+  const [error] = useState(null);
 
   if (loading) return <div className="p-8 text-center text-slate-500 animate-pulse">Đang tải dữ liệu...</div>;
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;

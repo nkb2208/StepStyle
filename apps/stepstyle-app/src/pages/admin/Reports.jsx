@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { formatPrice, TOP_PRODUCTS } from '../../data';
-import { getDashboardStats } from '../../services/adminDashboardService';
 
 const MONTHLY_STATS_FALLBACK = [
   { month: 'Tháng 3', rev: '42.000.000 đ', orders: 18, avg: '2.333.333 đ', returned: 1, returnRate: '5.6%' },
@@ -13,45 +12,18 @@ const MONTHLY_STATS_FALLBACK = [
 ];
 
 export default function Reports({ MONTHLY, maxRev }) {
-  const [stats, setStats] = useState({
-    totalRevenue: 0,
-    totalOrders: 0,
-    averageValue: 0,
-    topMonth: 'Chưa có',
+  const [stats] = useState({
+    totalRevenue: 508000000,
+    totalOrders: 232,
+    averageValue: 2189655,
+    topMonth: 'Tháng 8',
     monthly: MONTHLY || [],
     maxRev: maxRev || 100,
     monthlyStats: MONTHLY_STATS_FALLBACK,
     topProducts: TOP_PRODUCTS
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        const data = await getDashboardStats();
-        
-        setStats(prev => ({
-          ...prev,
-          totalRevenue: data.totalRevenue ?? data.revenue ?? 0,
-          totalOrders: data.totalOrders ?? data.orders ?? 232, // fallback to old mock value
-          averageValue: data.averageValue ?? 0,
-          topMonth: data.topMonth ?? 'Tháng 8',
-          monthly: data.monthly ?? prev.monthly,
-          maxRev: data.maxRev ?? prev.maxRev,
-          monthlyStats: data.monthlyStats ?? prev.monthlyStats,
-          topProducts: data.topProducts ?? prev.topProducts
-        }));
-      } catch (err) {
-        console.error("Failed to load reports stats", err);
-        setError("Không thể tải dữ liệu báo cáo");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
+  const [loading] = useState(false);
+  const [error] = useState(null);
 
   if (loading) return <div className="p-8 text-center text-slate-500 animate-pulse">Đang tải báo cáo...</div>;
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;

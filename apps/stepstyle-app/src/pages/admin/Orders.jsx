@@ -1,27 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { formatPrice } from '../../data';
-import { getOrders } from '../../services/adminOrderService';
+import React, { useState } from 'react';
+import { formatPrice, ORDERS } from '../../data';
 
 export default function Orders() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const data = await getOrders();
-        setOrders(data.items || data || []);
-      } catch (err) {
-        console.error("Lỗi tải đơn hàng", err);
-        setError("Không thể tải danh sách đơn hàng");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrders();
-  }, []);
+  const [orders] = useState(ORDERS);
+  const [loading] = useState(false);
+  const [error] = useState(null);
 
   const getStatusCount = (statusMatch) => {
     return orders.filter(o => {
@@ -32,10 +15,10 @@ export default function Orders() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 text-sm text-purple-700 flex items-center gap-2">
+      {/* <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 text-sm text-purple-700 flex items-center gap-2">
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         Chế độ xem — Quản trị viên chỉ theo dõi trạng thái. Việc xử lý đơn hàng do bộ phận Kho thực hiện.
-      </div>
+      </div> */}
       
       <div className="grid grid-cols-5 gap-3">
         {[
