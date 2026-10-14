@@ -15,7 +15,7 @@ export default function Products() {
     status: 'ACTIVE',
     category_id: null,
     image: '',
-    description: 'Sản phẩm mới'
+    description: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,7 +52,7 @@ export default function Products() {
         name: editingProduct.name,
         original_price: parseInt(String(editingProduct.original_price).replace(/\D/g, '')),
         status: editingProduct.status,
-        description: editingProduct.description || 'Sản phẩm mới',
+        description: editingProduct.description,
         image: editingProduct.image,
         category_id: editingProduct.category_id || null,
       };
@@ -122,7 +122,7 @@ export default function Products() {
         status: 'ACTIVE',
         category_id: null,
         image: '',
-        description: 'Sản phẩm mới'
+        description: ''
       });
       setShowAddProduct(false);
       
@@ -136,24 +136,69 @@ export default function Products() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
-    
-    // Cập nhật UI ngay lập tức (Optimistic Update) để sản phẩm biến mất lập tức
-    setProducts(prevProducts => prevProducts.filter(p => p.id !== id));
-    
+  const [deletingProduct, setDeletingProduct] = useState(null);
+
+  const handleDelete = (productOrId) => {
+    if (typeof productOrId === 'object' && productOrId !== null) {
+      setDeletingProduct(productOrId);
+    } else {
+      const found = products.find(p => String(p.id) === String(productOrId));
+      setDeletingProduct(found || { id: productOrId, name: `Sản phẩm #${productOrId}` });
+    }
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!deletingProduct) return;
+    const id = deletingProduct.id;
+    setDeletingProduct(null);
+
+    setProducts(prevProducts => prevProducts.filter(p => String(p.id) !== String(id)));
+
     try {
       await deleteProduct(id);
-      fetchProducts();
+      setProducts(prevProducts => prevProducts.filter(p => String(p.id) !== String(id)));
     } catch (error) {
       console.error("Lỗi xóa sản phẩm:", error);
       alert("Xóa sản phẩm thất bại!");
-      fetchProducts(); // Phục hồi lại dữ liệu nếu lỗi
+      fetchProducts();
     }
   };
 
   return (
     <div className="space-y-6 relative">
+      {/* Modal Xác nhận xóa sản phẩm */}
+      {deletingProduct && (
+        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="font-bold text-slate-900 text-lg mb-2">Xác nhận xóa sản phẩm</h3>
+              <p className="text-sm text-slate-600">
+                Bạn có muốn xóa sản phẩm <span className="font-bold text-slate-900">{deletingProduct.name || deletingProduct.title || ''}</span> này không?
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+              <button
+                onClick={() => setDeletingProduct(null)}
+                className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={confirmDeleteProduct}
+                className="px-4 py-2 rounded-xl text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                Xóa sản phẩm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Form thêm sản phẩm */}
       {showAddProduct && (
         <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
@@ -197,6 +242,13 @@ export default function Products() {
                         <option value="ACTIVE">Hoạt động</option>
                         <option value="INACTIVE">Ẩn</option>
                       </select>
+                    </div>
+                  </div>
+
+                  <div className='w-full'>
+                    <label className='block text-sm font-medium text-slate-700 mb-1.5' htmlFor="">Mô tả sản phẩm</label>
+                    <div className='border border-slate-200 w-full rounded-xl p-2'>
+                      <textarea value={newProduct.description} onChange={handleInputChange} className='w-full border-slate-200 focus:border-purple-500 rounded-xl text-sm outline-none bg-white' name="" id=""/>
                     </div>
                   </div>
                 </div>
@@ -268,6 +320,13 @@ export default function Products() {
                         <option value="ACTIVE">Hoạt động</option>
                         <option value="INACTIVE">Ẩn</option>
                       </select>
+                    </div>
+                  </div>
+
+                  <div className='w-full'>
+                    <label className='block text-sm font-medium text-slate-700 mb-1.5' htmlFor="">Mô tả sản phẩm</label>
+                    <div className='border border-slate-200 w-full rounded-xl p-2'>
+                      <textarea value={editingProduct.description} onChange={handleInputChange} className='w-full border-slate-200 focus:border-purple-500 rounded-xl text-sm outline-none bg-white' name="" id=""/>
                     </div>
                   </div>
                 </div>

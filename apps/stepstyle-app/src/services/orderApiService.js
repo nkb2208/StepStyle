@@ -23,11 +23,12 @@ export const getCart = async (userId) => {
   return response.data;
 };
 
-export const updateCartItem = async (userId, variantId, quantity) => {
+export const updateCartItem = async (userId, variantId, quantity, extra = {}) => {
   const response = await orderApiClient.put('/cart/update', {
     ma_nguoi_dung: userId,
     ma_bien_the: variantId,
-    so_luong: quantity
+    so_luong: quantity,
+    ...extra
   });
   return response.data;
 };

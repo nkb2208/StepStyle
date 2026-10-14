@@ -103,11 +103,11 @@ function ProDuctDetail(){
                                 </span> 
                             </p>
                             <div className="mt-2 flex gap-3 items-center">
-                                <button onClick={()=> setColor('white')} className="border border-gray-500 rounded-xl p-2 pr-3 pl-3">Trắng</button>
+                                <button onClick={()=> setColor('white')} className={color === "white"?"border border-gray-500 rounded-xl bg-orange-400 p-2 pr-3 pl-3 text-white font-bold":"font-bold border border-gray-500 rounded-xl p-2 pr-3 pl-3"}>Trắng</button>
 
-                                <button onClick={()=> setColor('black')} className="border border-gray-500 rounded-xl p-2 pr-3 pl-3">Đen</button>
+                                <button onClick={()=> setColor('black')} className={color === "black"?"border border-gray-500 rounded-xl bg-orange-400 p-2 pr-3 pl-3 text-white font-bold":"font-bold border border-gray-500 rounded-xl p-2 pr-3 pl-3"}>Đen</button>
 
-                                <button onClick={()=> setColor('red')} className="border border-gray-500 rounded-xl p-2 pr-3 pl-3">Đỏ</button>
+                                <button onClick={()=> setColor('red')} className={color === "red"?"border border-gray-500 rounded-xl bg-orange-400 p-2 pr-3 pl-3 text-white font-bold":"font-bold border border-gray-500 rounded-xl p-2 pr-3 pl-3"}>Đỏ</button>
                             </div>
                         </div>
 
@@ -123,13 +123,13 @@ function ProDuctDetail(){
                                 </span> 
                             </p>
                             <div className="mt-2 flex gap-3 items-center">
-                                <button onClick={()=> setSize('38')} className="border border-gray-500 rounded-xl p-2 pr-3 pl-3">38</button>
+                                <button onClick={()=> setSize('38')} className={size === "38"?"border border-gray-500 rounded-xl bg-orange-400 p-2 pr-3 pl-3 text-white font-bold":"font-bold border border-gray-500 rounded-xl p-2 pr-3 pl-3"}>38</button>
 
-                                <button onClick={()=> setSize('39')} className="border border-gray-500 rounded-xl p-2 pr-3 pl-3">39</button>
+                                <button onClick={()=> setSize('39')} className={size === "39"?"border border-gray-500 rounded-xl bg-orange-400 p-2 pr-3 pl-3 text-white font-bold":"font-bold border border-gray-500 rounded-xl p-2 pr-3 pl-3"}>39</button>
 
-                                <button onClick={()=> setSize('40')} className="border border-gray-500 rounded-xl p-2 pr-3 pl-3">40</button>
+                                <button onClick={()=> setSize('40')} className={size === "40"?"border border-gray-500 rounded-xl bg-orange-400 p-2 pr-3 pl-3 text-white font-bold":"font-bold border border-gray-500 rounded-xl p-2 pr-3 pl-3"}>40</button>
 
-                                <button onClick={()=> setSize('41')} className="border border-gray-500 rounded-xl p-2 pr-3 pl-3">41</button>
+                                <button onClick={()=> setSize('41')} className={size === "41"?"border border-gray-500 rounded-xl bg-orange-400 p-2 pr-3 pl-3 text-white font-bold":"font-bold border border-gray-500 rounded-xl p-2 pr-3 pl-3"}>41</button>
                             </div>
 
                             {/* Quantity */}

@@ -73,13 +73,15 @@ class CartController extends Controller
         ],200);
     }
 
-    // Cập nhật số lượng sản phẩm trong giỏ hàng
-public function updateQuantity(Request $request)
+    // Cập nhật số lượng và phân loại (size, màu sắc) sản phẩm trong giỏ hàng
+    public function updateQuantity(Request $request)
     {
         $request->validate([
             'ma_nguoi_dung' => 'required|integer',
             'ma_bien_the'   => 'required|integer',
-            'so_luong'      => 'required|integer|min:1'
+            'so_luong'      => 'required|integer|min:1',
+            'kich_co'       => 'nullable|string|max:20',
+            'mau_sac'       => 'nullable|string|max:50'
         ]);
 
         // 1. Tìm giỏ hàng theo ma_nguoi_dung
@@ -102,15 +104,25 @@ public function updateQuantity(Request $request)
         }
 
         // 3. Thực hiện cập nhật trực tiếp xuống Database
+        $updateData = ['so_luong' => $request->so_luong];
+        if ($request->filled('kich_co') && \Illuminate\Support\Facades\Schema::hasColumn('chitietgiohang', 'kich_co')) {
+            $updateData['kich_co'] = $request->kich_co;
+        }
+        if ($request->filled('mau_sac') && \Illuminate\Support\Facades\Schema::hasColumn('chitietgiohang', 'mau_sac')) {
+            $updateData['mau_sac'] = $request->mau_sac;
+        }
+
         CartItem::where('ma_gio_hang', $cart->ma_gio_hang)
                 ->where('ma_bien_the', $request->ma_bien_the)
-                ->update(['so_luong' => $request->so_luong]);
+                ->update($updateData);
 
         $cart->update(['ngay_cap_nhat' => now()]);
 
         return response()->json([
-            'message' => 'Da cap nhat so luong san pham trong gio hang',
-            'so_luong_moi' => $request->so_luong
+            'message' => 'Da cap nhat san pham trong gio hang',
+            'so_luong_moi' => $request->so_luong,
+            'kich_co' => $request->kich_co,
+            'mau_sac' => $request->mau_sac
         ], 200);
     }
 

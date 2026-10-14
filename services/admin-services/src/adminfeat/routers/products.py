@@ -156,7 +156,7 @@ async def create_product(
         ma_danh_muc=payload.category_id,
     )
     session.add(row)
-    await session.flush()
+    await session.commit()
     return {"product": to_dict(row)}
 
 
@@ -243,7 +243,7 @@ async def delete_product(
 ) -> dict[str, Any]:
     row = await _get_or_404(session, product_id)
     await session.delete(row)
-    await session.flush()
+    await session.commit()
     return {"message": "Product deleted", "id": product_id}
 
 
