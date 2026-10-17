@@ -1,0 +1,41 @@
+# Test your FastAPI endpoints
+
+###
+GET http://127.0.0.1:8001/products
+Accept: application/json
+
+###
+GET http://127.0.0.1:8001/products/1
+Accept: application/json
+
+###
+POST http://127.0.0.1:8001/products/create
+Accept: application/json
+Content-Type: application/json
+
+{
+  "ten_san_pham": "Giày Thể Thao StepStyle",
+  "gia_goc": 500000,
+  "gia_khuyen_mai": 450000,
+  "mo_ta": "Mẫu giày chạy bộ mới nhất",
+  "hinh_anh_dai_dien": "link_anh.jpg",
+  "ma_danh_muc": null
+}
+
+###
+PUT http://127.0.0.1:8001/products/update/1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "ten_san_pham": "Giày Thể Thao StepStyle (Bản nâng cấp)",
+  "gia_goc": 600000,
+  "gia_khuyen_mai": 550000,
+  "mo_ta": "Đã cập nhật chất liệu",
+  "hinh_anh_dai_dien": "link_anh_moi.jpg",
+  "ma_danh_muc": null
+}
+
+###
+DELETE http://127.0.0.1:8001/products/delete/1
+Accept: application/json
