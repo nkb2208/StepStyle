@@ -1,0 +1,8 @@
+# ── Development / test dependencies ──────────────────────────────────────────
+-r requirements.txt
+
+pytest>=8.0
+# The test suite runs the API against an in-memory/file SQLite database so it
+# needs no MySQL instance (the production driver stays aiomysql).
+aiosqlite>=0.20
+ruff>=0.6
