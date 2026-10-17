@@ -8,8 +8,34 @@ from sqlalchemy.orm import Session
 from typing import Annotated
 from starlette import status
 from database import SessionLocal,engine
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class BienTheSanPhamRequest(BaseModel):
+    ma_san_pham: int
+    kich_co: str
+    mau_sac: str
+    so_luong_kho: int = 0
+    hinh_anh_bien_the: str
+
+class BienTheResponse(BaseModel):
+    ma_bien_the: int
+    kich_co: str
+    mau_sac: str
+    so_luong_kho: int
+    hinh_anh_bien_the: str
+
+    class Config:
+        from_attributes = True
 
 class SanPhamRequest(BaseModel):
     ten_san_pham:str
@@ -20,17 +46,33 @@ class SanPhamRequest(BaseModel):
     trang_thai:str = 'ACTIVE'
     ma_danh_muc:int | None = None
 
+class SanPhamResponse(BaseModel):
+    ma_san_pham: int  # Cần có ID để Frontend dùng
+    ten_san_pham: str
+    gia_goc: float
+    gia_khuyen_mai: float
+    trang_thai: str
+    ma_danh_muc: int | None
+
+    # Mảng biến thể lồng bên trong
+    danh_sach_bien_the: list[BienTheResponse] = []
+
+    class Config:
+        from_attributes = True
+
 class DanhMucRequest(BaseModel):
     ten_danh_muc:str
-    mo_ta:str
-    ma_danh_muc_cha:int
+    mo_ta:str |None = None
+    ma_danh_muc_cha:int | None = None
 
-class BienTheSanPhamRequest(BaseModel):
-    ma_san_pham:int
-    kich_co:str
-    mau_sac:str
-    so_luong_kho:int = 0
-    hinh_anh_bien_the: str
+class DanhMucResponse(BaseModel):
+    ma_danh_muc: int
+    ten_danh_muc: str
+    mo_ta: str | None = None
+    ma_danh_muc_cha: int | None = None
+
+    class Config:
+        from_attributes = True
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -46,16 +88,10 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 
 # get all products
-@app.get("/products")
+@app.get("/products",response_model=list[SanPhamResponse])
 async def get_all_products(db:db_dependency):
     return db.query(SanPham).all()
 
-@app.get("/products/{id}")
-async def get_all_products(id:int,db:db_dependency):
-    product = db.query(SanPham).filter(SanPham.ma_san_pham == id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail=f"khong tim thay san pham co id:{id}")
-    return product
 
 # create product
 @app.post("/products/create")
@@ -63,6 +99,7 @@ async def create_product(product: SanPhamRequest, db: db_dependency):
     product_model = SanPham(**product.dict())
     db.add(product_model)
     db.commit()
+    db.refresh(product_model)
     return product_model
 
 # update product by id
@@ -90,6 +127,11 @@ async def delete_product(id:int, db:db_dependency):
     product = db.query(SanPham).filter(SanPham.ma_san_pham == id).first()
     if not product:
         raise HTTPException(status_code= 404, detail="fkhong tim thay san pham co id:{id}")
+
+    variants = db.query(BienTheSanPham).filter(BienTheSanPham.ma_san_pham == id).all()
+    if variants:
+        raise HTTPException(status_code=400,detail="San pham khong the xoa do con bien the san pham. Vui long xoa cac bien the truoc.")
+
     db.delete(product)
     db.commit()
 
@@ -97,11 +139,102 @@ async def delete_product(id:int, db:db_dependency):
 
 # find product by category, name and status
 @app.get("/products/find")
-async def find_product(db:db_dependency,product_name: str | None = None, product_status:str | None = None, product_category:int | None = None):
-    products = db.query(SanPham).filter(SanPham.ten_san_pham.ilike(f"%{product_name}%"),
-                                         SanPham.trang_thai.ilike(f"%{product_status}%"),
-                                         SanPham.ma_danh_muc.ilike(f"%{product_category}%")).all()
+def find_product(db: db_dependency, product_name: str | None = None, product_status: str | None = None, product_category: int | None = None):
+    query = db.query(SanPham)
+
+    if product_name:
+        query = query.filter(SanPham.ten_san_pham.ilike(f"%{product_name}%"))
+    if product_status:
+        query = query.filter(SanPham.trang_thai == product_status)
+    if product_category:
+        query = query.filter(SanPham.ma_danh_muc == product_category)
+
+    products = query.all()
     if not products:
-        raise HTTPException(status_code=404, detail="khong tim thay san pham")
+        raise HTTPException(status_code=404, detail="Khong tim thay san pham")
 
     return products
+
+# create variants of product
+@app.post("/products/variant/create")
+async def create_variant_of_product(variant: BienTheSanPhamRequest, db: db_dependency):
+    variant_model = BienTheSanPham(**variant.dict())
+    db.add(variant_model)
+    db.commit()
+    db.refresh(variant_model)
+    return variant_model
+
+# update varirant
+@app.put("/products/variant/update/{id}")
+async def update_variant(id:int, update_variant: BienTheSanPhamRequest, db: db_dependency):
+    variant_model = db.query(BienTheSanPham).filter(BienTheSanPham.ma_bien_the == id).first()
+    if not variant_model:
+        raise HTTPException(status_code=404, detail="Khong tim thay bien the")
+
+    variant_model.kich_co = update_variant.kich_co
+    variant_model.mau_sac = update_variant.mau_sac
+    variant_model.so_luong_kho = update_variant.so_luong_kho
+    variant_model.hinh_anh_bien_the = update_variant.hinh_anh_bien_the
+
+    db.add(variant_model)
+    db.commit()
+    db.refresh(variant_model)
+    return "Cap nhat bien the san pham thanh cong"
+
+# delete variant
+@app.delete("/products/variant/delete/{id}")
+async def delete_variant(id:int, db:db_dependency):
+    variant_model = db.query(BienTheSanPham).filter(BienTheSanPham.ma_bien_the == id).first()
+    if not variant_model:
+        raise HTTPException(status_code=404, detail="Khong tim thay bien the")
+    db.delete(variant_model)
+    db.commit()
+    return "Da xoa bien the san pham thanh cong"
+
+# get all categories
+@app.get("/products/categories", response_model=list[DanhMucResponse])
+async def get_all_categories(db:db_dependency):
+    return db.query(DanhMuc).all()
+
+# create categories
+@app.post("/products/categories/create")
+async def create_category(db:db_dependency, danhmuc : DanhMucRequest):
+    danhmuc_model = DanhMuc(**danhmuc.dict())
+    db.add(danhmuc_model)
+    db.commit()
+    db.refresh(danhmuc_model)
+    return danhmuc_model
+
+# update category
+@app.put("/products/categories/update/{id}")
+async def update_category(id:int, db:db_dependency, update_category: DanhMucRequest):
+    danhmuc_model = db.query(DanhMuc).filter(DanhMuc.ma_danh_muc == id).first()
+    if not danhmuc_model:
+        raise HTTPException(status_code=404, detail="Khong tim thay danh muc")
+
+
+    danhmuc_model.ten_danh_muc = update_category.ten_danh_muc
+    danhmuc_model.mo_ta = update_category.mo_ta
+    danhmuc_model.ma_danh_muc_cha = update_category.ma_danh_muc_cha
+
+    db.add(danhmuc_model)
+    db.commit()
+    db.refresh(danhmuc_model)
+
+    return "Da cap nhat danh muc san pham thanh cong"
+
+# delete category
+@app.delete("/products/categories/delete/{id}")
+async def delete_category(id:int, db:db_dependency):
+    danhmuc_model = db.query(DanhMuc).filter(DanhMuc.ma_danh_muc == id).first()
+    if not danhmuc_model:
+        raise HTTPException(status_code=404, detail="Khong tim thay danh muc")
+
+    products = db.query(SanPham).filter(SanPham.ma_danh_muc == id).all()
+    if products:
+        raise HTTPException(status_code=400, detail="Khong the xoa danh muc do con san pham thuoc danh muc, vui long xoa cac san pham thuoc danh muc truoc")
+
+    db.delete(danhmuc_model)
+    db.commit()
+
+    return "Xoa danh muc san pham thanh cong"

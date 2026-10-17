@@ -39,3 +39,16 @@ Content-Type: application/json
 ###
 DELETE http://127.0.0.1:8001/products/delete/1
 Accept: application/json
+
+###
+POST http://127.0.0.1:8001/products/variant/create
+Accept: application/json
+Content-Type: application/json
+
+{
+  "ma_san_pham" : 1,
+  "kich_co": "38",
+  "mau_sac": "Xanh",
+  "so_luong_kho": 10,
+  "hinh_anh_bien_the": "https://assets.adidas.com/images/w_500,f_auto,q_auto/e599a2f3b467491daec4c6ba9703c2f3_9366/Giay_Ultraboost_5_Strung_DJen_JQ2941.jpg"
+}

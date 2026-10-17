@@ -1,32 +1,93 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { formatPrice, PRODUCTS } from '../../data';
 
 export default function Products() {
-  const [showAddProduct, setShowAddProduct] = useState(false);
-  const [products, setProducts] = useState(
-    PRODUCTS.map(p => ({
-      ...p,
-      original_price: p.original_price ?? p.price ?? 0,
-      category_name: p.category_name ?? p.category ?? '-',
-      status: p.status ?? (p.featured ? 'ACTIVE' : 'INACTIVE')
-    }))
-  );
-  const [loading] = useState(false);
-  const [error] = useState(null);
+
   
   // Add Product form state
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [showEditProduct, setShowEditProduct] = useState(false);
+  let [products, setProducts] = useState([]);
   const [newProduct, setNewProduct] = useState({
     name: '',
+    category_id: '',
+    image: '',
     original_price: '',
     status: 'ACTIVE',
-    category_id: null,
-    image: '',
-    description: ''
+    description: '',
   });
+  const [variants, setVariants] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [expandedProductId, setExpandedProductId] = useState(null);
 
-  const [showEditProduct, setShowEditProduct] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const toggleRow = (id) => {
+    setExpandedProductId(prev => (prev === id ? null : id));
+  };
+
+  const handleSaveNewCategory = () => {
+    console.log("Đã lưu: ", newCategoryName);
+    setIsAddingCategory(false);
+  };
+
+
+  const handleAddVariant = () => {
+
+  };
+
+  const handleRemoveVariant = () => {
+  };
+
+  const handleVariantChange = () => {
+
+  };
+
+  // Lấy danh sách sản phẩm
+  useEffect(()=> {
+    getAllProducts();
+  }, []);
+
+  const getAllProducts = async () =>{
+    try {
+      const response = await fetch("http://localhost:8001/products");
+      if(!response){
+        console.error("Loi sever");
+      }
+      const data = await response.json()
+
+      setProducts(data);
+
+    } catch (error) {
+      console.error("Khong the lay du lieu", error);
+    }
+  }
+
+  // Tạo sản phẩm mới
+  const handleSubmit = () => {
+    const rawPrice = newProduct?.original_price
+      ? Number(String(newProduct.original_price).replace(/\./g, ''))
+      : 0;
+
+    const payload = {
+      name: newProduct?.name || '',
+      category_id: newProduct?.category_id || '',
+      image: newProduct?.image || '',
+      original_price: rawPrice,
+      status: newProduct?.status || 'ACTIVE',
+      description: newProduct?.description || '',
+      variants: variants.map(v => ({
+        size: v.size,
+        color: v.color,
+        stock: Number(v.stock) || 0,
+      })),
+    };
+
+    console.log('Dữ liệu sản phẩm chuẩn bị gửi:', JSON.stringify(payload, null, 2));
+    console.log('Object sản phẩm:', payload);
+  };
+
+  const handleCreateProduct = handleSubmit;
 
   const openEditModal = (product) => {
     setEditingProduct({
@@ -36,44 +97,7 @@ export default function Products() {
     setShowEditProduct(true);
   };
 
-  const handleEditInputChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'original_price') {
-      const numericValue = value.replace(/\D/g, '');
-      const formattedValue = numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      setEditingProduct(prev => ({ ...prev, [name]: formattedValue }));
-      return;
-    }
-    setEditingProduct(prev => ({ ...prev, [name]: value }));
-  };
 
-  const handleUpdateProduct = async () => {
-    if (!editingProduct.name || !editingProduct.original_price) {
-      alert("Vui lòng nhập tên và giá sản phẩm");
-      return;
-    }
-    setIsSubmitting(true);
-    const updatedPrice = parseInt(String(editingProduct.original_price).replace(/\D/g, ''), 10) || 0;
-    setProducts(prev =>
-      prev.map(p =>
-        String(p.id) === String(editingProduct.id)
-          ? {
-              ...p,
-              name: editingProduct.name,
-              original_price: updatedPrice,
-              price: updatedPrice,
-              status: editingProduct.status,
-              description: editingProduct.description,
-              image: editingProduct.image,
-              category_id: editingProduct.category_id || null
-            }
-          : p
-      )
-    );
-    setShowEditProduct(false);
-    setEditingProduct(null);
-    setIsSubmitting(false);
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -86,48 +110,9 @@ export default function Products() {
     setNewProduct(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateProduct = async () => {
-    if (!newProduct.name || !newProduct.original_price) {
-      alert("Vui lòng nhập tên và giá sản phẩm");
-      return;
-    }
-    setIsSubmitting(true);
-    const priceValue = parseInt(newProduct.original_price.replace(/\D/g, ''), 10) || 0;
-    const createdItem = {
-      id: String(Date.now()),
-      name: newProduct.name,
-      original_price: priceValue,
-      price: priceValue,
-      status: newProduct.status,
-      description: newProduct.description,
-      image: newProduct.image,
-      category_id: newProduct.category_id || null,
-      stock: 0
-    };
-    setProducts(prev => [createdItem, ...prev]);
 
-    setNewProduct({
-      name: '',
-      original_price: '',
-      status: 'ACTIVE',
-      category_id: null,
-      image: '',
-      description: ''
-    });
-    setShowAddProduct(false);
-    setIsSubmitting(false);
-  };
 
   const [deletingProduct, setDeletingProduct] = useState(null);
-
-  const handleDelete = (productOrId) => {
-    if (typeof productOrId === 'object' && productOrId !== null) {
-      setDeletingProduct(productOrId);
-    } else {
-      const found = products.find(p => String(p.id) === String(productOrId));
-      setDeletingProduct(found || { id: productOrId, name: `Sản phẩm #${productOrId}` });
-    }
-  };
 
   const confirmDeleteProduct = async () => {
     if (!deletingProduct) return;
@@ -150,7 +135,7 @@ export default function Products() {
               </div>
               <h3 className="font-bold text-slate-900 text-lg mb-2">Xác nhận xóa sản phẩm</h3>
               <p className="text-sm text-slate-600">
-                Bạn có muốn xóa sản phẩm <span className="font-bold text-slate-900">{deletingProduct.name || deletingProduct.title || ''}</span> này không?
+                Bạn có muốn xóa sản phẩm <span className="font-bold text-slate-900">{}</span> này không?
               </p>
             </div>
             <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
@@ -187,30 +172,68 @@ export default function Products() {
                 <div className="col-span-1 md:col-span-2 space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Tên sản phẩm</label>
-                    <input name="name" value={newProduct.name} onChange={handleInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="Nhập tên sản phẩm..." />
+                    <input name="name" value={newProduct?.name || ''} onChange={handleInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="Nhập tên sản phẩm..." />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Danh mục</label>
-                      <select className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none bg-white">
-                        <option value="">Không có</option>
-                        <option value="1">Sneakers</option>
-                        <option value="2">Phụ kiện</option>
-                      </select>
+                      {!isAddingCategory ? (
+                        <div className="flex items-center gap-2">
+                          <select name="category_id" value={newProduct?.category_id || ''} onChange={handleInputChange} className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none bg-white">
+                            <option value="">Không có</option>
+                            <option value="1">Sneakers</option>
+                            <option value="2">Phụ kiện</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingCategory(true)}
+                            className="shrink-0 bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200 rounded-xl px-3 py-2.5 text-xs font-bold transition-colors"
+                          >
+                            + Mới
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            placeholder="Nhập tên danh mục..."
+                            className="w-full min-w-0 border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2.5 text-sm outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSaveNewCategory}
+                            className="shrink-0 bg-purple-500 hover:bg-purple-600 text-white rounded-xl px-3 py-2.5 text-xs font-bold transition-colors"
+                          >
+                            Lưu
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAddingCategory(false);
+                              setNewCategoryName('');
+                            }}
+                            className="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl px-3 py-2.5 text-xs font-bold transition-colors"
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <div>
+                    <div className='mt-4'>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Link Hình Ảnh</label>
-                      <input name="image" value={newProduct.image} onChange={handleInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="https://..." />
+                      <input name="image" value={newProduct?.image || ''} onChange={handleInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="https://..." />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Giá bán gốc (VNĐ)</label>
-                      <input name="original_price" value={newProduct.original_price} onChange={handleInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="VD: 1.500.000" />
+                      <input name="original_price" value={newProduct?.original_price || ''} onChange={handleInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="VD: 1.500.000" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Trạng thái</label>
-                      <select name="status" value={newProduct.status} onChange={handleInputChange} className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none bg-white">
+                      <select name="status" value={newProduct?.status || 'ACTIVE'} onChange={handleInputChange} className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none bg-white">
                         <option value="ACTIVE">Hoạt động</option>
                         <option value="INACTIVE">Ẩn</option>
                       </select>
@@ -220,21 +243,95 @@ export default function Products() {
                   <div className='w-full'>
                     <label className='block text-sm font-medium text-slate-700 mb-1.5' htmlFor="">Mô tả sản phẩm</label>
                     <div className='border border-slate-200 w-full rounded-xl p-2'>
-                      <textarea value={newProduct.description} onChange={handleInputChange} className='w-full border-slate-200 focus:border-purple-500 rounded-xl text-sm outline-none bg-white' name="" id=""/>
+                      <textarea name="description" value={newProduct?.description || ''} onChange={handleInputChange} className='w-full border-slate-200 focus:border-purple-500 rounded-xl text-sm outline-none bg-white' id=""/>
                     </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-4 mt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700">Phân loại hàng (Biến thể)</label>
+                        <p className="text-xs text-slate-400">Thêm kích cỡ, màu sắc và số lượng tồn kho tương ứng</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddVariant}
+                        className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-600 hover:bg-purple-100 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
+                      >
+                        + Thêm phân loại
+                      </button>
+                    </div>
+
+                    {variants.length === 0 ? (
+                      <div className="text-center py-4 bg-slate-50/70 border border-dashed border-slate-200 rounded-xl text-xs text-slate-400">
+                        Chưa có phân loại nào.
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        <div className="grid grid-cols-12 gap-2 px-1 text-xs font-medium text-slate-500">
+                          <div className="col-span-4">Kích cỡ</div>
+                          <div className="col-span-4">Màu sắc</div>
+                          <div className="col-span-3">Số lượng kho</div>
+                          <div className="col-span-1 text-center">Xóa</div>
+                        </div>
+                        {variants.map((variant, index) => (
+                          <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                            <div className="col-span-4">
+                              <input
+                                type="text"
+                                value={variant.size}
+                                onChange={(e) => handleVariantChange(index, 'size', e.target.value)}
+                                placeholder="VD: 39, 40"
+                                className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
+                              />
+                            </div>
+                            <div className="col-span-4">
+                              <input
+                                type="text"
+                                value={variant.color}
+                                onChange={(e) => handleVariantChange(index, 'color', e.target.value)}
+                                placeholder="VD: Đen, Trắng"
+                                className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
+                              />
+                            </div>
+                            <div className="col-span-3">
+                              <input
+                                type="number"
+                                min="0"
+                                value={variant.stock}
+                                onChange={(e) => handleVariantChange(index, 'stock', e.target.value)}
+                                placeholder="0"
+                                className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
+                              />
+                            </div>
+                            <div className="col-span-1 flex justify-center">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVariant(index)}
+                                title="Xóa biến thể"
+                                className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Hình ảnh sản phẩm</label>
-                  <div className="border-2 border-dashed border-slate-200 rounded-2xl h-full min-h-[160px] flex flex-col items-center justify-center text-slate-400 text-sm cursor-pointer hover:bg-slate-50 transition-colors overflow-hidden">
-                    {newProduct.image ? (
-                        <img src={newProduct.image} alt="Preview" className="w-full h-full object-cover" />
-                    ) : (
+                  <div className="border-2 border-dashed border-slate-200 rounded-2xl h-100 flex flex-col items-center justify-center text-slate-400 text-sm cursor-pointer hover:bg-slate-50 transition-colors overflow-hidden">
+                    
+                        {/* <img src="" alt="Preview" className="w-full h-full object-cover" /> */}
+      
                         <>
                           <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                           <span className="font-medium text-slate-500">Xem trước</span>
                         </>
-                    )}
                   </div>
                 </div>
               </div>
@@ -242,7 +339,7 @@ export default function Products() {
             
             <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50 rounded-b-2xl">
               <button onClick={() => setShowAddProduct(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">Hủy bỏ</button>
-              <button onClick={handleCreateProduct} disabled={isSubmitting} className="bg-purple-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-purple-600 transition-colors disabled:opacity-50">
+              <button onClick={handleSubmit} disabled={isSubmitting} className="bg-purple-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-purple-600 transition-colors disabled:opacity-50">
                 {isSubmitting ? 'Đang lưu...' : 'Lưu sản phẩm'}
               </button>
             </div>
@@ -354,50 +451,169 @@ export default function Products() {
           </div>
         </div>
         
-        {loading ? (
-          <div className="text-center py-10 text-slate-500 animate-pulse">Đang tải sản phẩm...</div>
-        ) : error ? (
-          <div className="text-center py-10 text-red-500">{error}</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100">
-              <tr>
-                <th className="text-left py-3 px-4 text-slate-500 font-semibold rounded-tl-xl">Sản phẩm</th>
-                <th className="text-left py-3 px-4 text-slate-500 font-semibold">Danh mục</th>
-                <th className="text-left py-3 px-4 text-slate-500 font-semibold">Giá bán</th>
-                <th className="text-left py-3 px-4 text-slate-500 font-semibold">Tồn kho</th>
-                <th className="text-left py-3 px-4 text-slate-500 font-semibold">Nổi bật</th>
-                <th className="text-left py-3 px-4 text-slate-500 font-semibold rounded-tr-xl">Thao tác</th>
-              </tr>
-            </thead>
+        
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 border-b border-slate-100">
+            <tr>
+              <th className="text-left py-3 px-4 text-slate-500 font-semibold rounded-tl-xl">Sản phẩm</th>
+              <th className="text-left py-3 px-4 text-slate-500 font-semibold">Danh mục</th>
+              <th className="text-left py-3 px-4 text-slate-500 font-semibold">Giá bán</th>
+              <th className="text-left py-3 px-4 text-slate-500 font-semibold">Tồn kho</th>
+              <th className="text-left py-3 px-4 text-slate-500 font-semibold">Nổi bật</th>
+              <th className="text-left py-3 px-4 text-slate-500 font-semibold rounded-tr-xl">Thao tác</th>
+            </tr>
+          </thead>
             <tbody className="divide-y divide-slate-50">
-              {products.length === 0 && <tr><td colSpan="6" className="text-center py-6 text-slate-400">Chưa có sản phẩm nào</td></tr>}
-              {products.map(p => (
-                <tr key={p.id} className="hover:bg-slate-50">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-slate-100 rounded-lg shrink-0 overflow-hidden">
-                        {p.image && <img src={p.image} alt={p.name} className="w-full h-full object-cover" />}
+            {products.length === 0 && <tr><td colSpan="6" className="text-center py-6 text-slate-400">Chưa có sản phẩm nào</td></tr>}
+            
+            {products.map(p => {
+              const tongTonKho = p.danh_sach_bien_the?.reduce(
+                (total, variant) => total + variant.so_luong_kho, 0
+              ) || 0;
+              const isExpanded = expandedProductId === p.ma_san_pham;
+
+              return (
+                <React.Fragment key={p.ma_san_pham}>
+                  <tr
+                    onClick={() => toggleRow(p.ma_san_pham)}
+                    className={`cursor-pointer transition-colors ${isExpanded ? 'bg-purple-50/40' : 'hover:bg-slate-50'}`}
+                  >
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleRow(p.ma_san_pham);
+                          }}
+                          title="Xem biến thể"
+                          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-200 shrink-0 ${
+                            isExpanded
+                              ? 'bg-purple-100 text-purple-600 rotate-90'
+                              : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                        <div className="w-10 h-10 bg-slate-100 rounded-lg shrink-0 overflow-hidden">
+                          {p.hinh_anh_dai_dien && <img src={p.hinh_anh_dai_dien} alt={p.ten_san_pham} className="w-full h-full object-cover" />}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900">{p.ten_san_pham}</p>
+                          <span className="text-xs text-purple-500 font-medium">
+                            {isExpanded ? 'Thu gọn biến thể' : `Xem biến thể (${p.danh_sach_bien_the?.length || 0})`}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-900">{p.name || p.title}</p>
-                        <p className="text-xs text-slate-400">{p.brand || 'No brand'}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-slate-600 font-medium">{p.category_name || p.category_id || '-'}</td>
-                  <td className="py-3 px-4 font-bold text-slate-900">{formatPrice(p.original_price || p.price || 0)}</td>
-                  <td className="py-3 px-4"><span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md">{p.variant_count ?? p.stock ?? 0}</span></td>
-                  <td className="py-3 px-4">{p.status === 'ACTIVE' ? <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md">Hoạt động</span> : <span className="text-slate-600 font-bold bg-slate-100 px-2 py-1 rounded-md">Ẩn</span>}</td>
-                  <td className="py-3 px-4 flex gap-2">
-                    <button onClick={() => openEditModal(p)} className="text-emerald-500 bg-emerald-50 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-100">Sửa</button>
-                    <button onClick={() => handleDelete(p.id)} className="text-red-500 bg-red-50 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-red-100">Xóa</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+                    </td>
+                    <td className="py-3 px-4 text-slate-600 font-medium">{p.ma_danh_muc || '-'}</td>
+                    <td className="py-3 px-4 font-bold text-slate-900">{formatPrice(p.gia_goc || 0)}</td>
+                    
+                    <td className="py-3 px-4">
+                      <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md">
+                        {tongTonKho}
+                      </span>
+                    </td>
+                    
+                    <td className="py-3 px-4">
+                      {p.trang_thai === 'ACTIVE' 
+                        ? <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md">Hoạt động</span> 
+                        : <span className="text-slate-600 font-bold bg-slate-100 px-2 py-1 rounded-md">Ẩn</span>
+                      }
+                    </td>
+                    
+                    <td className="py-3 px-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => openEditModal(p)} className="text-emerald-500 bg-emerald-50 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-100">Sửa</button>
+                      <button onClick={() => handleDelete(p.ma_san_pham)} className="text-red-500 bg-red-50 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-red-100">Xóa</button>
+                    </td>
+                  </tr>
+
+                  {expandedProductId === p.ma_san_pham && (
+                    <tr className="bg-slate-50/40">
+                      <td colSpan="6" className="px-6 py-3">
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70 shadow-inner transition-all">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                              Danh sách biến thể — {p.ten_san_pham}
+                            </p>
+                            <span className="text-xs text-slate-500 font-medium">
+                              Tổng: {p.danh_sach_bien_the?.length || 0} phân loại
+                            </span>
+                          </div>
+
+                          {!p.danh_sach_bien_the || p.danh_sach_bien_the.length === 0 ? (
+                            <p className="text-xs text-slate-400 italic py-2 text-center">
+                              Sản phẩm này chưa có biến thể nào.
+                            </p>
+                          ) : (
+                            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+                              <table className="w-full text-xs">
+                                <thead className="bg-slate-100/80 text-slate-500 border-b border-slate-100">
+                                  <tr>
+                                    <th className="text-left py-2.5 px-4 font-semibold">Hình ảnh biến thể</th>
+                                    <th className="text-left py-2.5 px-4 font-semibold">Kích cỡ</th>
+                                    <th className="text-left py-2.5 px-4 font-semibold">Màu sắc</th>
+                                    <th className="text-left py-2.5 px-4 font-semibold">Số lượng kho</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                  {p.danh_sach_bien_the.map((variant, idx) => {
+                                    const variantImg = variant.hinh_anh_bien_the || variant.hinh_anh || p.hinh_anh_dai_dien;
+                                    const size = variant.kich_co ?? variant.size ?? '-';
+                                    const color = variant.mau_sac ?? variant.color ?? '-';
+                                    const stock = variant.so_luong_kho ?? variant.stock ?? 0;
+
+                                    return (
+                                      <tr key={variant.ma_bien_the || idx} className="hover:bg-slate-50/80 transition-colors">
+                                        <td className="py-2.5 px-4">
+                                          <div className="w-8 h-8 bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center">
+                                            {variantImg ? (
+                                              <img src={variantImg} alt={`${p.ten_san_pham} - ${color}`} className="w-full h-full object-cover" />
+                                            ) : (
+                                              <span className="text-[10px] text-slate-400">N/A</span>
+                                            )}
+                                          </div>
+                                        </td>
+                                        <td className="py-2.5 px-4 font-bold text-slate-800">
+                                          <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md">
+                                            Size {size}
+                                          </span>
+                                        </td>
+                                        <td className="py-2.5 px-4 font-medium text-slate-700">
+                                          <span className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md font-semibold">
+                                            {color}
+                                          </span>
+                                        </td>
+                                        <td className="py-2.5 px-4">
+                                          <span
+                                            className={`font-bold px-2.5 py-1 rounded-md ${
+                                              stock > 0
+                                                ? 'bg-emerald-50 text-emerald-600'
+                                                : 'bg-red-50 text-red-500'
+                                            }`}
+                                          >
+                                            {stock > 0 ? `${stock} đôi` : 'Hết hàng (0)'}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+        
       </div>
     </div>
   );

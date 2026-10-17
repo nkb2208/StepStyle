@@ -15,6 +15,8 @@ class SanPham(Base):
     ma_danh_muc = Column(Integer, ForeignKey("danhmuc.ma_danh_muc"))
     ngay_tao = Column(DateTime, server_default=func.now())
     ngay_cap_nhat = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    danh_sach_bien_the = relationship("BienTheSanPham", back_populates="san_pham")
+    danh_muc = relationship("DanhMuc", back_populates="danh_sach_san_pham")
 
 
 class DanhMuc(Base):
@@ -23,6 +25,10 @@ class DanhMuc(Base):
     ten_danh_muc = Column(String(255), nullable=False)
     mo_ta = Column(Text, nullable=True)
     ma_danh_muc_cha = Column(Integer, ForeignKey("danhmuc.ma_danh_muc"))
+    danh_sach_san_pham = relationship("SanPham", back_populates="danh_muc")
+
+    danh_muc_con = relationship("DanhMuc", back_populates="danh_muc_cha", foreign_keys=[ma_danh_muc_cha])
+    danh_muc_cha = relationship("DanhMuc", back_populates="danh_muc_con", remote_side=[ma_danh_muc])
 
 class BienTheSanPham(Base):
     __tablename__ = 'bienthesanpham'
@@ -33,5 +39,5 @@ class BienTheSanPham(Base):
     so_luong_kho = Column(Integer, default=0)
     hinh_anh_bien_the =  Column(String(255))
 
-
+    san_pham = relationship("SanPham", back_populates="danh_sach_bien_the")
 
