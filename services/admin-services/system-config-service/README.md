@@ -51,6 +51,7 @@ Success and failure use the same envelope as the rest of the platform:
 
 | Method | Path                                      | Permission            | Table                          |
 | ------ | ----------------------------------------- | --------------------- | ------------------------------ |
+| GET    | `/api/v1/settings/public`                 | public                | `caidat*` (read-only)          |
 | GET    | `/api/v1/settings/store`                  | `store_setting:read`  | `caidatcuahang`                |
 | PUT    | `/api/v1/settings/store`                  | `store_setting:update`| `caidatcuahang`                |
 | GET    | `/api/v1/settings/payment-methods`        | `store_setting:read`  | `caidatphuongthucthanhtoan`    |
@@ -119,12 +120,38 @@ the configuration (and its history) survives.
 `viettelpost`). `PUT /api/v1/settings/shipping-partners/{id}` toggles one
 carrier by `ma_cai_dat_doi_tac`, with the same never-delete rule.
 
+### Public storefront
+
+`GET /api/v1/settings/public` is the **only unauthenticated** endpoint. It is
+what the customer-facing storefront (checkout) reads to know which payment
+methods / carriers to offer and how to price delivery:
+
+```json
+{
+  "store_name": "StepStyle",
+  "base_shipping_fee": 35000,
+  "free_shipping_threshold": 500000,
+  "payment_methods": [
+    { "code": "cod", "name": "COD", "description": "Thanh toán khi nhận hàng" },
+    { "code": "momo", "name": "MoMo", "description": "Ví điện tử MoMo" }
+  ],
+  "shipping_partners": [
+    { "code": "ghn", "name": "GHN", "description": "Giao Hàng Nhanh" }
+  ]
+}
+```
+
+It returns **only enabled** options and strips internal ids / the `enabled`
+flag; no admin data or gateway secret is ever exposed.
+
 ## Validation & security
 
 - **Admin only.** Reads require `store_setting:read`, writes require
   `store_setting:update`. `ADMIN` holds the `*:*` wildcard; `SELLER` and
   `CUSTOMER` do not, so they receive `403`. Roles/permissions live in
-  `packages/auth-types/src/constants.ts`.
+  `packages/auth-types/src/constants.ts`. The single exception is
+  `GET /api/v1/settings/public`, which is unauthenticated by design and exposes
+  only non-sensitive storefront data.
 - **No secrets in the payload.** The schemas use `extra="forbid"` — API keys,
   tokens or gateway passwords are rejected with `422` rather than stored.
 - **Amounts** are whole non-negative VND integers (`DECIMAL(15,0)`); `-1`,
@@ -198,7 +225,7 @@ ruff check src tests scripts
 python scripts/smoke.py    # end-to-end against a real MySQL + a local JWKS
 ```
 
-The suite (68 tests) runs the whole HTTP API against a **SQLite** file using
+The suite (71 tests) runs the whole HTTP API against a **SQLite** file using
 `aiosqlite` (the production driver stays `aiomysql`), so it needs no external
 service. It covers: health/discovery, RBAC and JWKS token verification, schema
 validation, the store singleton, partial updates, payment-method and

@@ -70,6 +70,21 @@ def shipping_partner_to_dict(row: CaiDatDoiTacVanChuyen) -> dict[str, Any]:
     }
 
 
+def public_option_to_dict(
+    row: CaiDatPhuongThucThanhToan | CaiDatDoiTacVanChuyen,
+) -> dict[str, Any]:
+    """Customer-facing projection: code / name / description only.
+
+    Ids and the ``enabled`` flag are internal; the storefront endpoint filters to
+    enabled rows before serialising, so it never needs them.
+    """
+    if isinstance(row, CaiDatPhuongThucThanhToan):
+        code, name = row.code_phuong_thuc, row.ten_phuong_thuc
+    else:
+        code, name = row.code_doi_tac, row.ten_doi_tac
+    return {"code": code, "name": name, "description": row.mo_ta}
+
+
 class SettingsService:
     """Business logic over the store singleton and its option rows."""
 
@@ -212,6 +227,29 @@ class SettingsService:
         await self.repo.flush()
         await self.session.refresh(partner)
         return shipping_partner_to_dict(partner)
+
+    # ── Public storefront ───────────────────────────────────────────────────
+    async def get_storefront_settings(self) -> dict[str, Any]:
+        """Non-sensitive configuration for the customer-facing storefront.
+
+        Only *enabled* payment methods and carriers are returned (a disabled
+        method is never offered to customers), together with the shipping rules
+        the checkout needs to compute the delivery fee.
+        """
+        row = await self.get_or_create_store()
+        methods = await self.repo.list_payment_methods(row.ma_cai_dat)
+        partners = await self.repo.list_shipping_partners(row.ma_cai_dat)
+        return {
+            "store_name": row.ten_cua_hang,
+            "base_shipping_fee": money(row.phi_van_chuyen_co_ban),
+            "free_shipping_threshold": money(row.nguong_mien_phi_van_chuyen),
+            "payment_methods": [
+                public_option_to_dict(method) for method in methods if method.kich_hoat
+            ],
+            "shipping_partners": [
+                public_option_to_dict(partner) for partner in partners if partner.kich_hoat
+            ],
+        }
 
     # ── Integration helper ──────────────────────────────────────────────────
     async def calculate_shipping_fee(self, order_value: Decimal) -> Decimal:

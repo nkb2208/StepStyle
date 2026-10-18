@@ -190,3 +190,32 @@ class ShippingPartnerResponse(_Strict):
     name: str
     description: str | None = None
     enabled: bool
+
+
+# ── Public storefront (customer-facing) ─────────────────────────────────────
+
+
+class PublicOption(_Strict):
+    """A storefront option reduced to what a customer needs to see.
+
+    Internal ids and the ``enabled`` flag are intentionally omitted: the public
+    endpoint only ever returns options that are already enabled.
+    """
+
+    code: str
+    name: str
+    description: str | None = None
+
+
+class StorefrontSettingsResponse(_Strict):
+    """Public store configuration consumed by the storefront (checkout).
+
+    Exposes only non-sensitive data — the store name, the shipping rules and the
+    *enabled* payment methods / carriers. No admin ids, no gateway secrets.
+    """
+
+    store_name: str
+    base_shipping_fee: int
+    free_shipping_threshold: int
+    payment_methods: list[PublicOption]
+    shipping_partners: list[PublicOption]

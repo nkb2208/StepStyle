@@ -37,7 +37,7 @@ export const config = {
   refreshTokenTtlSeconds: parseDuration(process.env.REFRESH_TOKEN_EXPIRES_IN ?? "7d", 604800),
   jwksUrl: process.env.JWKS_URL ?? "http://localhost:4000/.well-known/jwks.json",
 
-  corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:3000,http://localhost:4000")
+  corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:3000,http://localhost:5173,http://localhost:4000")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
