@@ -24,6 +24,7 @@ from systemconfig.schemas import (
     PaymentMethodUpdate,
     ShippingPartnerResponse,
     ShippingPartnerUpdate,
+    StorefrontSettingsResponse,
     StoreSettingsResponse,
     StoreSettingsUpdate,
 )
@@ -34,6 +35,24 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 
 READ = [Depends(require_permission("store_setting:read"))]
 UPDATE = [Depends(require_permission("store_setting:update"))]
+
+
+# ── Public storefront ───────────────────────────────────────────────────────
+
+
+@router.get(
+    "/public",
+    response_model=StorefrontSettingsResponse,
+    summary="Public storefront configuration (enabled options only)",
+)
+async def get_public_settings(session: AsyncSession = Depends(get_session)) -> dict:
+    """Non-sensitive store configuration for the customer-facing storefront.
+
+    Deliberately unauthenticated: it exposes only the store name, the shipping
+    rules and the *enabled* payment methods / carriers — never admin ids or
+    gateway secrets.
+    """
+    return await SettingsService(session).get_storefront_settings()
 
 
 # ── Store information ───────────────────────────────────────────────────────
