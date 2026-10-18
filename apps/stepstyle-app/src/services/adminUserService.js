@@ -1,28 +1,28 @@
-import adminApiClient from './adminApiClient';
+import { userApiClient } from './adminApiClient';
 
 export const getUsers = async (params = {}) => {
-  const response = await adminApiClient.get('/users', { 
+  const response = await userApiClient.get('/users', { 
     params: { ...params, _t: new Date().getTime() } 
   });
   return response.data;
 };
 
 export const getUserById = async (id) => {
-  const response = await adminApiClient.get(`/users/${id}`);
+  const response = await userApiClient.get(`/users/${id}`);
   return response.data;
 };
 
 export const createUser = async (data) => {
-  const response = await adminApiClient.post('/users', data);
+  const response = await userApiClient.post('/users', data);
   return response.data;
 };
 
 export const updateUser = async (id, data) => {
-  const response = await adminApiClient.put(`/users/${id}`, data);
+  const response = await userApiClient.put(`/users/${id}`, data);
   return response.data;
 };
 
 export const deleteUser = async (id) => {
-  const response = await adminApiClient.delete(`/users/${id}`);
+  const response = await userApiClient.delete(`/users/${id}`);
   return response.data;
 };

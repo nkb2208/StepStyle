@@ -39,4 +39,10 @@ export const settingsApiClient = createClient(
   import.meta.env.VITE_SETTINGS_API_URL || 'http://localhost:4004/api/v1/settings'
 );
 
+// User Management Service on /api/v1 (users, profiles).
+export const userApiClient = createClient(
+  import.meta.env.VITE_USER_API_URL || 'http://localhost:4005/api/v1'
+);
+
 export default adminApiClient;
+
