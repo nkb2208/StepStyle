@@ -39,4 +39,10 @@ export const settingsApiClient = createClient(
   import.meta.env.VITE_SETTINGS_API_URL || 'http://localhost:4004/api/v1/settings'
 );
 
+// Analytics & Reporting Service on /api/v1/reports
+export const reportingApiClient = createClient(
+  import.meta.env.VITE_REPORTING_API_URL || 'http://localhost:4006/api/v1/reports'
+);
+
 export default adminApiClient;
+

@@ -125,6 +125,29 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  reporting:
+    build:
+      context: ./services/admin-services/reporting-service
+      dockerfile: Dockerfile
+    container_name: reporting-service
+    ports:
+      - "4006:4006"
+    environment:
+      ENVIRONMENT: production
+      PORT: 4006
+      DATABASE_URL: mysql+aiomysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/stepstyle_db
+      JWKS_URL: http://auth:4000/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api.yourdomain.com}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173
+    depends_on:
+      mysql:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
+
   mongodb-data:
   mysql-data:
