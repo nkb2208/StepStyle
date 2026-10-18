@@ -14,11 +14,11 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "ten_san_pham": "Giày Thể Thao StepStyle",
+  "ten_san_pham": "Giày Thể Thao Adidas",
   "gia_goc": 500000,
   "gia_khuyen_mai": 450000,
   "mo_ta": "Mẫu giày chạy bộ mới nhất",
-  "hinh_anh_dai_dien": "link_anh.jpg",
+  "hinh_anh_dai_dien": "https://bizweb.dktcdn.net/100/340/361/products/giayultraboost5mauxanhdatroiid-a2dc44d6-652a-456c-b60f-da656eea657d.jpg?v=1745380983767",
   "ma_danh_muc": null
 }
 

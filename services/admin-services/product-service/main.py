@@ -51,6 +51,7 @@ class SanPhamResponse(BaseModel):
     ten_san_pham: str
     gia_goc: float
     gia_khuyen_mai: float
+    hinh_anh_dai_dien: str
     trang_thai: str
     ma_danh_muc: int | None
 
@@ -92,6 +93,33 @@ db_dependency = Annotated[Session, Depends(get_db)]
 async def get_all_products(db:db_dependency):
     return db.query(SanPham).all()
 
+# get all categories
+@app.get("/products/categories", response_model=list[DanhMucResponse])
+async def get_all_categories(db:db_dependency):
+    return db.query(DanhMuc).all()
+
+# find product by category, name and status
+@app.get("/products/find", response_model=list[SanPhamResponse])
+def find_product(db: db_dependency, product_name: str | None = None, product_status: str | None = None, product_category: int | None = None):
+    query = db.query(SanPham)
+
+    if product_name:
+        query = query.filter(SanPham.ten_san_pham.ilike(f"%{product_name}%"))
+    if product_status:
+        query = query.filter(SanPham.trang_thai == product_status)
+    if product_category:
+        query = query.filter(SanPham.ma_danh_muc == product_category)
+
+    products = query.all()
+    if not products:
+        raise HTTPException(status_code=404, detail="Khong tim thay san pham")
+
+    return products
+
+# get product by id
+@app.get("/products/{id}")
+async def get_product_by_id(id:int, db:db_dependency):
+    return db.query(SanPham).filter(SanPham.ma_san_pham == id).first()
 
 # create product
 @app.post("/products/create")
@@ -137,24 +165,6 @@ async def delete_product(id:int, db:db_dependency):
 
     return "Xoa thanh cong"
 
-# find product by category, name and status
-@app.get("/products/find")
-def find_product(db: db_dependency, product_name: str | None = None, product_status: str | None = None, product_category: int | None = None):
-    query = db.query(SanPham)
-
-    if product_name:
-        query = query.filter(SanPham.ten_san_pham.ilike(f"%{product_name}%"))
-    if product_status:
-        query = query.filter(SanPham.trang_thai == product_status)
-    if product_category:
-        query = query.filter(SanPham.ma_danh_muc == product_category)
-
-    products = query.all()
-    if not products:
-        raise HTTPException(status_code=404, detail="Khong tim thay san pham")
-
-    return products
-
 # create variants of product
 @app.post("/products/variant/create")
 async def create_variant_of_product(variant: BienTheSanPhamRequest, db: db_dependency):
@@ -190,11 +200,6 @@ async def delete_variant(id:int, db:db_dependency):
     db.delete(variant_model)
     db.commit()
     return "Da xoa bien the san pham thanh cong"
-
-# get all categories
-@app.get("/products/categories", response_model=list[DanhMucResponse])
-async def get_all_categories(db:db_dependency):
-    return db.query(DanhMuc).all()
 
 # create categories
 @app.post("/products/categories/create")
