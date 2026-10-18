@@ -31,7 +31,7 @@ services:
     ports:
       - "4000:4000"
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 4000
       MONGODB_URI: mongodb://mongodb:27017/auth-db
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-only-secret-change-me-before-deploying-32}
@@ -90,7 +90,7 @@ services:
       MYSQL_DATABASE: stepstyle_db
       TZ: Asia/Ho_Chi_Minh
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       # Store-configuration schema (caidatcuahang, caidatphuongthucthanhtoan,

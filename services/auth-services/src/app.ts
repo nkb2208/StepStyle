@@ -2,7 +2,9 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { config } from "./config";
+import { getDB } from "./infrastructure/database";
 import { getPublicKeyJWKS } from "./infrastructure/jwt";
+import { logger } from "./infrastructure/logger";
 import { errorHandler } from "./middleware/error-handler";
 import { apiLimiter } from "./middleware/rate-limit";
 import authRoutes from "./modules/auth/auth.routes";
@@ -36,6 +38,21 @@ export function createApp() {
   app.use("/api/users", userRoutes);
   app.use("/api/services", serviceRoutes);
 
+  // ── Discovery ──────────────────────────────────────────────────────────────
+  app.get("/", (_req, res) => {
+    res.json({
+      service: "StepStyle Auth Service",
+      version: "1.0.0",
+      api_prefix: "/api",
+      endpoints: {
+        auth: "/api/auth",
+        users: "/api/users",
+        services: "/api/services",
+        jwks: "/.well-known/jwks.json",
+      },
+    });
+  });
+
   app.get("/health", (_req, res) => {
     res.status(200).json({
       status: "ok",
@@ -43,6 +60,23 @@ export function createApp() {
       service: "auth-service",
       version: "1.0.0",
     });
+  });
+
+  app.get("/health/ready", async (_req, res) => {
+    const checks: Record<string, string> = {};
+    let statusCode = 200;
+    try {
+      await getDB().command({ ping: 1 });
+      checks.database = "ok";
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "unknown";
+      checks.database = `error: ${message}`;
+      statusCode = 503;
+      logger.warn("Readiness check failed", { error: message });
+    }
+    res
+      .status(statusCode)
+      .json({ status: statusCode === 200 ? "ok" : "degraded", checks });
   });
 
   app.get("/.well-known/jwks.json", (_req, res) => {
