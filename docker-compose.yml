@@ -125,6 +125,29 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  users:
+    build:
+      context: ./services/admin-services/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "4005:4005"
+    environment:
+      ENVIRONMENT: production
+      PORT: 4005
+      DATABASE_URL: mysql+aiomysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/stepstyle_db
+      JWKS_URL: http://auth:4000/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api.yourdomain.com}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:4000
+    depends_on:
+      mysql:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   mongodb-data:
   mysql-data:
+
