@@ -14,6 +14,7 @@ function buildAuth() {
     baseURL: config.betterAuthUrl,
     emailAndPassword: {
       enabled: true,
+      minPasswordLength: 4,
       resetPasswordTokenExpiresIn: 3600,
       sendResetPassword: async ({ user, token }) => {
         const resetUrl = `${config.appUrl}/reset-password?token=${token}`;
