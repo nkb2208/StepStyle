@@ -1,37 +1,42 @@
 import axios from 'axios';
 
-const adminApiClient = axios.create({
-  baseURL: import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:4004/api/admin',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Interceptor to extract data from { success: true, data: ... } envelope
-adminApiClient.interceptors.response.use(
-  (response) => {
-    // If the backend wraps responses in a { success: true, data: ... } envelope
-    if (response.data && response.data.success !== undefined && response.data.data !== undefined) {
-      // Modify response.data to just be the inner payload so existing services work without change
-      response.data = response.data.data;
-    }
-    return response;
-  },
-  (error) => {
-    return Promise.reject(error);
+// Unwrap the backend's `{ success: true, data: ... }` envelope so callers keep
+// receiving the inner payload directly.
+const unwrapEnvelope = (response) => {
+  if (response.data && response.data.success !== undefined && response.data.data !== undefined) {
+    response.data = response.data.data;
   }
+  return response;
+};
+
+// Attach the bearer token issued by the auth service when one is stored.
+const addAuthToken = (config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+};
+
+const createClient = (baseURL) => {
+  const client = axios.create({
+    baseURL,
+    headers: { 'Content-Type': 'application/json' },
+  });
+  client.interceptors.response.use(unwrapEnvelope, (error) => Promise.reject(error));
+  client.interceptors.request.use(addAuthToken, (error) => Promise.reject(error));
+  return client;
+};
+
+// Admin CRUD service (products, orders, users, …) on /api/admin.
+const adminApiClient = createClient(
+  import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:4004/api/admin'
 );
 
-// Interceptor to add auth token if needed
-adminApiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token'); // Adjust based on your auth logic
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
+// System Configuration Service on /api/v1/settings (store, payment methods,
+// shipping partners). Same envelope + auth behaviour as the admin client.
+export const settingsApiClient = createClient(
+  import.meta.env.VITE_SETTINGS_API_URL || 'http://localhost:4004/api/v1/settings'
 );
 
 export default adminApiClient;

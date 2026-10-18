@@ -21,6 +21,12 @@ export const PERMISSIONS = {
   ORDER_CREATE: "order:create",
   ORDER_UPDATE: "order:update",
   ORDER_DELETE: "order:delete",
+
+  // Store configuration (system-config-service). ADMIN already holds `*:*`;
+  // grant `store_setting:read` explicitly to M2M service clients that only need
+  // to read the store / payment-method / shipping-carrier configuration.
+  STORE_SETTING_READ: "store_setting:read",
+  STORE_SETTING_UPDATE: "store_setting:update",
 } as const;
 
 /**
