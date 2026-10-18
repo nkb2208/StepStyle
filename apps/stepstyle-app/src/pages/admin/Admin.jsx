@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { logout as logoutRequest } from '../../services/authService';
 import Dashboard from './Dashboard';
 import Products from './Products';
 import Users from './Users';
@@ -27,6 +28,37 @@ const maxRev = Math.max(...MONTHLY.map(r => r.rev));
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const navigate = useNavigate();
+  const [session] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null');
+    } catch {
+      return null;
+    }
+  });
+
+  const adminName = session?.name || session?.email || 'Quản trị viên';
+  const adminInitial = adminName.trim().charAt(0).toUpperCase() || 'A';
+
+  // The admin panel is only reachable with an administrator's access token.
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || session?.role !== 'ADMIN') {
+      navigate('/admin/login', { replace: true });
+    }
+  }, [session, navigate]);
+
+  const handleLogout = async () => {
+    // Best effort: revoke the session server-side, then clear it locally.
+    try {
+      await logoutRequest();
+    } catch {
+      // Ignore — the local session is cleared regardless.
+    }
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    navigate('/admin/login');
+  };
 
   return (
     <div className="min-h-screen flex bg-slate-50">
@@ -44,10 +76,10 @@ export default function Admin() {
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 bg-purple-50 rounded-2xl px-4 py-3">
             <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center shrink-0">
-              <span className="text-white font-bold">N</span>
+              <span className="text-white font-bold">{adminInitial}</span>
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-slate-900 truncate">Nguyễn Minh Admin</p>
+              <p className="text-sm font-bold text-slate-900 truncate">{adminName}</p>
               <p className="text-xs text-purple-500 font-medium">Quản trị viên</p>
             </div>
           </div>
@@ -66,7 +98,7 @@ export default function Admin() {
         </nav>
 
         <div className="p-4 border-t border-slate-100">
-          <button onClick={() => navigate('/admin/login')}
+          <button onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 w-full transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
             Đăng xuất

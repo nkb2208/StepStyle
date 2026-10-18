@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 STORE = "/api/v1/settings/store"
 PAYMENTS = "/api/v1/settings/payment-methods"
 PARTNERS = "/api/v1/settings/shipping-partners"
+PUBLIC = "/api/v1/settings/public"
 
 
 def data(response) -> Any:
@@ -80,6 +81,49 @@ def test_me_echoes_the_verified_principal(client: TestClient, holder: PrincipalH
     principal = data(response)["principal"]
     assert principal["role"] == "ADMIN"
     assert principal["permissions"] == ["*:*"]
+
+
+# ── Public storefront configuration ─────────────────────────────────────────
+
+
+def test_public_settings_need_no_authentication(client: TestClient) -> None:
+    # `holder` carries no principal: every authenticated endpoint would 401,
+    # but the storefront endpoint is public.
+    response = client.get(PUBLIC)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    storefront = body["data"]
+    assert storefront["store_name"] == "Not configured"
+    assert storefront["base_shipping_fee"] == 35000
+    assert storefront["free_shipping_threshold"] == 500000
+    # Nothing is offered until an administrator enables it.
+    assert storefront["payment_methods"] == []
+    assert storefront["shipping_partners"] == []
+
+
+def test_public_settings_expose_only_enabled_options(admin_client: TestClient) -> None:
+    cod = find(data(admin_client.get(PAYMENTS)), "cod")
+    admin_client.put(f"{PAYMENTS}/{cod['id']}", json={"enabled": True})
+    ghn = find(data(admin_client.get(PARTNERS)), "ghn")
+    admin_client.put(f"{PARTNERS}/{ghn['id']}", json={"enabled": True})
+
+    storefront = data(admin_client.get(PUBLIC))
+    assert [method["code"] for method in storefront["payment_methods"]] == ["cod"]
+    assert [partner["code"] for partner in storefront["shipping_partners"]] == ["ghn"]
+    # The public projection carries no internal id and no `enabled` flag.
+    assert set(storefront["payment_methods"][0]) == {"code", "name", "description"}
+    assert set(storefront["shipping_partners"][0]) == {"code", "name", "description"}
+
+
+def test_public_settings_reflect_updated_shipping_rules(admin_client: TestClient) -> None:
+    admin_client.put(
+        STORE,
+        json={"base_shipping_fee": 40000, "free_shipping_threshold": 600000},
+    )
+    storefront = data(admin_client.get(PUBLIC))
+    assert storefront["base_shipping_fee"] == 40000
+    assert storefront["free_shipping_threshold"] == 600000
 
 
 # ── Store information ───────────────────────────────────────────────────────

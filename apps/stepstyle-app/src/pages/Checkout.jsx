@@ -1,8 +1,30 @@
 import Footer from "../layouts/Footer";
 import NavBar from "../layouts/NavBar";
 import { Link, Route, Routes, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getCart, checkout, createMomoPayment, createVnpayPayment } from "../services/orderApiService";
+import { getPublicSettings } from "../services/storefrontSettingsService";
+
+// Shown only when the settings service is unreachable, so checkout keeps working.
+const DEFAULT_PAYMENT_OPTIONS = [
+    { code: 'cod', name: 'Thanh toán khi nhận hàng (COD)', description: null },
+    { code: 'card', name: 'Thẻ Tín dụng/Ghi nợ', description: null },
+    { code: 'momo', name: 'Thanh toán qua Momo', description: null },
+    { code: 'vnpay', name: 'Thanh toán qua VNPAY', description: null },
+];
+
+// Store-configuration payment `code` → numeric `ma_phuong_thuc` used by the
+// order service (see `phuongthucthanhtoan` in StepStyle-v2.sql).
+const PAYMENT_METHOD_IDS = {
+    cod: 1,
+    card: 2,
+    creditcard: 2,
+    momo: 3,
+    bank_transfer: 4,
+    bank: 4,
+    vnpay: 5,
+    zalopay: 6,
+};
 
 const getMeta = (ma_bien_the) => {
     let metadata = {};
@@ -119,32 +141,36 @@ function CustomerInfo({ info, setInfo }) {
     );
 }
 
-function Purchase({ paymentMethod, setPaymentMethod }) {
+function Purchase({ paymentMethod, setPaymentMethod, paymentOptions }) {
     return(
         <>
             <p className="font-bold">Phương thức thanh toán</p>
             <div>
-                <div className="flex items-center gap-3 mt-4">
-                    <input type="radio" name="payment" id="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} />
-                    <label htmlFor="cod">Thanh toán khi nhận hàng (COD)</label>
-                </div>
+                {paymentOptions.length === 0 && (
+                    <p className="mt-4 text-sm text-gray-500">
+                        Hiện chưa có phương thức thanh toán nào được bật.
+                    </p>
+                )}
 
-                <div className="flex items-center gap-3 mt-4">
-                    <input type="radio" name="payment" id="creditcard" checked={paymentMethod === 'creditcard'} onChange={() => setPaymentMethod('creditcard')} />
-                    <label htmlFor="creditcard">Thẻ Tín dụng/Ghi nợ</label>
-                </div>
+                {paymentOptions.map(option => (
+                    <div key={option.code} className="flex items-center gap-3 mt-4">
+                        <input
+                            type="radio"
+                            name="payment"
+                            id={`pay-${option.code}`}
+                            checked={paymentMethod === option.code}
+                            onChange={() => setPaymentMethod(option.code)}
+                        />
+                        <label htmlFor={`pay-${option.code}`}>
+                            {option.name}
+                            {option.description ? (
+                                <span className="block text-xs text-gray-500">{option.description}</span>
+                            ) : null}
+                        </label>
+                    </div>
+                ))}
 
-                <div className="flex items-center gap-3 mt-4">
-                    <input type="radio" name="payment" id="momo" checked={paymentMethod === 'momo'} onChange={() => setPaymentMethod('momo')} />
-                    <label htmlFor="momo">Thanh toán qua Momo</label>
-                </div>
-
-                <div className="flex items-center gap-3 mt-4">
-                    <input type="radio" name="payment" id="vnpay" checked={paymentMethod === 'vnpay'} onChange={() => setPaymentMethod('vnpay')} />
-                    <label htmlFor="vnpay">Thanh toán qua VNPAY</label>
-                </div>
-
-                {paymentMethod === 'creditcard' && (
+                {paymentMethod === 'card' && (
                     <div className="mt-4 pl-4 border-l-2 border-gray-300">
                         <form action="" className="w-full">
                             <input className="border border-gray-300 rounded-xl w-full p-2" placeholder="Số thẻ" type="text" name="" id="" />
@@ -167,14 +193,8 @@ function Purchase({ paymentMethod, setPaymentMethod }) {
     );
 }
 
-function Confirmation({ info, paymentMethod, cartItems, handleCheckout }) {
-    const getPaymentName = () => {
-        if(paymentMethod === 'cod') return 'Thanh toán khi nhận hàng (COD)';
-        if(paymentMethod === 'creditcard') return 'Thẻ Tín dụng/Ghi nợ';
-        if(paymentMethod === 'momo') return 'Momo';
-        if(paymentMethod === 'vnpay') return 'VNPAY';
-        return '';
-    };
+function Confirmation({ info, paymentMethod, paymentOptions, cartItems, handleCheckout }) {
+    const paymentName = paymentOptions.find(option => option.code === paymentMethod)?.name || '';
 
     return(
         <>
@@ -206,7 +226,7 @@ function Confirmation({ info, paymentMethod, cartItems, handleCheckout }) {
 
                 <div className="mt-4 flex items-center justify-between">
                     <p>Thanh toán</p>
-                    <p className="font-bold">{getPaymentName()}</p>
+                    <p className="font-bold">{paymentName}</p>
                 </div> 
 
                 <div className="flex mt-4 gap-3">
@@ -221,7 +241,8 @@ function Confirmation({ info, paymentMethod, cartItems, handleCheckout }) {
 function CheckOut(){
     const [cart, setCart] = useState(null);
     const [info, setInfo] = useState({ ten_nguoi_nhan: '', so_dien_thoai_nhan: '', dia_chi_giao_hang: '', ghi_chu: '' });
-    const [paymentMethod, setPaymentMethod] = useState('cod');
+    const [storeSettings, setStoreSettings] = useState(null);
+    const [selectedPayment, setSelectedPayment] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -233,12 +254,43 @@ function CheckOut(){
         fetchCart();
     }, []);
 
+    // Payment methods / shipping rules configured by the administrator.
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const settings = await getPublicSettings();
+                if (settings) setStoreSettings(settings);
+            } catch (error) {
+                console.error("Không tải được cấu hình cửa hàng:", error);
+            }
+        };
+        fetchSettings();
+    }, []);
+
     const cartItems = (cart?.items || []).map(item => ({
         ...item,
         don_gia: Number(item.don_gia ?? getMeta(item.ma_bien_the).don_gia ?? 2890000)
     }));
     const totalItems = cartItems.reduce((acc, item) => acc + item.so_luong, 0);
     const totalPrice = cartItems.reduce((acc, item) => acc + (item.so_luong * item.don_gia), 0);
+
+    // Only methods an admin enabled are offered; fall back to the built-in list
+    // while the settings are still loading (or if the service is unreachable).
+    const paymentOptions = useMemo(
+        () => (storeSettings ? (storeSettings.payment_methods ?? []) : DEFAULT_PAYMENT_OPTIONS),
+        [storeSettings]
+    );
+    const paymentMethod = paymentOptions.some(option => option.code === selectedPayment)
+        ? selectedPayment
+        : (paymentOptions[0]?.code ?? 'cod');
+
+    // `order_value >= free_shipping_threshold ? 0 : base_shipping_fee`.
+    const shippingFee = useMemo(() => {
+        const base = Number(storeSettings?.base_shipping_fee ?? 0);
+        const threshold = Number(storeSettings?.free_shipping_threshold ?? 0);
+        return totalPrice >= threshold ? 0 : base;
+    }, [storeSettings, totalPrice]);
+    const orderTotal = totalPrice + shippingFee;
 
     const handleCheckout = async () => {
         if (cartItems.length === 0) {
@@ -248,11 +300,7 @@ function CheckOut(){
         
         try {
             const userId = localStorage.getItem("userId") || 1;
-            let ma_phuong_thuc = 1;
-            if (paymentMethod === 'creditcard') ma_phuong_thuc = 2;
-            else if (paymentMethod === 'momo') ma_phuong_thuc = 3;
-            else if (paymentMethod === 'bank') ma_phuong_thuc = 4;
-            else if (paymentMethod === 'vnpay') ma_phuong_thuc = 5;
+            const ma_phuong_thuc = PAYMENT_METHOD_IDS[paymentMethod] ?? 1;
 
             const items = cartItems.map(i => { 
                 const meta = getMeta(i.ma_bien_the); 
@@ -271,7 +319,7 @@ function CheckOut(){
                 ten_nguoi_nhan: info.ten_nguoi_nhan || 'Khách hàng',
                 so_dien_thoai_nhan: info.so_dien_thoai_nhan || '0123456789',
                 dia_chi_giao_hang: info.dia_chi_giao_hang || 'Tại nhà',
-                phi_van_chuyen: 0,
+                phi_van_chuyen: shippingFee,
                 tien_giam_gia: 0,
                 ma_giam_gia: null,
                 ghi_chu: info.ghi_chu || '',
@@ -330,8 +378,8 @@ function CheckOut(){
                             <Routes>
                                 <Route path="/" element={<CustomerInfo info={info} setInfo={setInfo} />} />
                                 <Route path="/info" element={<CustomerInfo info={info} setInfo={setInfo} />} />
-                                <Route path="/purchase" element={<Purchase paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} />} />
-                                <Route path="/confirm" element={<Confirmation info={info} paymentMethod={paymentMethod} cartItems={cartItems} handleCheckout={handleCheckout} />} />
+                                <Route path="/purchase" element={<Purchase paymentMethod={paymentMethod} setPaymentMethod={setSelectedPayment} paymentOptions={paymentOptions} />} />
+                                <Route path="/confirm" element={<Confirmation info={info} paymentMethod={paymentMethod} paymentOptions={paymentOptions} cartItems={cartItems} handleCheckout={handleCheckout} />} />
                             </Routes>
                         </div>
 
@@ -357,12 +405,14 @@ function CheckOut(){
 
                             <div className="mt-4 text-xs w-full flex items-center justify-between">
                                 <p>Vận chuyển</p>
-                                <p className="text-green-500">Miễn phí</p>
+                                <p className={shippingFee === 0 ? 'text-green-500' : ''}>
+                                    {shippingFee === 0 ? 'Miễn phí' : `${shippingFee.toLocaleString('vi-VN')} đ`}
+                                </p>
                             </div>
 
                             <div className="text-md mt-4 w-full flex items-center justify-between">
                                 <p className="font-bold">Tổng cộng</p>
-                                <p className="font-bold text-orange-400">{totalPrice.toLocaleString('vi-VN')} đ</p>
+                                <p className="font-bold text-orange-400">{orderTotal.toLocaleString('vi-VN')} đ</p>
                             </div>
                         </div>
                     </div>
