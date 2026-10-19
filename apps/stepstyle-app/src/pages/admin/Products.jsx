@@ -402,7 +402,7 @@ export default function Products() {
     <div className="space-y-6 relative">
       {/* Modal Xác nhận xóa sản phẩm */}
       {deletingProduct && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed min-h-screen inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
             <div className="p-6 text-center">
               <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4">
@@ -435,7 +435,7 @@ export default function Products() {
 
       {/* Modal Form thêm sản phẩm */}
       {showAddProduct && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 min-h-screen bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h3 className="font-bold text-slate-900 text-lg">Thêm sản phẩm mới</h3>
@@ -600,7 +600,7 @@ export default function Products() {
 
       {/* Modal Form Sửa sản phẩm */}
       {showEditProduct && editingProduct && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 min-h-screen bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h3 className="font-bold text-slate-900 text-lg">Chỉnh sửa sản phẩm</h3>
@@ -766,7 +766,7 @@ export default function Products() {
 
       {/* Modal Form Sửa biến thể riêng lẻ */}
       {showEditVariant && editingVariant && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed min-h-screen inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full overflow-hidden">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-white">
               <h3 className="font-bold text-slate-900 text-lg">Chỉnh sửa biến thể</h3>
@@ -851,7 +851,7 @@ export default function Products() {
 
       {/* Modal Quản lý danh mục */}
       {showCategoryModal && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed min-h-screen inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h3 className="font-bold text-slate-900 text-lg">Quản lý danh mục</h3>

@@ -107,10 +107,10 @@ admin_dependency = Annotated[dict, Depends(require_admin)]
 async def get_all_products(db: db_dependency, _admin: admin_dependency):
     return db.query(SanPham).all()
 
-# get product by id
-@app.get("/products/{id}")
-async def get_product_by_id(id: int, db: db_dependency, _admin: admin_dependency):
-    return db.query(SanPham).filter(SanPham.ma_san_pham == id).first()
+# get all categories
+@app.get("/products/categories", response_model=list[DanhMucResponse])
+async def get_all_categories(db: db_dependency, _admin: admin_dependency):
+    return db.query(DanhMuc).all()
 
 # find product by category, name and status
 @app.get("/products/find", response_model=list[SanPhamResponse])
@@ -129,6 +129,11 @@ def find_product(db: db_dependency, _admin: admin_dependency, product_name: str 
         raise HTTPException(status_code=404, detail="Khong tim thay san pham")
 
     return products
+
+# get product by id
+@app.get("/products/{id}")
+async def get_product_by_id(id: int, db: db_dependency, _admin: admin_dependency):
+    return db.query(SanPham).filter(SanPham.ma_san_pham == id).first()
 
 
 
@@ -211,11 +216,6 @@ async def delete_variant(id: int, db: db_dependency, _admin: admin_dependency):
     db.delete(variant_model)
     db.commit()
     return "Da xoa bien the san pham thanh cong"
-
-# get all categories
-@app.get("/products/categories", response_model=list[DanhMucResponse])
-async def get_all_categories(db: db_dependency, _admin: admin_dependency):
-    return db.query(DanhMuc).all()
 
 # create categories
 @app.post("/products/categories/create")
