@@ -12,9 +12,6 @@ export default function Products() {
   const [expandedProductId, setExpandedProductId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Category states
-  const [isAddingCategory, setIsAddingCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
 
   // Form states
   const [newProduct, setNewProduct] = useState({
@@ -29,33 +26,6 @@ export default function Products() {
     setExpandedProductId(prev => (prev === id ? null : id));
   };
 
-  const handleSaveNewCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    try {
-      const response = await fetch("http://localhost:8001/products/categories/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ten_danh_muc: newCategoryName.trim(),
-          mo_ta: null,
-          ma_danh_muc_cha: null
-        }),
-      });
-      if (!response.ok) {
-        console.log("Loi sever");
-        return;
-      }
-      const created = await response.json();
-      await getAllCategories();
-      if (created?.ma_danh_muc) {
-        setNewProduct(prev => ({ ...prev, category_id: created.ma_danh_muc.toString() }));
-      }
-      setIsAddingCategory(false);
-      setNewCategoryName('');
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const [searchName, setSearchName] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
