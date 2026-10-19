@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { login as loginRequest, apiErrorMessage } from '../../services/authService';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -9,7 +10,7 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -19,10 +20,24 @@ export default function AdminLogin() {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { user, accessToken, refreshToken } = await loginRequest(email.trim(), password);
+
+      // The admin panel is for administrators only.
+      if (user?.role !== 'ADMIN') {
+        setError('Tài khoản này không có quyền truy cập trang quản trị.');
+        return;
+      }
+
+      localStorage.setItem('token', accessToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
       navigate('/admin');
-    }, 300);
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

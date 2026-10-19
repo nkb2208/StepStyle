@@ -31,6 +31,14 @@ export default function Products() {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
   // Lấy danh sách sản phẩm
   useEffect(() => {
     getAllProducts();
@@ -39,7 +47,9 @@ export default function Products() {
 
   const getAllProducts = async () => {
     try {
-      const response = await fetch("http://localhost:8001/products");
+      const response = await fetch("http://localhost:8001/products", {
+        headers: getAuthHeaders(),
+      });
       if (!response.ok) {
         console.error("Lỗi server");
         return;
@@ -64,7 +74,9 @@ export default function Products() {
         return;
       }
 
-      const response = await fetch(`http://localhost:8001/products/find?${params.toString()}`);
+      const response = await fetch(`http://localhost:8001/products/find?${params.toString()}`, {
+        headers: getAuthHeaders(),
+      });
       if (response.status === 404) {
         setProducts([]);
         return;
@@ -97,7 +109,7 @@ export default function Products() {
 
       const response = await fetch("http://localhost:8001/products/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(productPayload)
       });
 
@@ -116,7 +128,7 @@ export default function Products() {
           };
           return fetch("http://localhost:8001/products/variant/create", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify(newVariant),
           });
         });
@@ -137,7 +149,9 @@ export default function Products() {
   // Gọi API lấy chi tiết sản phẩm & Đổ dữ liệu vào Form Sửa
   const openEditModal = async (product) => {
     try {
-      const response = await fetch(`http://localhost:8001/products/${product.ma_san_pham}`);
+      const response = await fetch(`http://localhost:8001/products/${product.ma_san_pham}`, {
+        headers: getAuthHeaders(),
+      });
       if (!response.ok) {
         alert("Không thể tải thông tin sản phẩm!");
         return;
@@ -190,7 +204,7 @@ export default function Products() {
 
       const response = await fetch(`http://localhost:8001/products/update/${editingProduct.ma_san_pham}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(updatePayload)
       });
 
@@ -209,13 +223,13 @@ export default function Products() {
           if (variant.ma_bien_the) {
             return fetch(`http://localhost:8001/products/variant/update/${variant.ma_bien_the}`, {
               method: "PUT",
-              headers: { "Content-Type": "application/json" },
+              headers: getAuthHeaders(),
               body: JSON.stringify(variantPayload)
             });
           } else {
             return fetch("http://localhost:8001/products/variant/create", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: getAuthHeaders(),
               body: JSON.stringify(variantPayload)
             });
           }
@@ -240,7 +254,7 @@ export default function Products() {
     try {
       const response = await fetch(`http://localhost:8001/products/delete/${deletingProduct.ma_san_pham}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" }
+        headers: getAuthHeaders()
       });
 
       if (!response.ok) {
@@ -286,7 +300,7 @@ export default function Products() {
     try {
       const response = await fetch(`http://localhost:8001/products/variant/delete/${id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" }
+        headers: getAuthHeaders()
       });
 
       if (!response.ok) {
@@ -342,7 +356,7 @@ export default function Products() {
 
       const response = await fetch(`http://localhost:8001/products/variant/update/${editingVariant.ma_bien_the}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -368,7 +382,9 @@ export default function Products() {
 
   const getAllCategories = async () => {
     try {
-      const response = await fetch("http://localhost:8001/products/categories");
+      const response = await fetch("http://localhost:8001/products/categories", {
+        headers: getAuthHeaders(),
+      });
 
       if (!response.ok) {
         console.log("Loi sever");
@@ -393,9 +409,7 @@ export default function Products() {
 
       const response = await fetch("http://localhost:8001/products/categories/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(category),
       });
 
@@ -438,9 +452,7 @@ export default function Products() {
 
       const response = await fetch(`http://localhost:8001/products/categories/update/${editingCategoryId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(category),
       });
 
@@ -461,9 +473,7 @@ export default function Products() {
     try {
       const response = await fetch(`http://localhost:8001/products/categories/delete/${id}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {

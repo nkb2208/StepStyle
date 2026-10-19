@@ -1,4 +1,4 @@
-
+import os
 import models
 from models import SanPham, DanhMuc, BienTheSanPham
 from fastapi import FastAPI, HTTPException
@@ -7,18 +7,33 @@ from fastapi.params import Depends
 from sqlalchemy.orm import Session
 from typing import Annotated
 from starlette import status
-from database import SessionLocal,engine
+from database import SessionLocal, engine
 from fastapi.middleware.cors import CORSMiddleware
+from security import require_admin
 
-app = FastAPI()
+app = FastAPI(title="StepStyle Product Service")
+
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://localhost:5173,http://localhost:4000",
+    ).split(",")
+    if origin.strip()
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/health", tags=["discovery"])
+async def health():
+    return {"status": "ok"}
 
 class BienTheSanPhamRequest(BaseModel):
     ma_san_pham: int
@@ -86,21 +101,22 @@ def get_db():
         db.close()
 
 db_dependency = Annotated[Session, Depends(get_db)]
+admin_dependency = Annotated[dict, Depends(require_admin)]
 
 
 # get all products
-@app.get("/products",response_model=list[SanPhamResponse])
-async def get_all_products(db:db_dependency):
+@app.get("/products", response_model=list[SanPhamResponse])
+async def get_all_products(db: db_dependency, _admin: admin_dependency):
     return db.query(SanPham).all()
 
 # get all categories
 @app.get("/products/categories", response_model=list[DanhMucResponse])
-async def get_all_categories(db:db_dependency):
+async def get_all_categories(db: db_dependency, _admin: admin_dependency):
     return db.query(DanhMuc).all()
 
 # find product by category, name and status
 @app.get("/products/find", response_model=list[SanPhamResponse])
-def find_product(db: db_dependency, product_name: str | None = None, product_status: str | None = None, product_category: int | None = None):
+def find_product(db: db_dependency, _admin: admin_dependency, product_name: str | None = None, product_status: str | None = None, product_category: int | None = None):
     query = db.query(SanPham)
 
     if product_name:
@@ -118,12 +134,12 @@ def find_product(db: db_dependency, product_name: str | None = None, product_sta
 
 # get product by id
 @app.get("/products/{id}")
-async def get_product_by_id(id:int, db:db_dependency):
+async def get_product_by_id(id: int, db: db_dependency, _admin: admin_dependency):
     return db.query(SanPham).filter(SanPham.ma_san_pham == id).first()
 
 # create product
 @app.post("/products/create")
-async def create_product(product: SanPhamRequest, db: db_dependency):
+async def create_product(product: SanPhamRequest, db: db_dependency, _admin: admin_dependency):
     product_model = SanPham(**product.dict())
     db.add(product_model)
     db.commit()
@@ -132,7 +148,7 @@ async def create_product(product: SanPhamRequest, db: db_dependency):
 
 # update product by id
 @app.put("/products/update/{id}")
-async def update_product(id:int, db:db_dependency, update_product: SanPhamRequest):
+async def update_product(id: int, db: db_dependency, update_product: SanPhamRequest, _admin: admin_dependency):
     product = db.query(SanPham).filter(SanPham.ma_san_pham == id).first()
     if not product:
         raise HTTPException(status_code=404, detail=f"khong tim thay san pham co id:{id}")
@@ -151,14 +167,14 @@ async def update_product(id:int, db:db_dependency, update_product: SanPhamReques
 
 # delte product by id
 @app.delete("/products/delete/{id}")
-async def delete_product(id:int, db:db_dependency):
+async def delete_product(id: int, db: db_dependency, _admin: admin_dependency):
     product = db.query(SanPham).filter(SanPham.ma_san_pham == id).first()
     if not product:
-        raise HTTPException(status_code= 404, detail="fkhong tim thay san pham co id:{id}")
+        raise HTTPException(status_code=404, detail="fkhong tim thay san pham co id:{id}")
 
     variants = db.query(BienTheSanPham).filter(BienTheSanPham.ma_san_pham == id).all()
     if variants:
-        raise HTTPException(status_code=400,detail="San pham khong the xoa do con bien the san pham. Vui long xoa cac bien the truoc.")
+        raise HTTPException(status_code=400, detail="San pham khong the xoa do con bien the san pham. Vui long xoa cac bien the truoc.")
 
     db.delete(product)
     db.commit()
@@ -167,7 +183,7 @@ async def delete_product(id:int, db:db_dependency):
 
 # create variants of product
 @app.post("/products/variant/create")
-async def create_variant_of_product(variant: BienTheSanPhamRequest, db: db_dependency):
+async def create_variant_of_product(variant: BienTheSanPhamRequest, db: db_dependency, _admin: admin_dependency):
     variant_model = BienTheSanPham(**variant.dict())
     db.add(variant_model)
     db.commit()
@@ -176,7 +192,7 @@ async def create_variant_of_product(variant: BienTheSanPhamRequest, db: db_depen
 
 # update varirant
 @app.put("/products/variant/update/{id}")
-async def update_variant(id:int, update_variant: BienTheSanPhamRequest, db: db_dependency):
+async def update_variant(id: int, update_variant: BienTheSanPhamRequest, db: db_dependency, _admin: admin_dependency):
     variant_model = db.query(BienTheSanPham).filter(BienTheSanPham.ma_bien_the == id).first()
     if not variant_model:
         raise HTTPException(status_code=404, detail="Khong tim thay bien the")
@@ -193,7 +209,7 @@ async def update_variant(id:int, update_variant: BienTheSanPhamRequest, db: db_d
 
 # delete variant
 @app.delete("/products/variant/delete/{id}")
-async def delete_variant(id:int, db:db_dependency):
+async def delete_variant(id: int, db: db_dependency, _admin: admin_dependency):
     variant_model = db.query(BienTheSanPham).filter(BienTheSanPham.ma_bien_the == id).first()
     if not variant_model:
         raise HTTPException(status_code=404, detail="Khong tim thay bien the")
@@ -203,7 +219,7 @@ async def delete_variant(id:int, db:db_dependency):
 
 # create categories
 @app.post("/products/categories/create")
-async def create_category(db:db_dependency, danhmuc : DanhMucRequest):
+async def create_category(db: db_dependency, danhmuc: DanhMucRequest, _admin: admin_dependency):
     danhmuc_model = DanhMuc(**danhmuc.dict())
     db.add(danhmuc_model)
     db.commit()
@@ -212,7 +228,7 @@ async def create_category(db:db_dependency, danhmuc : DanhMucRequest):
 
 # update category
 @app.put("/products/categories/update/{id}")
-async def update_category(id:int, db:db_dependency, update_category: DanhMucRequest):
+async def update_category(id: int, db: db_dependency, update_category: DanhMucRequest, _admin: admin_dependency):
     danhmuc_model = db.query(DanhMuc).filter(DanhMuc.ma_danh_muc == id).first()
     if not danhmuc_model:
         raise HTTPException(status_code=404, detail="Khong tim thay danh muc")
@@ -230,7 +246,7 @@ async def update_category(id:int, db:db_dependency, update_category: DanhMucRequ
 
 # delete category
 @app.delete("/products/categories/delete/{id}")
-async def delete_category(id:int, db:db_dependency):
+async def delete_category(id: int, db: db_dependency, _admin: admin_dependency):
     danhmuc_model = db.query(DanhMuc).filter(DanhMuc.ma_danh_muc == id).first()
     if not danhmuc_model:
         raise HTTPException(status_code=404, detail="Khong tim thay danh muc")

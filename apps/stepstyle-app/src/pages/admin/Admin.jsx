@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { logout as logoutRequest } from '../../services/authService';
 import Dashboard from './Dashboard';
 import Products from './Products';
 import Users from './Users';
@@ -27,11 +28,35 @@ const maxRev = Math.max(...MONTHLY.map(r => r.rev));
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const navigate = useNavigate();
+  const [session] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null');
+    } catch {
+      return null;
+    }
+  });
 
-  const adminName = 'Nguyễn Minh Admin';
-  const adminInitial = 'N';
+  const adminName = session?.name || session?.email || 'Quản trị viên';
+  const adminInitial = adminName.trim().charAt(0).toUpperCase() || 'A';
 
-  const handleLogout = () => {
+  // The admin panel is only reachable with an administrator's access token.
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || session?.role !== 'ADMIN') {
+      navigate('/admin/login', { replace: true });
+    }
+  }, [session, navigate]);
+
+  const handleLogout = async () => {
+    // Best effort: revoke the session server-side, then clear it locally.
+    try {
+      await logoutRequest();
+    } catch {
+      // Ignore — the local session is cleared regardless.
+    }
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
     navigate('/admin/login');
   };
 

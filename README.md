@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # StepStyle App 👟
 
 Một website bán giày dép được xây dựng bằng ReactJS, tối ưu hóa tốc độ bằng Vite và thiết kế giao diện với Tailwind CSS.
@@ -28,7 +27,6 @@ npm install
 Lệnh này sẽ tự động tải toàn bộ thư viện cần thiết (React, Tailwind, Router...) dựa trên file cấu hình.
 ```bash
 npm run dev
-=======
 # NgocAnh Auth — Centralized Authentication & Authorization Service
 
 A production-ready auth microservice built with **Node.js + TypeScript + Express + MongoDB + [Better Auth](https://www.better-auth.com)**.
@@ -312,4 +310,3 @@ tests/                    bun test suites + harness
 - Rate limits on auth endpoints (`RATE_LIMIT_MAX`, per-route stricter limits)
 - Helmet, CORS allow-list, body-size limits
 - Errors: 4xx messages are safe; 5xx messages are masked in production
->>>>>>> feature/authentication
