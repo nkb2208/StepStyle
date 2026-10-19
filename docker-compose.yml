@@ -135,6 +135,16 @@ services:
     environment:
       ENVIRONMENT: production
       PORT: 4005
+  reporting:
+    build:
+      context: ./services/admin-services/reporting-service
+      dockerfile: Dockerfile
+    container_name: reporting-service
+    ports:
+      - "4006:4006"
+    environment:
+      ENVIRONMENT: production
+      PORT: 4006
       DATABASE_URL: mysql+aiomysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/stepstyle_db
       JWKS_URL: http://auth:4000/.well-known/jwks.json
       JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
@@ -148,6 +158,7 @@ services:
     restart: unless-stopped
 
 volumes:
+
   mongodb-data:
   mysql-data:
 
