@@ -91,10 +91,16 @@ export const settingsApiClient = createClient(
 // User Management Service on /api/v1 (users, profiles).
 export const userApiClient = createClient(
   import.meta.env.VITE_USER_API_URL || 'http://localhost:4005/api/v1'
-// Analytics & Reporting Service on /api/v1/reports
 );
+
+// Analytics & Reporting Service on /api/v1/reports
 export const reportingApiClient = createClient(
   import.meta.env.VITE_REPORTING_API_URL || 'http://localhost:4006/api/v1/reports'
+);
+
+// Product Management Service on port 8001
+export const productApiClient = createClient(
+  import.meta.env.VITE_PRODUCT_API_URL || 'http://localhost:8001'
 );
 
 export default adminApiClient;
