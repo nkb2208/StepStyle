@@ -197,10 +197,10 @@ services:
       dockerfile: Dockerfile
     container_name: admin-product-service
     ports:
-      - "8001:8001"
+      - "4008:4008"
     environment:
       ENVIRONMENT: production
-      PORT: 8001
+      PORT: 4008
       DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/stepstyle_db
       JWKS_URL: http://auth:4000/.well-known/jwks.json
       JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}

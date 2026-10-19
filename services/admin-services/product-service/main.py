@@ -61,7 +61,7 @@ class SanPhamRequest(BaseModel):
     ma_danh_muc:int | None = None
 
 class SanPhamResponse(BaseModel):
-    ma_san_pham: int  # Cần có ID để Frontend dùng
+    ma_san_pham: int  
     ten_san_pham: str
     gia_goc: float
     gia_khuyen_mai: float
@@ -69,7 +69,6 @@ class SanPhamResponse(BaseModel):
     trang_thai: str
     ma_danh_muc: int | None
 
-    # Mảng biến thể lồng bên trong
     danh_sach_bien_the: list[BienTheResponse] = []
 
     class Config:

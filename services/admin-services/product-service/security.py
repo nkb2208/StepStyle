@@ -170,7 +170,11 @@ async def require_admin(
     try:
         payload = await verifier.verify(token)
     except TokenVerificationError as exc:
-        status_code = 401 if exc.code in {"INVALID_TOKEN", "TOKEN_EXPIRED", "INVALID_ALGORITHM"} else 503
+        status_code = (
+            401
+            if exc.code in {"INVALID_TOKEN", "TOKEN_EXPIRED", "INVALID_ALGORITHM", "UNKNOWN_KEY"}
+            else 503
+        )
         raise HTTPException(
             status_code=status_code,
             detail={"code": exc.code, "message": exc.message},
