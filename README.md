@@ -1,32 +1,74 @@
 # StepStyle App 👟
 
-Một website bán giày dép được xây dựng bằng ReactJS, tối ưu hóa tốc độ bằng Vite và thiết kế giao diện với Tailwind CSS.
+Một hệ thống thương mại điện tử bán giày dép được xây dựng theo kiến trúc **Frontend React (Vite + Tailwind CSS)** kết hợp với hệ thống **Microservices (Auth, Admin Product, User, Reporting, System Config)** chạy trên Docker.
 
 ## 🚀 Công nghệ sử dụng
-* **Core:** React 18
-* **Build Tool:** Vite
-* **Styling:** Tailwind CSS
-* **Routing:** React Router DOM
+* **Frontend:** React, Vite, Tailwind CSS, React Router DOM, Axios
+* **Auth Service:** Node.js / Bun, TypeScript, Express, Better Auth, MongoDB (RS256 JWT + JWKS)
+* **Admin Microservices:** Python, FastAPI, SQLAlchemy, MySQL 8.4
 
 ---
 
-## 🛠️ Hướng dẫn cài đặt
+## 🛠️ Hướng dẫn cài đặt & khởi chạy toàn hệ thống
 
-Nếu bạn vừa tải dự án này về máy, máy tính của bạn cần được cài đặt sẵn [Node.js](https://nodejs.org/). Sau đó, hãy mở Terminal tại thư mục dự án và chạy lần lượt các lệnh sau:
-**Bước 1:Clone dự án về máy:**
+### 1. Khởi chạy các Backend Microservices (Docker Compose)
+
+Đảm bảo máy tính đã cài đặt và bật **Docker Desktop**. Mở Terminal tại thư mục gốc `StepStyle` và chạy:
+
 ```bash
-   git clone https://github.com/nkb2208/StepStyle.git
-   cd stepstyle-app
+docker compose up -d --build
 ```
-**Bước 2: Cài đặt thư viện**
-Lệnh này sẽ tự động tải toàn bộ thư viện cần thiết (React, Tailwind, Router...) dựa trên file cấu hình.
+
+Lệnh trên sẽ tự động khởi tạo cơ sở dữ liệu và toàn bộ các service:
+
+| Service | Container | Cổng (Port) | Mô tả / Swagger Docs |
+| :--- | :--- | :--- | :--- |
+| **Auth Service** | `auth-service` | `http://localhost:4000` | Xác thực tập trung (JWT RS256, JWKS) |
+| **System Config (Settings)** | `system-config-service` | `http://localhost:4004` | Cài đặt hệ thống (`http://localhost:4004/docs`) |
+| **User Service** | `user-service` | `http://localhost:4005` | Quản lý người dùng (`http://localhost:4005/docs`) |
+| **Reporting Service** | `reporting-service` | `http://localhost:4006` | Báo cáo & thống kê (`http://localhost:4006/docs`) |
+| **Admin Product Service** | `admin-product-service` | `http://localhost:8001` | Quản lý sản phẩm & danh mục (`http://localhost:8001/docs`) |
+| **Product Service (Store)** | `product-service` | `http://localhost:4002` | Dịch vụ sản phẩm (MongoDB) |
+| **MySQL Database** | `stepstyle-mysql` | `localhost:3307` (`3306` nội bộ) | DB `stepstyle_db` (user: `root`, pass: `root`) |
+| **MongoDB** | `auth-mongodb` | `localhost:27017` | DB cho Auth Service |
+| **Mailpit** | `auth-mailpit` | `http://localhost:8025` | Giao diện kiểm tra email local |
+
+Để kiểm tra trạng thái các container đang chạy:
 ```bash
-npm install
+docker compose ps
 ```
-**Bước 3: Khởi chạy dự án**
-Lệnh này sẽ tự động tải toàn bộ thư viện cần thiết (React, Tailwind, Router...) dựa trên file cấu hình.
+
+---
+
+### 2. Khởi chạy giao diện Frontend (`stepstyle-app`)
+
+Mở một Terminal mới và di chuyển vào thư mục ứng dụng React:
+
 ```bash
+cd apps/stepstyle-app
+npm install --workspaces=false
 npm run dev
+```
+
+Sau khi chạy thành công, mở trình duyệt tại: **`http://localhost:5173`**
+
+---
+
+### 3. Hướng dẫn đăng nhập & Test phân hệ Admin
+
+1. Truy cập trang đăng nhập quản trị tại: **`http://localhost:5173/admin/login`** *(lưu ý: trang `/login` chỉ dành cho khách mua hàng)*.
+2. Sử dụng tài khoản Admin mặc định được khởi tạo sẵn từ `docker-compose.yml`:
+   - **Email:** `admin@gmail.com`
+   - **Mật khẩu:** `1234`
+3. Sau khi đăng nhập thành công, hệ thống chuyển hướng vào **`http://localhost:5173/admin`**. Tại đây có thể kiểm thử:
+   - **Tổng quan (Dashboard):** Thống kê doanh thu, đơn hàng, số lượng khách hàng/nhân sự và biểu đồ phân bổ người dùng (kết nối `reporting-service` & `user-service`).
+   - **Quản lý sản phẩm (Products):** Thêm/sửa/xoá sản phẩm, biến thể (size, màu, tồn kho) và danh mục sản phẩm (kết nối `admin-product-service` cổng `8001`, xác thực JWT Admin).
+   - **Tài khoản & Phân quyền (Users):** Xem danh sách, tạo mới, cập nhật vai trò (`ADMIN`, `STAFF`, `CUSTOMER`), khóa/mở khóa và xoá tài khoản (kết nối `user-service` cổng `4005`).
+   - **Báo cáo & Doanh thu (Reports):** Xem KPI tổng quan, doanh thu theo tháng, trạng thái đơn hàng, top sản phẩm bán chạy và tỷ lệ phương thức thanh toán (kết nối `reporting-service` cổng `4006`).
+   - **Cài đặt hệ thống (Settings):** Cập nhật thông tin cửa hàng, phương thức thanh toán và đối tác vận chuyển (kết nối `system-config-service` cổng `4004`).
+
+---
+
 # NgocAnh Auth — Centralized Authentication & Authorization Service
 
 A production-ready auth microservice built with **Node.js + TypeScript + Express + MongoDB + [Better Auth](https://www.better-auth.com)**.
