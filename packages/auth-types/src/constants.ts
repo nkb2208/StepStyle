@@ -34,7 +34,7 @@ export const PERMISSIONS = {
  *
  * - ADMIN    → system-wide wildcard `*:*`
  * - SELLER   → `product:*`, `order:read`, `order:update`
- * - CUSTOMER → `product:read`, `order:create`, `order:read`
+ * - CUSTOMER → `product:read`, `order:create`, `order:read`, `user:read` (own profile)
  *
  * Wildcard semantics supported when evaluating:
  * - `*:*`      matches every permission
@@ -43,7 +43,7 @@ export const PERMISSIONS = {
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ADMIN: ["*:*"],
   SELLER: ["product:*", "order:read", "order:update"],
-  CUSTOMER: ["product:read", "order:create", "order:read"],
+  CUSTOMER: ["product:read", "order:create", "order:read", "user:read"],
 };
 
 export function matchesPermission(granted: Permission, required: Permission): boolean {

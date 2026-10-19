@@ -8,13 +8,20 @@ export class AppError extends Error {
   readonly statusCode: number;
   readonly code: string;
   readonly isOperational: boolean;
+  readonly details?: Array<{ field: string; message: string; type?: string }>;
 
-  constructor(message: string, statusCode = 500, code = "INTERNAL_ERROR") {
+  constructor(
+    message: string,
+    statusCode = 500,
+    code = "INTERNAL_ERROR",
+    details?: Array<{ field: string; message: string; type?: string }>
+  ) {
     super(message);
     this.name = "AppError";
     this.statusCode = statusCode;
     this.code = code;
     this.isOperational = true;
+    this.details = details;
   }
 
   static badRequest(message: string, code = "BAD_REQUEST"): AppError {
@@ -36,6 +43,13 @@ export class AppError extends Error {
   static conflict(message: string, code = "CONFLICT"): AppError {
     return new AppError(message, 409, code);
   }
+
+  static validationError(
+    message: string,
+    details: Array<{ field: string; message: string; type?: string }>
+  ): AppError {
+    return new AppError(message, 422, "VALIDATION_ERROR", details);
+  }
 }
 
 interface BetterAuthApiError {
@@ -52,9 +66,12 @@ export function toAppError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
   if (error instanceof ZodError) {
-    const issue = error.issues[0];
-    const field = issue?.path.join(".") || "request";
-    return AppError.badRequest(`Validation error on field '${field}': ${issue?.message ?? "invalid input"}`, "VALIDATION_ERROR");
+    const details = error.issues.map((issue) => ({
+      field: issue.path.join(".") || "request",
+      message: issue.message,
+      type: issue.code,
+    }));
+    return AppError.validationError("Request validation failed", details);
   }
 
   if (error instanceof MongoError && error.code === 11000) {
@@ -94,11 +111,16 @@ export const errorHandler = (
 
   const exposeMessage = appError.statusCode < 500 || !config.isProduction;
 
+  const errorBody: Record<string, unknown> = {
+    code: appError.code,
+    message: exposeMessage ? appError.message : "Internal server error",
+  };
+  if (appError.details && appError.details.length > 0) {
+    errorBody.details = appError.details;
+  }
+
   res.status(appError.statusCode).json({
     success: false,
-    error: {
-      code: appError.code,
-      message: exposeMessage ? appError.message : "Internal server error",
-    },
+    error: errorBody,
   });
 };

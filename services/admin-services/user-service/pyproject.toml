@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "user"
+version = "1.0.0"
+description = "StepStyle User Service: FastAPI microservice quản lý người dùng (bảng nguoidung trong stepstyle_db)."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.30,<1.0",
+    "sqlalchemy[asyncio]>=2.0,<3.0",
+    "aiomysql>=0.2.0",
+    "pydantic>=2.7,<3.0",
+    "pydantic-settings>=2.3,<3.0",
+    "email-validator>=2.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "aiosqlite>=0.20", "ruff>=0.6", "httpx>=0.27"]
+
+[project.scripts]
+user = "user.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["B008"]

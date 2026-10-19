@@ -1,8 +1,13 @@
 import axios from 'axios';
 
+const AUTH_BASE_URL =
+  import.meta.env.VITE_AUTH_API_URL || 'http://localhost:4000/api/auth';
+
 const authApiClient = axios.create({
-  baseURL: import.meta.env.VITE_AUTH_API_URL || 'http://localhost:4000/api/auth',
-  headers: { 'Content-Type': 'application/json' },
+  baseURL: AUTH_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 authApiClient.interceptors.request.use(
@@ -31,29 +36,50 @@ export const login = async (email, password) => {
   return response.data;
 };
 
-export const register = async (payload) => {
-  const response = await authApiClient.post('/register', payload);
-  return response.data;
-};
-
 export const logout = async () => {
-  const refreshToken = localStorage.getItem('refreshToken') || undefined;
-  const response = await authApiClient.post('/logout', refreshToken ? { refreshToken } : {});
+  const refreshToken = localStorage.getItem('refreshToken');
+  try {
+    const response = await authApiClient.post('/logout', { refreshToken });
+    return response.data;
+  } catch (error) {
+    // Return or throw based on caller needs
+    throw error;
+  }
+};
+
+export const register = async (userData) => {
+  const response = await authApiClient.post('/register', userData);
   return response.data;
 };
 
-export const getMe = async () => {
+export const refreshToken = async () => {
+  const currentRefreshToken = localStorage.getItem('refreshToken');
+  if (!currentRefreshToken) {
+    throw new Error('No refresh token available');
+  }
+  const response = await authApiClient.post('/refresh', { refreshToken: currentRefreshToken });
+  return response.data;
+};
+
+export const getProfile = async () => {
   const response = await authApiClient.get('/me');
   return response.data;
 };
 
-export const apiErrorMessage = (
-  error,
-  fallback = 'Đăng nhập thất bại, vui lòng kiểm tra lại thông tin.'
-) => {
-  const body = error?.response?.data;
-  if (body?.error?.message) return body.error.message;
-  if (typeof body === 'string' && body.trim()) return body;
-  if (error?.message) return error.message;
-  return fallback;
+export const apiErrorMessage = (err) => {
+  if (err?.response?.data?.error?.message) {
+    return err.response.data.error.message;
+  }
+  if (err?.response?.data?.message) {
+    return err.response.data.message;
+  }
+  if (typeof err?.response?.data?.error === 'string') {
+    return err.response.data.error;
+  }
+  if (err?.message) {
+    return err.message;
+  }
+  return 'Đã có lỗi xảy ra. Vui lòng thử lại sau.';
 };
+
+export default authApiClient;

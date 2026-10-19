@@ -31,7 +31,7 @@ services:
     ports:
       - "4000:4000"
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 4000
       MONGODB_URI: mongodb://mongodb:27017/auth-db
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-only-secret-change-me-before-deploying-32}
@@ -46,8 +46,8 @@ services:
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
       MAIL_FROM: "Auth System <noreply@auth.example.com>"
-      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
-      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@gmail.com}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-1234}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -90,7 +90,7 @@ services:
       MYSQL_DATABASE: stepstyle_db
       TZ: Asia/Ho_Chi_Minh
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       # Store-configuration schema (caidatcuahang, caidatphuongthucthanhtoan,
@@ -125,6 +125,29 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  users:
+    build:
+      context: ./services/admin-services/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "4005:4005"
+    environment:
+      ENVIRONMENT: production
+      PORT: 4005
+      DATABASE_URL: mysql+aiomysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/stepstyle_db
+      JWKS_URL: http://auth:4000/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api.yourdomain.com}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:4000
+    depends_on:
+      mysql:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   mongodb-data:
   mysql-data:
+

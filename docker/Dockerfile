@@ -7,16 +7,13 @@ COPY packages/auth-types/package.json packages/auth-types/
 COPY packages/auth-express/package.json packages/auth-express/
 COPY services/auth-services/package.json services/auth-services/
 COPY services/product-service/package.json services/product-service/
-RUN bun install --frozen-lockfile
+RUN bun install
 
-FROM deps AS build
-COPY . .
-RUN bun run typecheck
-
-FROM oven/bun:1-alpine AS runtime
+FROM deps AS runtime
 RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
-COPY --from=build --chown=app:app /app ./
+COPY . .
+RUN mkdir -p /app/config && chown -R app:app /app
 USER app
 
 EXPOSE 4000
