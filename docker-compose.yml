@@ -48,6 +48,7 @@ services:
       MAIL_FROM: "Auth System <noreply@auth.example.com>"
       BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@gmail.com}
       BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-1234}
+      RATE_LIMIT_ENABLED: "false"
     depends_on:
       mongodb:
         condition: service_healthy

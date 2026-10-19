@@ -103,5 +103,10 @@ export const productApiClient = createClient(
   import.meta.env.VITE_PRODUCT_API_URL || 'http://localhost:8001'
 );
 
+// Auth Service User Management on /api/users (port 4000)
+export const authUsersApiClient = createClient(
+  import.meta.env.VITE_AUTH_USERS_API_URL || 'http://localhost:4000/api/users'
+);
+
 export default adminApiClient;
 
