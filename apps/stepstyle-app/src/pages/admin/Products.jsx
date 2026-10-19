@@ -1051,7 +1051,7 @@ export default function Products() {
               <th className="text-left py-3 px-4 text-slate-500 font-semibold">Danh mục</th>
               <th className="text-left py-3 px-4 text-slate-500 font-semibold">Giá bán</th>
               <th className="text-left py-3 px-4 text-slate-500 font-semibold">Tồn kho</th>
-              <th className="text-left py-3 px-4 text-slate-500 font-semibold">Nổi bật</th>
+              <th className="text-left py-3 px-4 text-slate-500 font-semibold">Trạng thái</th>
               <th className="text-left py-3 px-4 text-slate-500 font-semibold rounded-tr-xl">Thao tác</th>
             </tr>
           </thead>

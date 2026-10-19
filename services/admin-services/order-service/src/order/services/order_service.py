@@ -7,7 +7,7 @@ from datetime import date, datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from order.errors import bad_request, not_found
-from order.models import DonHang, TrangThaiDonHang, TrangThaiThanhToan
+from order.models import DonHang, ThanhToan, TrangThaiDonHang, TrangThaiThanhToan
 from order.repositories.order_repository import OrderRepository
 from order.schemas import (
     OrderDetailOut,
@@ -139,12 +139,6 @@ class OrderService:
         if order is None:
             raise not_found("Đơn hàng")
         if new_status != order.trang_thai:
-            allowed = ALLOWED_TRANSITIONS.get(order.trang_thai, [])
-            if new_status not in allowed:
-                raise bad_request(
-                    "INVALID_TRANSITION",
-                    f"Không thể chuyển đơn từ {order.trang_thai} sang {new_status}",
-                )
             order.trang_thai = new_status
             await self._repo.flush()
         return await self._reload(order_id)
@@ -154,11 +148,20 @@ class OrderService:
         if order is None:
             raise not_found("Đơn hàng")
         if not order.thanh_toan:
-            raise not_found("Thanh toán của đơn hàng", code="PAYMENT_NOT_FOUND")
-        payment = order.thanh_toan[-1]
-        payment.trang_thai = new_status
-        if new_status == TrangThaiThanhToan.SUCCESS.value and payment.ngay_thanh_toan is None:
-            payment.ngay_thanh_toan = datetime.now()
+            payment = ThanhToan(
+                ma_don_hang=order.id,
+                so_tien=order.tong_thanh_toan,
+                trang_thai=new_status,
+                ngay_thanh_toan=datetime.now()
+                if new_status == TrangThaiThanhToan.SUCCESS.value
+                else None,
+            )
+            self._repo._session.add(payment)
+        else:
+            payment = order.thanh_toan[-1]
+            payment.trang_thai = new_status
+            if new_status == TrangThaiThanhToan.SUCCESS.value and payment.ngay_thanh_toan is None:
+                payment.ngay_thanh_toan = datetime.now()
         await self._repo.flush()
         return await self._reload(order_id)
 

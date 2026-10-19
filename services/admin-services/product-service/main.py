@@ -159,6 +159,7 @@ async def update_product(id: int, db: db_dependency, update_product: SanPhamRequ
     product.mo_ta = update_product.mo_ta
     product.hinh_anh_dai_dien = update_product.hinh_anh_dai_dien
     product.ma_danh_muc = update_product.ma_danh_muc
+    product.trang_thai = update_product.trang_thai
 
     db.add(product)
     db.commit()

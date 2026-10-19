@@ -19,7 +19,7 @@ logger = logging.getLogger("order.security")
 _bearer = HTTPBearer(auto_error=True)
 _verifier: Optional[JwksVerifier] = None
 
-STAFF_ROLES = {"ADMIN", "SELLER"}
+STAFF_ROLES = {"ADMIN", "SELLER", "STAFF"}
 
 
 def get_verifier() -> JwksVerifier:
@@ -54,7 +54,7 @@ async def get_current_user(
     try:
         payload = await get_verifier().verify(credentials.credentials)
     except TokenVerificationError as exc:
-        status = 401 if exc.code in {"INVALID_TOKEN", "TOKEN_EXPIRED", "INVALID_ALGORITHM"} else 503
+        status = 401 if exc.code in {"INVALID_TOKEN", "TOKEN_EXPIRED", "INVALID_ALGORITHM", "UNKNOWN_KEY"} else 503
         raise HTTPException(
             status_code=status, detail={"code": exc.code, "message": exc.message}
         ) from exc

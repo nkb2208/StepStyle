@@ -87,6 +87,8 @@ export default function Orders() {
 
   const refreshAll = () => { loadOrders(); loadStats(); };
 
+  const [updatingId, setUpdatingId] = useState(null);
+
   const openDetail = async (id) => {
     setDetail({ id });
     setDetailLoading(true);
@@ -100,7 +102,24 @@ export default function Orders() {
     }
   };
 
+  const handleQuickStatusChange = async (orderId, nextStatus) => {
+    if (nextStatus === 'CANCELLED' && !window.confirm('Bạn chắc chắn muốn hủy đơn hàng này?')) return;
+    setUpdatingId(orderId);
+    try {
+      const updated = await updateOrderStatus(orderId, nextStatus);
+      if (detail && detail.id === orderId) {
+        setDetail(updated);
+      }
+      refreshAll();
+    } catch (err) {
+      alert(errMsg(err));
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const changeStatus = async (next) => {
+    if (!next || next === detail.trang_thai) return;
     if (next === 'CANCELLED' && !window.confirm('Bạn chắc chắn muốn hủy đơn hàng này?')) return;
     setSaving(true);
     setDetailError(null);
@@ -114,11 +133,12 @@ export default function Orders() {
     }
   };
 
-  const markPaid = async () => {
+  const changePaymentStatus = async (nextPayment) => {
+    if (!nextPayment || nextPayment === detail.trang_thai_thanh_toan) return;
     setSaving(true);
     setDetailError(null);
     try {
-      setDetail(await updatePaymentStatus(detail.id, 'SUCCESS'));
+      setDetail(await updatePaymentStatus(detail.id, nextPayment));
       refreshAll();
     } catch (err) {
       setDetailError(errMsg(err));
@@ -172,32 +192,55 @@ export default function Orders() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                {['Mã đơn', 'Khách hàng', 'Ngày đặt', 'Tổng tiền', 'Trạng thái', 'Thanh toán'].map((h) => (
+                {['Mã đơn', 'Khách hàng', 'Ngày đặt', 'Số SP', 'Tổng tiền', 'Trạng thái', 'Thanh toán', 'Chi tiết'].map((h) => (
                   <th key={h} className="text-left py-3 px-4 text-slate-500 font-semibold">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {orders.length === 0 && (
-                <tr><td colSpan="6" className="text-center py-6 text-slate-400">Không có đơn hàng nào</td></tr>
+                <tr><td colSpan="8" className="text-center py-6 text-slate-400">Không có đơn hàng nào</td></tr>
               )}
               {orders.map((o) => (
-                <tr key={o.id} onClick={() => openDetail(o.id)} className="hover:bg-slate-50 cursor-pointer">
-                  <td className="py-3 px-4 font-bold text-slate-900">#{o.id}</td>
+                <tr key={o.id} onClick={() => openDetail(o.id)} className="hover:bg-purple-50/40 cursor-pointer transition-colors">
+                  <td className="py-3 px-4 font-bold text-purple-600">#{o.id}</td>
                   <td className="py-3 px-4">
                     <p className="font-bold text-slate-900">{o.ten_nguoi_nhan}</p>
-                    <p className="text-xs text-slate-400">{o.email_khach || o.so_dien_thoai_nhan}</p>
+                    <p className="text-xs text-slate-400">{o.so_dien_thoai_nhan}{o.email_khach ? ` · ${o.email_khach}` : ''}</p>
                   </td>
                   <td className="py-3 px-4 text-slate-600">{fmtDate(o.ngay_dat)}</td>
+                  <td className="py-3 px-4 text-slate-700 font-medium">{o.so_san_pham ?? 1} SP</td>
                   <td className="py-3 px-4 font-bold text-purple-600">{formatPrice(o.tong_thanh_toan)}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${STATUS[o.trang_thai]?.badge}`}>
-                      {STATUS[o.trang_thai]?.label || o.trang_thai}
-                    </span>
+                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                    <select
+                      value={o.trang_thai}
+                      disabled={updatingId === o.id}
+                      onChange={(e) => handleQuickStatusChange(o.id, e.target.value)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer outline-none border border-transparent hover:border-slate-300 transition ${STATUS[o.trang_thai]?.badge || 'bg-slate-100 text-slate-700'} disabled:opacity-50`}
+                    >
+                      {Object.entries(STATUS).map(([key, val]) => (
+                        <option key={key} value={key} className="bg-white text-slate-800 font-medium">
+                          {val.label}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   <td className="py-3 px-4 text-slate-600">
-                    <p>{o.phuong_thuc_thanh_toan || '—'}</p>
-                    <p className="text-xs text-slate-400">{PAYMENT[o.trang_thai_thanh_toan] || ''}</p>
+                    <p className="font-medium text-slate-800">{o.phuong_thuc_thanh_toan || 'COD'}</p>
+                    <p className={`text-xs font-semibold ${o.trang_thai_thanh_toan === 'SUCCESS' ? 'text-emerald-600' : o.trang_thai_thanh_toan === 'FAILED' ? 'text-red-500' : 'text-amber-600'}`}>
+                      {PAYMENT[o.trang_thai_thanh_toan] || 'Chưa thanh toán'}
+                    </p>
+                  </td>
+                  <td className="py-3 px-4">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDetail(o.id);
+                      }}
+                      className="text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      Xem chi tiết
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -219,82 +262,120 @@ export default function Orders() {
       {/* Chi tiết đơn */}
       {detail && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setDetail(null)}>
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             {detailLoading ? (
-              <div className="py-10 text-center text-slate-500 animate-pulse">Đang tải chi tiết...</div>
+              <div className="py-10 text-center text-slate-500 animate-pulse">Đang tải chi tiết đơn hàng...</div>
             ) : !detail.items ? (
               <div className="py-10 text-center text-red-500">{detailError}</div>
             ) : (
               <div className="space-y-5">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between border-b border-slate-100 pb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900">Đơn hàng #{detail.id}</h3>
-                    <p className="text-xs text-slate-400">Đặt lúc {fmtDate(detail.ngay_dat)}</p>
+                    <h3 className="text-xl font-bold text-slate-900">Chi tiết đơn hàng #{detail.id}</h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Đặt lúc: {fmtDate(detail.ngay_dat)}
+                      {detail.ngay_cap_nhat && ` · Cập nhật: ${fmtDate(detail.ngay_cap_nhat)}`}
+                    </p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${STATUS[detail.trang_thai]?.badge}`}>
                     {STATUS[detail.trang_thai]?.label}
                   </span>
                 </div>
 
-                <div className="text-sm text-slate-700 space-y-1">
-                  <p><b>Người nhận:</b> {detail.ten_nguoi_nhan} · {detail.so_dien_thoai_nhan}</p>
-                  <p><b>Địa chỉ:</b> {detail.dia_chi_giao_hang}</p>
-                  {detail.ghi_chu && <p><b>Ghi chú:</b> {detail.ghi_chu}</p>}
+                {/* Thông tin khách hàng & giao hàng */}
+                <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-700 space-y-1.5">
+                  <p className="font-bold text-slate-900 mb-2">Thông tin nhận hàng</p>
+                  <p><b>Người nhận:</b> {detail.ten_nguoi_nhan}</p>
+                  <p><b>Số điện thoại:</b> {detail.so_dien_thoai_nhan}</p>
+                  {detail.email_khach && <p><b>Email tài khoản:</b> {detail.email_khach}</p>}
+                  <p><b>Địa chỉ giao hàng:</b> {detail.dia_chi_giao_hang}</p>
+                  {detail.ghi_chu && <p><b>Ghi chú:</b> <span className="italic text-slate-600">{detail.ghi_chu}</span></p>}
                 </div>
 
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      <th className="text-left py-2 px-3">Sản phẩm</th>
-                      <th className="py-2 px-3">SL</th>
-                      <th className="text-right py-2 px-3">Đơn giá</th>
-                      <th className="text-right py-2 px-3">Thành tiền</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {detail.items.map((i) => (
-                      <tr key={i.id}>
-                        <td className="py-2 px-3">
-                          <p className="font-semibold text-slate-900">{i.ten_san_pham}</p>
-                          <p className="text-xs text-slate-400">Size {i.kich_co} · {i.mau_sac}</p>
-                        </td>
-                        <td className="text-center">{i.so_luong}</td>
-                        <td className="text-right px-3">{formatPrice(i.don_gia)}</td>
-                        <td className="text-right px-3">{formatPrice(i.thanh_tien)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <div className="text-sm text-slate-700 space-y-1 text-right">
-                  <p>Tiền hàng: {formatPrice(detail.tong_tien_hang)}</p>
-                  <p>Giảm giá: -{formatPrice(detail.tien_giam_gia)}</p>
-                  <p>Phí vận chuyển: {formatPrice(detail.phi_van_chuyen)}</p>
-                  <p className="text-lg font-bold text-purple-600">Tổng: {formatPrice(detail.tong_thanh_toan)}</p>
+                {/* Danh sách sản phẩm */}
+                <div>
+                  <p className="font-bold text-slate-900 text-sm mb-2">Danh sách sản phẩm ({detail.items.length})</p>
+                  <div className="border border-slate-100 rounded-xl overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50 text-slate-600">
+                        <tr>
+                          <th className="text-left py-2.5 px-3">Sản phẩm</th>
+                          <th className="py-2.5 px-3 text-center">SL</th>
+                          <th className="text-right py-2.5 px-3">Đơn giá</th>
+                          <th className="text-right py-2.5 px-3">Thành tiền</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {detail.items.map((i) => (
+                          <tr key={i.id}>
+                            <td className="py-2.5 px-3">
+                              <p className="font-semibold text-slate-900">{i.ten_san_pham}</p>
+                              <p className="text-xs text-slate-400">Size {i.kich_co} · Màu: {i.mau_sac}</p>
+                            </td>
+                            <td className="text-center font-medium">{i.so_luong}</td>
+                            <td className="text-right px-3">{formatPrice(i.don_gia)}</td>
+                            <td className="text-right px-3 font-semibold text-slate-900">{formatPrice(i.thanh_tien)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
-                <div className="text-sm border-t border-slate-100 pt-3 flex items-center justify-between">
-                  <span>
-                    <b>Thanh toán:</b> {detail.phuong_thuc_thanh_toan || '—'} ·{' '}
-                    {PAYMENT[detail.trang_thai_thanh_toan] || 'Chưa có giao dịch'}
-                  </span>
-                  {detail.trang_thai_thanh_toan === 'PENDING' && (
-                    <button disabled={saving} onClick={markPaid}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-bold disabled:opacity-50">
-                      Đánh dấu đã thanh toán
-                    </button>
-                  )}
+                {/* Tổng tiền */}
+                <div className="text-sm text-slate-700 space-y-1 text-right bg-purple-50/40 rounded-xl p-4">
+                  <p>Tổng tiền hàng: <span className="font-medium">{formatPrice(detail.tong_tien_hang)}</span></p>
+                  <p>Giảm giá: <span className="font-medium text-emerald-600">-{formatPrice(detail.tien_giam_gia)}</span></p>
+                  <p>Phí vận chuyển: <span className="font-medium">{formatPrice(detail.phi_van_chuyen)}</span></p>
+                  <p className="text-lg font-bold text-purple-600 pt-1 border-t border-purple-100">
+                    Tổng thanh toán: {formatPrice(detail.tong_thanh_toan)}
+                  </p>
+                </div>
+
+                {/* Chỉnh sửa trạng thái đơn hàng & Thanh toán */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-sm">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1.5">Chỉnh sửa trạng thái đơn hàng</label>
+                    <select
+                      value={detail.trang_thai}
+                      disabled={saving}
+                      onChange={(e) => changeStatus(e.target.value)}
+                      className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm font-semibold outline-none bg-white disabled:opacity-50"
+                    >
+                      {Object.entries(STATUS).map(([key, val]) => (
+                        <option key={key} value={key}>{val.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1.5">
+                      Thanh toán ({detail.phuong_thuc_thanh_toan || 'COD'})
+                    </label>
+                    <select
+                      value={detail.trang_thai_thanh_toan || 'PENDING'}
+                      disabled={saving}
+                      onChange={(e) => changePaymentStatus(e.target.value)}
+                      className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm font-semibold outline-none bg-white disabled:opacity-50"
+                    >
+                      {Object.entries(PAYMENT).map(([key, label]) => (
+                        <option key={key} value={key}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {detailError && <p className="text-sm text-red-500">{detailError}</p>}
 
                 <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-                  <button onClick={() => setDetail(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm">Đóng</button>
+                  <button onClick={() => setDetail(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-100">
+                    Đóng
+                  </button>
                   <div className="flex gap-2">
                     {detail.trang_thai_ke_tiep.map((next) => (
                       <button key={next} disabled={saving} onClick={() => changeStatus(next)}
                         className={`px-4 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-50 ${
-                          next === 'CANCELLED' ? 'bg-red-500' : 'bg-purple-600'
+                          next === 'CANCELLED' ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-600 hover:bg-purple-700'
                         }`}>
                         {next === 'CANCELLED' ? 'Hủy đơn' : `→ ${STATUS[next].label}`}
                       </button>

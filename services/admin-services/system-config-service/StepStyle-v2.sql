@@ -292,3 +292,79 @@ CREATE TABLE IF NOT EXISTS caidatdoitacvanchuyen
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+-- ============================================================================
+-- DỮ LIỆU MẪU KHỞI TẠO (SEED DATA)
+-- ============================================================================
+SET NAMES utf8mb4;
+
+INSERT IGNORE INTO nguoidung (ma_nguoi_dung, ho_ten, email, mat_khau, so_dien_thoai, dia_chi, vai_tro, trang_thai) VALUES
+(1, 'Administrator', 'admin@gmail.com', '1234', '0900000001', '123 Nguyễn Huệ, Q.1, TP.HCM', 'ADMIN', TRUE),
+(2, 'Bình Ngô', 'admin1@gmail.com', '123456', '0900000002', '45 Lê Lợi, Q.1, TP.HCM', 'ADMIN', TRUE),
+(3, 'Nguyễn Văn A', 'test@example.com', '123456', '0901234567', '12 Trần Hưng Đạo, P. Phạm Ngũ Lão, Q.1, TP.HCM', 'CUSTOMER', TRUE),
+(4, 'Trần Thị Bích', 'bichtran@gmail.com', '123456', '0912345678', '88 Cầu Giấy, P. Quan Hoa, Q. Cầu Giấy, Hà Nội', 'CUSTOMER', TRUE),
+(5, 'Lê Hoàng Nam', 'namle@gmail.com', '123456', '0987654321', '210 Nguyễn Văn Linh, Q. Hải Châu, Đà Nẵng', 'CUSTOMER', TRUE),
+(6, 'Phạm Minh Tuấn', 'tuanpham@gmail.com', '123456', '0933445566', '56 Võ Văn Ngân, P. Bình Thọ, TP. Thủ Đức, TP.HCM', 'CUSTOMER', TRUE),
+(7, 'Võ Thị Mai', 'maivo@gmail.com', '123456', '0977889900', '19 Phan Chu Trinh, TP. Huế', 'CUSTOMER', FALSE);
+
+INSERT IGNORE INTO danhmuc (ma_danh_muc, ten_danh_muc, mo_ta, ma_danh_muc_cha) VALUES
+(1, 'Sneakers', 'Giày thể thao thời trang', NULL),
+(2, 'Running', 'Giày chạy bộ chuyên dụng', NULL),
+(3, 'Basketball', 'Giày bóng rổ hiệu năng cao', NULL),
+(4, 'Lifestyle', 'Giày đi hằng ngày phong cách cổ điển', NULL);
+
+INSERT IGNORE INTO sanpham (ma_san_pham, ten_san_pham, gia_goc, gia_khuyen_mai, mo_ta, hinh_anh_dai_dien, trang_thai, ma_danh_muc) VALUES
+(1, 'Ultraboost 5', 4900000, 4900000, 'Giày chạy bộ đệm Boost êm ái', 'https://i.ebayimg.com/images/g/VlIAAOSwXuReydjX/s-l1200.jpg', 'ACTIVE', 1),
+(2, 'Nike Air Force 1 ''07', 2900000, 2650000, 'Giày sneaker kinh điển dễ phối đồ', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600', 'ACTIVE', 1),
+(3, 'New Balance 530 White Silver', 2750000, 2490000, 'Phong cách retro chạy bộ êm ái', 'https://images.unsplash.com/photo-1539185441755-769473a23570?w=600', 'ACTIVE', 2),
+(4, 'Adidas Samba OG Cloud White', 3100000, 2890000, 'Thiết kế cổ điển vượt thời gian', 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600', 'ACTIVE', 4),
+(5, 'Jordan 1 Low Bred Toe', 3600000, 3400000, 'Phối màu nổi bật cá tính', 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600', 'ACTIVE', 3);
+
+INSERT IGNORE INTO bienthesanpham (ma_bien_the, ma_san_pham, kich_co, mau_sac, so_luong_kho, hinh_anh_bien_the) VALUES
+(1, 1, '41', 'Trắng', 15, NULL),
+(2, 1, '42', 'Đen', 12, NULL),
+(3, 2, '40', 'Trắng', 20, NULL),
+(4, 2, '41', 'Trắng', 18, NULL),
+(5, 3, '39', 'Bạc Trắng', 10, NULL),
+(6, 3, '42', 'Bạc Trắng', 8, NULL),
+(7, 4, '41', 'Trắng Đen', 14, NULL),
+(8, 5, '42', 'Đỏ Đen', 6, NULL);
+
+INSERT IGNORE INTO phuongthucthanhtoan (ma_phuong_thuc, ten_phuong_thuc, mo_ta, kich_hoat) VALUES
+(1, 'COD (Thanh toán khi nhận hàng)', 'Thanh toán tiền mặt cho shipper khi nhận hàng', TRUE),
+(2, 'Chuyển khoản ngân hàng (VietQR)', 'Chuyển khoản nhanh qua mã QR ngân hàng', TRUE),
+(3, 'Ví điện tử MoMo', 'Thanh toán qua ví MoMo', TRUE),
+(4, 'VNPay QR / Thẻ ATM', 'Thanh toán qua cổng VNPay', TRUE);
+
+INSERT IGNORE INTO donhang (ma_don_hang, ma_nguoi_dung, ten_nguoi_nhan, so_dien_thoai_nhan, dia_chi_giao_hang, tong_tien_hang, tien_giam_gia, phi_van_chuyen, tong_thanh_toan, trang_thai_don_hang, ghi_chu, ngay_dat) VALUES
+(1001, 3, 'Nguyễn Văn A', '0901234567', '12 Trần Hưng Đạo, P. Phạm Ngũ Lão, Q.1, TP.HCM', 7550000, 200000, 0, 7350000, 'PENDING', 'Giao giờ hành chính giúp mình nhé', '2026-10-19 08:30:00'),
+(1002, 4, 'Trần Thị Bích', '0912345678', '88 Cầu Giấy, P. Quan Hoa, Q. Cầu Giấy, Hà Nội', 2490000, 0, 35000, 2525000, 'PENDING', 'Gọi trước khi giao 15 phút', '2026-10-19 09:45:00'),
+(1003, 5, 'Lê Hoàng Nam', '0987654321', '210 Nguyễn Văn Linh, Q. Hải Châu, Đà Nẵng', 5780000, 150000, 0, 5630000, 'PROCESSING', 'Đóng gói kỹ hộp nguyên vẹn làm quà tặng', '2026-10-18 14:20:00'),
+(1004, 6, 'Phạm Minh Tuấn', '0933445566', '56 Võ Văn Ngân, P. Bình Thọ, TP. Thủ Đức, TP.HCM', 3400000, 0, 35000, 3435000, 'PROCESSING', NULL, '2026-10-18 16:10:00'),
+(1005, 3, 'Nguyễn Văn A', '0901234567', '12 Trần Hưng Đạo, P. Phạm Ngũ Lão, Q.1, TP.HCM', 4900000, 100000, 0, 4800000, 'SHIPPED', 'Gửi bảo vệ tòa nhà nếu không nghe máy', '2026-10-17 10:15:00'),
+(1006, 4, 'Trần Thị Bích', '0912345678', '88 Cầu Giấy, P. Quan Hoa, Q. Cầu Giấy, Hà Nội', 5540000, 240000, 0, 5300000, 'DELIVERED', 'Khách hàng thân thiết', '2026-10-15 11:00:00'),
+(1007, 5, 'Lê Hoàng Nam', '0987654321', '210 Nguyễn Văn Linh, Q. Hải Châu, Đà Nẵng', 2490000, 0, 35000, 2525000, 'DELIVERED', NULL, '2026-10-12 15:30:00'),
+(1008, 7, 'Võ Thị Mai', '0977889900', '19 Phan Chu Trinh, TP. Huế', 3400000, 0, 35000, 3435000, 'CANCELLED', 'Khách đổi ý muốn chọn mẫu khác', '2026-10-10 09:20:00');
+
+INSERT IGNORE INTO chitietdonhang (ma_chi_tiet, ma_don_hang, ma_bien_the, ten_san_pham, kich_co, mau_sac, so_luong, don_gia) VALUES
+(1, 1001, 1, 'Ultraboost 5', '41', 'Trắng', 1, 4900000),
+(2, 1001, 3, 'Nike Air Force 1 ''07', '40', 'Trắng', 1, 2650000),
+(3, 1002, 5, 'New Balance 530 White Silver', '39', 'Bạc Trắng', 1, 2490000),
+(4, 1003, 7, 'Adidas Samba OG Cloud White', '41', 'Trắng Đen', 2, 2890000),
+(5, 1004, 8, 'Jordan 1 Low Bred Toe', '42', 'Đỏ Đen', 1, 3400000),
+(6, 1005, 2, 'Ultraboost 5', '42', 'Đen', 1, 4900000),
+(7, 1006, 4, 'Nike Air Force 1 ''07', '41', 'Trắng', 1, 2650000),
+(8, 1006, 7, 'Adidas Samba OG Cloud White', '41', 'Trắng Đen', 1, 2890000),
+(9, 1007, 6, 'New Balance 530 White Silver', '42', 'Bạc Trắng', 1, 2490000),
+(10, 1008, 8, 'Jordan 1 Low Bred Toe', '42', 'Đỏ Đen', 1, 3400000);
+
+INSERT IGNORE INTO thanhtoan (ma_thanh_toan, ma_don_hang, ma_phuong_thuc, so_tien, trang_thai_thanh_toan, ma_giao_dich_cong, ngay_tao, ngay_thanh_toan) VALUES
+(1, 1001, 1, 7350000, 'PENDING', NULL, '2026-10-19 08:30:00', NULL),
+(2, 1002, 2, 2525000, 'SUCCESS', 'VQR20261019002', '2026-10-19 09:45:00', '2026-10-19 09:46:12'),
+(3, 1003, 3, 5630000, 'SUCCESS', 'MOMO20261018003', '2026-10-18 14:20:00', '2026-10-18 14:21:05'),
+(4, 1004, 1, 3435000, 'PENDING', NULL, '2026-10-18 16:10:00', NULL),
+(5, 1005, 4, 4800000, 'SUCCESS', 'VNP20261017005', '2026-10-17 10:15:00', '2026-10-17 10:16:30'),
+(6, 1006, 2, 5300000, 'SUCCESS', 'VQR20261015006', '2026-10-15 11:00:00', '2026-10-15 11:02:00'),
+(7, 1007, 1, 2525000, 'SUCCESS', 'COD20261012007', '2026-10-12 15:30:00', '2026-10-14 17:00:00'),
+(8, 1008, 1, 3435000, 'FAILED', NULL, '2026-10-10 09:20:00', NULL);
+

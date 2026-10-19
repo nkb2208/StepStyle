@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { login as loginRequest, apiErrorMessage } from '../../services/authService';
+import { login as loginRequest, logout as logoutRequest, apiErrorMessage } from '../../services/authService';
+import { getUsers } from '../../services/adminUserService';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -31,6 +32,25 @@ export default function AdminLogin() {
 
       localStorage.setItem('token', accessToken);
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+
+      try {
+        const usersData = await getUsers({ page: 1, page_size: 100 });
+        const list = usersData?.items || (Array.isArray(usersData) ? usersData : []);
+        const matched = list.find(
+          (u) => String(u.email).toLowerCase() === email.trim().toLowerCase()
+        );
+        if (matched && matched.kich_hoat === false) {
+          await logoutRequest().catch(() => {});
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          setError('Tài khoản của bạn đã bị khóa.');
+          return;
+        }
+      } catch {
+        // Ignore if user-service check is unavailable
+      }
+
       localStorage.setItem('user', JSON.stringify(user));
       navigate('/admin');
     } catch (err) {
