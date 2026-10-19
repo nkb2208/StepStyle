@@ -39,13 +39,19 @@ export default function Admin() {
   const adminName = session?.name || session?.email || 'Quản trị viên';
   const adminInitial = adminName.trim().charAt(0).toUpperCase() || 'A';
 
+  const token = localStorage.getItem('token');
+  const isAuthorized = Boolean(token && session?.role === 'ADMIN');
+
   // The admin panel is only reachable with an administrator's access token.
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token || session?.role !== 'ADMIN') {
+    if (!isAuthorized) {
       navigate('/admin/login', { replace: true });
     }
-  }, [session, navigate]);
+  }, [isAuthorized, navigate]);
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   const handleLogout = async () => {
     // Best effort: revoke the session server-side, then clear it locally.

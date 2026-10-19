@@ -1,5 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { formatPrice } from '../../data';
+import {
+  getProducts,
+  findProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  createVariant,
+  updateVariant,
+  deleteVariant,
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from '../../services/adminProductService';
 
 export default function Products() {
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -31,14 +46,6 @@ export default function Products() {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-  };
-
   // Lấy danh sách sản phẩm
   useEffect(() => {
     getAllProducts();
@@ -47,15 +54,8 @@ export default function Products() {
 
   const getAllProducts = async () => {
     try {
-      const response = await fetch("http://localhost:8001/products", {
-        headers: getAuthHeaders(),
-      });
-      if (!response.ok) {
-        console.error("Lỗi server");
-        return;
-      }
-      const data = await response.json();
-      setProducts(data);
+      const data = await getProducts();
+      setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Không thể lấy dữ liệu", error);
     }
@@ -64,30 +64,23 @@ export default function Products() {
   // Tìm kiếm & lọc sản phẩm
   const handleFindProducts = async (nameVal = searchName, categoryVal = filterCategory, statusVal = filterStatus) => {
     try {
-      const params = new URLSearchParams();
-      if (nameVal && nameVal.trim()) params.append('product_name', nameVal.trim());
-      if (categoryVal) params.append('product_category', categoryVal);
-      if (statusVal) params.append('product_status', statusVal);
+      const params = {};
+      if (nameVal && nameVal.trim()) params.product_name = nameVal.trim();
+      if (categoryVal) params.product_category = categoryVal;
+      if (statusVal) params.product_status = statusVal;
 
-      if (params.toString() === '') {
+      if (Object.keys(params).length === 0) {
         getAllProducts();
         return;
       }
 
-      const response = await fetch(`http://localhost:8001/products/find?${params.toString()}`, {
-        headers: getAuthHeaders(),
-      });
-      if (response.status === 404) {
+      const data = await findProducts(params);
+      setProducts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      if (error.response?.status === 404) {
         setProducts([]);
         return;
       }
-      if (!response.ok) {
-        console.error("Lỗi server khi tìm kiếm");
-        return;
-      }
-      const data = await response.json();
-      setProducts(data);
-    } catch (error) {
       console.error("Không thể tìm kiếm sản phẩm", error);
     }
   };
@@ -107,14 +100,7 @@ export default function Products() {
         trang_thai: newProduct.status
       };
 
-      const response = await fetch("http://localhost:8001/products/create", {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(productPayload)
-      });
-
-      if (!response.ok) throw new Error("Lỗi thêm sản phẩm");
-      const createdProduct = await response.json();
+      const createdProduct = await createProduct(productPayload);
       const createdProductId = createdProduct.ma_san_pham;
 
       if (variants && variants.length > 0) {
@@ -126,11 +112,7 @@ export default function Products() {
             so_luong_kho: parseInt(variant.stock) || 0,
             hinh_anh_bien_the: variant.image || newProduct.image
           };
-          return fetch("http://localhost:8001/products/variant/create", {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(newVariant),
-          });
+          return createVariant(newVariant);
         });
         await Promise.all(variantPromises);
       }
@@ -149,16 +131,12 @@ export default function Products() {
   // Gọi API lấy chi tiết sản phẩm & Đổ dữ liệu vào Form Sửa
   const openEditModal = async (product) => {
     try {
-      const response = await fetch(`http://localhost:8001/products/${product.ma_san_pham}`, {
-        headers: getAuthHeaders(),
-      });
-      if (!response.ok) {
+      const data = await getProductById(product.ma_san_pham);
+      if (!data) {
         alert("Không thể tải thông tin sản phẩm!");
         return;
       }
-      const data = await response.json();
 
-      // Formatting lại dữ liệu đổ vào state editingProduct
       setEditingProduct({
         ma_san_pham: data.ma_san_pham,
         name: data.ten_san_pham || '',
@@ -183,6 +161,7 @@ export default function Products() {
       setShowEditProduct(true);
     } catch (error) {
       console.error("Lỗi khi tải chi tiết sản phẩm: ", error);
+      alert("Không thể tải thông tin sản phẩm!");
     }
   };
 
@@ -202,13 +181,7 @@ export default function Products() {
         trang_thai: editingProduct.status
       };
 
-      const response = await fetch(`http://localhost:8001/products/update/${editingProduct.ma_san_pham}`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(updatePayload)
-      });
-
-      if (!response.ok) throw new Error("Lỗi cập nhật sản phẩm");
+      await updateProduct(editingProduct.ma_san_pham, updatePayload);
 
       if (editVariants && editVariants.length > 0) {
         const variantPromises = editVariants.map(variant => {
@@ -221,17 +194,9 @@ export default function Products() {
           };
 
           if (variant.ma_bien_the) {
-            return fetch(`http://localhost:8001/products/variant/update/${variant.ma_bien_the}`, {
-              method: "PUT",
-              headers: getAuthHeaders(),
-              body: JSON.stringify(variantPayload)
-            });
+            return updateVariant(variant.ma_bien_the, variantPayload);
           } else {
-            return fetch("http://localhost:8001/products/variant/create", {
-              method: "POST",
-              headers: getAuthHeaders(),
-              body: JSON.stringify(variantPayload)
-            });
+            return createVariant(variantPayload);
           }
         });
         await Promise.all(variantPromises);
@@ -252,20 +217,12 @@ export default function Products() {
   const confirmDeleteProduct = async () => {
     if (!deletingProduct) return;
     try {
-      const response = await fetch(`http://localhost:8001/products/delete/${deletingProduct.ma_san_pham}`, {
-        method: "DELETE",
-        headers: getAuthHeaders()
-      });
-
-      if (!response.ok) {
-        alert("Không thể xóa sản phẩm này (kiểm tra lại biến thể liên quan)!");
-        return;
-      }
-
+      await deleteProduct(deletingProduct.ma_san_pham);
       setDeletingProduct(null);
       getAllProducts();
     } catch (error) {
       console.error("Khong the xoa san pham", error);
+      alert("Không thể xóa sản phẩm này (kiểm tra lại biến thể liên quan)!");
     }
   };
 
@@ -291,22 +248,14 @@ export default function Products() {
     setEditingProduct(prev => ({ ...prev, [name]: value }));
   };
 
-  // --- Xử lý biến thể (Variants) ---
+  //Xử lý biến thể 
   const handleAddVariant = () => {
     setVariants([...variants, { size: '', color: '', stock: 0, image: '' }]);
   };
 
   const handleRemoveVariant = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8001/products/variant/delete/${id}`, {
-        method: "DELETE",
-        headers: getAuthHeaders()
-      });
-
-      if (!response.ok) {
-        console.error("Loi server");
-        return;
-      }
+      await deleteVariant(id);
       console.log("Xoa bien the thanh cong");
       getAllProducts();
     } catch (error) {
@@ -354,13 +303,7 @@ export default function Products() {
         hinh_anh_bien_the: editingVariant.image || ''
       };
 
-      const response = await fetch(`http://localhost:8001/products/variant/update/${editingVariant.ma_bien_the}`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) throw new Error("Lỗi cập nhật biến thể");
+      await updateVariant(editingVariant.ma_bien_the, payload);
 
       setShowEditVariant(false);
       setEditingVariant(null);
@@ -382,17 +325,8 @@ export default function Products() {
 
   const getAllCategories = async () => {
     try {
-      const response = await fetch("http://localhost:8001/products/categories", {
-        headers: getAuthHeaders(),
-      });
-
-      if (!response.ok) {
-        console.log("Loi sever");
-        return;
-      }
-
-      const data = await response.json();
-      setCategories(data);
+      const data = await getCategories();
+      setCategories(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error(error);
     }
@@ -407,16 +341,7 @@ export default function Products() {
         ma_danh_muc_cha: categoryParentId ? parseInt(categoryParentId) : null
       };
 
-      const response = await fetch("http://localhost:8001/products/categories/create", {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(category),
-      });
-
-      if (!response.ok) {
-        console.log("Loi sever");
-        return;
-      }
+      await createCategory(category);
 
       setCategoryName('');
       setCategoryDesc('');
@@ -450,43 +375,26 @@ export default function Products() {
         ma_danh_muc_cha: categoryParentId ? parseInt(categoryParentId) : null
       };
 
-      const response = await fetch(`http://localhost:8001/products/categories/update/${editingCategoryId}`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(category),
-      });
-
-      if (!response.ok) {
-        console.log("Loi sever");
-        alert("Cập nhật danh mục thất bại!");
-        return;
-      }
+      await updateCategory(editingCategoryId, category);
 
       cancelEditCategory();
       getAllCategories();
     } catch (error) {
       console.error(error);
+      alert("Cập nhật danh mục thất bại!");
     }
   };
 
   const handleDeleteCategory = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8001/products/categories/delete/${id}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      });
-
-      if (!response.ok) {
-        alert("Không thể xóa danh mục do còn sản phẩm thuộc danh mục này!");
-        return;
-      }
-
+      await deleteCategory(id);
       if (editingCategoryId === id) {
         cancelEditCategory();
       }
       getAllCategories();
     } catch (error) {
       console.error(error);
+      alert("Không thể xóa danh mục do còn sản phẩm thuộc danh mục này!");
     }
   };
 

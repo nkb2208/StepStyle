@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 from typing import Annotated
-from starlette import status
 from database import SessionLocal, engine
 from fastapi.middleware.cors import CORSMiddleware
 from security import require_admin

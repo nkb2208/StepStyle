@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
-import { USERS } from '../../data';
+import React, { useState, useEffect, useCallback } from 'react';
+import { getUsers, createUser, updateUser, deleteUser } from '../../services/adminUserService';
+
+const normalizeUser = (u) => ({
+  id: u.id,
+  name: u.ho_ten ?? u.name ?? '',
+  email: u.email ?? '',
+  phone: u.so_dien_thoai ?? u.phone ?? '',
+  address: u.dia_chi ?? u.address ?? '',
+  role: String(u.vai_tro ?? u.role ?? 'CUSTOMER').toUpperCase(),
+  active: u.kich_hoat ?? u.active ?? true,
+  created_at: u.ngay_tao ?? u.created_at ?? u.createdAt ?? null,
+});
 
 export default function Users() {
-  const [users, setUsers] = useState(
-    USERS.map(u => ({
-      ...u,
-      role: u.role === 'admin' ? 'ADMIN' : u.role === 'buyer' ? 'CUSTOMER' : 'STAFF',
-      created_at: u.created_at ?? u.createdAt ?? null
-    }))
-  );
-  const [loading] = useState(false);
-  const [error] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,6 +28,25 @@ export default function Users() {
     role: 'STAFF',
     active: true
   });
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getUsers({ page: 1, page_size: 100 });
+      const rawItems = data?.items || (Array.isArray(data) ? data : []);
+      setUsers(rawItems.map(normalizeUser));
+    } catch (err) {
+      console.error("Lỗi tải người dùng", err);
+      setError("Không thể tải danh sách người dùng");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const getRoleCount = (roleMatch) => {
     return users.filter(u => String(u.role).toUpperCase() === roleMatch.toUpperCase()).length;
@@ -46,29 +70,34 @@ export default function Users() {
       alert("Vui lòng nhập họ tên, email và mật khẩu");
       return;
     }
-    setIsSubmitting(true);
-    const createdStaff = {
-      id: `u_${Date.now()}`,
-      name: newStaff.name,
-      email: newStaff.email,
-      phone: newStaff.phone,
-      address: newStaff.address,
-      role: newStaff.role,
-      active: newStaff.active,
-      created_at: new Date().toISOString()
-    };
-    setUsers(prev => [createdStaff, ...prev]);
-    setNewStaff({
-      name: '',
-      email: '',
-      password: '',
-      phone: '',
-      address: '',
-      role: 'STAFF',
-      active: true
-    });
-    setShowAddStaff(false);
-    setIsSubmitting(false);
+    try {
+      setIsSubmitting(true);
+      await createUser({
+        ho_ten: newStaff.name.trim(),
+        email: newStaff.email.trim(),
+        mat_khau: newStaff.password,
+        so_dien_thoai: newStaff.phone?.trim() || null,
+        dia_chi: newStaff.address?.trim() || null,
+        vai_tro: newStaff.role,
+        kich_hoat: newStaff.active,
+      });
+      setNewStaff({
+        name: '',
+        email: '',
+        password: '',
+        phone: '',
+        address: '',
+        role: 'STAFF',
+        active: true
+      });
+      setShowAddStaff(false);
+      await fetchUsers();
+    } catch (err) {
+      console.error("Lỗi thêm nhân sự:", err);
+      alert(err?.response?.data?.error?.message || "Thêm nhân sự thất bại!");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const [showEditStaff, setShowEditStaff] = useState(false);
@@ -97,30 +126,35 @@ export default function Users() {
       alert("Vui lòng nhập họ tên và email");
       return;
     }
-    setIsSubmitting(true);
-    setUsers(prev =>
-      prev.map(u =>
-        String(u.id) === String(editingStaff.id)
-          ? {
-              ...u,
-              name: editingStaff.name,
-              email: editingStaff.email,
-              phone: editingStaff.phone,
-              address: editingStaff.address,
-              role: editingStaff.role,
-              active: editingStaff.active
-            }
-          : u
-      )
-    );
-    setShowEditStaff(false);
-    setEditingStaff(null);
-    setIsSubmitting(false);
+    try {
+      setIsSubmitting(true);
+      await updateUser(editingStaff.id, {
+        ho_ten: editingStaff.name.trim(),
+        so_dien_thoai: editingStaff.phone?.trim() || null,
+        dia_chi: editingStaff.address?.trim() || null,
+        vai_tro: editingStaff.role,
+        kich_hoat: editingStaff.active,
+      });
+      setShowEditStaff(false);
+      setEditingStaff(null);
+      await fetchUsers();
+    } catch (err) {
+      console.error("Lỗi cập nhật nhân sự:", err);
+      alert(err?.response?.data?.error?.message || "Cập nhật nhân sự thất bại!");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteStaff = async (id) => {
     if (!confirm("Bạn có chắc muốn xóa tài khoản này vĩnh viễn?")) return;
-    setUsers(prev => prev.filter(u => u.id !== id));
+    try {
+      await deleteUser(id);
+      await fetchUsers();
+    } catch (err) {
+      console.error("Lỗi xóa nhân sự:", err);
+      alert(err?.response?.data?.error?.message || "Xóa tài khoản thất bại!");
+    }
   };
 
   return (

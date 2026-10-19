@@ -11,6 +11,7 @@ import {
 import { Bar } from 'react-chartjs-2';
 import { formatPrice, USERS } from '../../data';
 import { getOverviewReport, getMonthlyRevenue } from '../../services/adminReportingService';
+import { getUsers } from '../../services/adminUserService';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -24,6 +25,12 @@ export default function Dashboard() {
     buyers: USERS.filter((u) => u.role === 'buyer').length || 24,
     staff: USERS.filter((u) => u.role !== 'buyer').length || 5,
   });
+
+  const [userDistribution, setUserDistribution] = useState([
+    { role: 'ADMIN', label: 'Quản trị viên', color: 'bg-purple-500', count: USERS.filter((u) => u.role === 'admin').length || 1 },
+    { role: 'STAFF', label: 'Nhân viên', color: 'bg-emerald-500', count: USERS.filter((u) => u.role === 'warehouse' || u.role === 'care').length || 4 },
+    { role: 'CUSTOMER', label: 'Khách hàng', color: 'bg-orange-500', count: USERS.filter((u) => u.role === 'buyer').length || 24 },
+  ]);
 
   const [monthlyData, setMonthlyData] = useState([
     { month_label: 'T1', rev: 35 },
@@ -46,27 +53,51 @@ export default function Dashboard() {
     async function fetchDashboard() {
       setLoading(true);
       try {
-        const [ov, mon] = await Promise.all([
+        const [ovRes, monRes, usersRes] = await Promise.allSettled([
           getOverviewReport(currentYear),
           getMonthlyRevenue(currentYear),
+          getUsers({ page: 1, page_size: 100 }),
         ]);
-        if (isMounted) {
-          if (ov) {
-            setOverview((prev) => ({
-              ...prev,
-              totalRevenue: ov.total_revenue,
-              totalOrders: ov.total_orders,
-              cancelRate: ov.cancel_rate,
-            }));
-          }
-          if (mon?.items?.length) {
-            setMonthlyData(
-              mon.items.map((m) => ({
-                month_label: `T${m.month}`,
-                rev: Math.round(m.revenue / 1000000),
-              }))
-            );
-          }
+
+        if (!isMounted) return;
+
+        if (ovRes.status === 'fulfilled' && ovRes.value) {
+          const ov = ovRes.value;
+          setOverview((prev) => ({
+            ...prev,
+            totalRevenue: ov.total_revenue,
+            totalOrders: ov.total_orders,
+            cancelRate: ov.cancel_rate,
+          }));
+        }
+
+        if (monRes.status === 'fulfilled' && monRes.value?.items?.length) {
+          setMonthlyData(
+            monRes.value.items.map((m) => ({
+              month_label: `T${m.month}`,
+              rev: Math.round(m.revenue / 1000000),
+            }))
+          );
+        }
+
+        if (usersRes.status === 'fulfilled' && usersRes.value) {
+          const items = usersRes.value.items || (Array.isArray(usersRes.value) ? usersRes.value : []);
+          const normalized = items.map((u) => String(u.vai_tro ?? u.role ?? 'CUSTOMER').toUpperCase());
+          const adminCount = normalized.filter((r) => r === 'ADMIN').length;
+          const staffCount = normalized.filter((r) => r === 'STAFF' || r === 'SELLER').length;
+          const customerCount = normalized.filter((r) => r === 'CUSTOMER').length;
+
+          setOverview((prev) => ({
+            ...prev,
+            buyers: customerCount,
+            staff: adminCount + staffCount,
+          }));
+
+          setUserDistribution([
+            { role: 'ADMIN', label: 'Quản trị viên', color: 'bg-purple-500', count: adminCount },
+            { role: 'STAFF', label: 'Nhân viên', color: 'bg-emerald-500', count: staffCount },
+            { role: 'CUSTOMER', label: 'Khách hàng', color: 'bg-orange-500', count: customerCount },
+          ]);
         }
       } catch {
         // Keep fallback data if service is not yet started
@@ -117,7 +148,7 @@ export default function Dashboard() {
     },
   };
 
-  const totalUsers = USERS.length || 1;
+  const totalUsers = userDistribution.reduce((sum, item) => sum + item.count, 0) || 1;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -132,8 +163,8 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Tổng doanh thu', value: formatPrice(overview.totalRevenue), delta: '+12.4%', good: true, icon: '💰', bg: 'bg-purple-50', text: 'text-purple-600' },
-          { label: 'Khách hàng', value: overview.buyers.toString(), delta: '+8 tháng này', good: true, icon: '👥', bg: 'bg-sky-50', text: 'text-sky-600' },
+          { label: 'Tổng doanh thu', value: formatPrice(overview.totalRevenue), delta: `${overview.totalOrders} đơn hàng`, good: true, icon: '💰', bg: 'bg-purple-50', text: 'text-purple-600' },
+          { label: 'Khách hàng', value: overview.buyers.toString(), delta: 'tài khoản khách hàng', good: true, icon: '👥', bg: 'bg-sky-50', text: 'text-sky-600' },
           { label: 'Nhân sự', value: overview.staff.toString(), delta: 'đang hoạt động', good: true, icon: '🧑‍💼', bg: 'bg-emerald-50', text: 'text-emerald-600' },
           { label: 'Tỉ lệ huỷ đơn', value: `${overview.cancelRate}%`, delta: overview.cancelRate < 8 ? 'Tốt' : 'Cần chú ý', good: overview.cancelRate < 8, icon: '📉', bg: 'bg-amber-50', text: 'text-amber-600' },
         ].map((k) => (
@@ -165,12 +196,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
           <h3 className="font-bold text-slate-900 mb-5">Phân bổ người dùng</h3>
           <div className="space-y-3">
-            {[
-              { role: 'admin', label: 'Quản trị viên', color: 'bg-purple-500', count: USERS.filter((u) => u.role === 'admin').length || 1 },
-              { role: 'warehouse', label: 'Quản lý kho', color: 'bg-emerald-500', count: USERS.filter((u) => u.role === 'warehouse').length || 2 },
-              { role: 'care', label: 'Chăm sóc viên', color: 'bg-sky-500', count: USERS.filter((u) => u.role === 'care').length || 2 },
-              { role: 'buyer', label: 'Người mua', color: 'bg-orange-500', count: USERS.filter((u) => u.role === 'buyer').length || 24 },
-            ].map((r) => (
+            {userDistribution.map((r) => (
               <div key={r.role}>
                 <div className="flex items-center justify-between text-sm mb-1">
                   <span className="font-medium text-slate-700">{r.label}</span>
