@@ -321,14 +321,14 @@ INSERT IGNORE INTO sanpham (ma_san_pham, ten_san_pham, gia_goc, gia_khuyen_mai, 
 (5, 'Jordan 1 Low Bred Toe', 3600000, 3400000, 'Phối màu nổi bật cá tính', 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600', 'ACTIVE', 3);
 
 INSERT IGNORE INTO bienthesanpham (ma_bien_the, ma_san_pham, kich_co, mau_sac, so_luong_kho, hinh_anh_bien_the) VALUES
-(1, 1, '41', 'Trắng', 15, NULL),
-(2, 1, '42', 'Đen', 12, NULL),
-(3, 2, '40', 'Trắng', 20, NULL),
-(4, 2, '41', 'Trắng', 18, NULL),
-(5, 3, '39', 'Bạc Trắng', 10, NULL),
-(6, 3, '42', 'Bạc Trắng', 8, NULL),
-(7, 4, '41', 'Trắng Đen', 14, NULL),
-(8, 5, '42', 'Đỏ Đen', 6, NULL);
+(1, 1, '41', 'Trắng', 15, 'https://i.ebayimg.com/images/g/VlIAAOSwXuReydjX/s-l1200.jpg'),
+(2, 1, '42', 'Đen', 12, 'https://i.ebayimg.com/images/g/VlIAAOSwXuReydjX/s-l1200.jpg'),
+(3, 2, '40', 'Trắng', 20, 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600'),
+(4, 2, '41', 'Trắng', 18, 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600'),
+(5, 3, '39', 'Bạc Trắng', 10, 'https://images.unsplash.com/photo-1539185441755-769473a23570?w=600'),
+(6, 3, '42', 'Bạc Trắng', 8, 'https://images.unsplash.com/photo-1539185441755-769473a23570?w=600'),
+(7, 4, '41', 'Trắng Đen', 14, 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600'),
+(8, 5, '42', 'Đỏ Đen', 6, 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600');
 
 INSERT IGNORE INTO phuongthucthanhtoan (ma_phuong_thuc, ten_phuong_thuc, mo_ta, kich_hoat) VALUES
 (1, 'COD (Thanh toán khi nhận hàng)', 'Thanh toán tiền mặt cho shipper khi nhận hàng', TRUE),

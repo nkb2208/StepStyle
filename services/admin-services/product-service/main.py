@@ -39,14 +39,14 @@ class BienTheSanPhamRequest(BaseModel):
     kich_co: str
     mau_sac: str
     so_luong_kho: int = 0
-    hinh_anh_bien_the: str
+    hinh_anh_bien_the: str | None = None
 
 class BienTheResponse(BaseModel):
     ma_bien_the: int
     kich_co: str
     mau_sac: str
     so_luong_kho: int
-    hinh_anh_bien_the: str
+    hinh_anh_bien_the: str | None = None
 
     class Config:
         from_attributes = True
