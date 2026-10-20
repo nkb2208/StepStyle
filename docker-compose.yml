@@ -137,6 +137,7 @@ services:
       ENVIRONMENT: production
       PORT: 4005
       DATABASE_URL: mysql+aiomysql://root:${MYSQL_ROOT_PASSWORD:-root}@mysql:3306/stepstyle_db
+      AUTH_SERVICE_URL: http://auth:4000
       JWKS_URL: http://auth:4000/.well-known/jwks.json
       JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-api.yourdomain.com}

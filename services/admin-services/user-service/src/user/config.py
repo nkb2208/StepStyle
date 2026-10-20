@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     database_echo: bool = False
 
     # ── Auth microservice integration ───────────────────────────────────────
+    auth_service_url: str = "http://localhost:4000"
     jwks_url: str = "http://localhost:4000/.well-known/jwks.json"
     jwt_issuer: str = "auth.yourdomain.com"
     jwt_audience: str = "api.yourdomain.com"
