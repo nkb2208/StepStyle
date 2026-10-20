@@ -5,7 +5,7 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from user.models import NguoiDung
+from user.models import NguoiDung, VaiTro
 from user.schemas import UserCreate, UserUpdate
 
 
@@ -39,7 +39,10 @@ class UserRepository:
         return list(rows.scalars().all()), total
 
     async def create(self, data: UserCreate) -> NguoiDung:
-        user = NguoiDung(**data.model_dump())
+        user_dict = data.model_dump()
+        user_dict["vai_tro"] = VaiTro.ADMIN.value
+        user_dict["kich_hoat"] = True
+        user = NguoiDung(**user_dict)
         self._session.add(user)
         await self._session.flush()
         await self._session.refresh(user)

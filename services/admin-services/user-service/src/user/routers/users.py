@@ -1,13 +1,11 @@
 """REST endpoints cho resource /users.
 
-Phân quyền:
-- ``GET /users``               → quản trị viên — danh sách người dùng
-- ``POST /users``              → quản trị viên — tạo tài khoản
-- ``GET /users/{id}``          → quản trị viên — xem tài khoản bất kỳ
-- ``PUT /users/{id}``          → quản trị viên — cập nhật tài khoản bất kỳ
-- ``DELETE /users/{id}``       → quản trị viên — xoá tài khoản
-- ``GET /users/me``            → khách hàng thành viên — xem thông tin cá nhân
-- ``PATCH /users/me``          → khách hàng thành viên — cập nhật thông tin cá nhân
+Phân quyền (chỉ dành cho quản trị viên):
+- ``GET  /users``          → danh sách tất cả tài khoản (có phân trang)
+- ``POST /users``          → tạo tài khoản quản trị viên mới
+- ``GET  /users/{id}``     → xem tài khoản theo ID
+- ``PUT  /users/{id}``     → cập nhật tài khoản quản trị viên hoặc khoá/mở khoá tài khoản
+- ``DELETE /users/{id}``   → xoá tài khoản
 """
 
 from __future__ import annotations
@@ -16,8 +14,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from user.db import get_session
-from user.schemas import ProfileOut, ProfileUpdate, UserCreate, UserListOut, UserOut, UserUpdate
-from user.security import CurrentUser, require_admin, require_customer
+from user.schemas import UserCreate, UserListOut, UserOut, UserUpdate
+from user.security import CurrentUser, require_admin
 from user.services.user_service import UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -25,27 +23,6 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 def get_service(session: AsyncSession = Depends(get_session)) -> UserService:
     return UserService(session)
-
-
-# ── Khách hàng thành viên: thông tin cá nhân ─────────────────────────────────
-
-@router.get("/me", response_model=ProfileOut, summary="Xem thông tin cá nhân")
-async def get_my_profile(
-    current_user: CurrentUser = Depends(require_customer),
-    svc: UserService = Depends(get_service),
-) -> ProfileOut:
-    """Khách hàng đang đăng nhập xem thông tin cá nhân của mình."""
-    return await svc.get_profile(current_user.email)
-
-
-@router.patch("/me", response_model=ProfileOut, summary="Cập nhật thông tin cá nhân")
-async def update_my_profile(
-    body: ProfileUpdate,
-    current_user: CurrentUser = Depends(require_customer),
-    svc: UserService = Depends(get_service),
-) -> ProfileOut:
-    """Khách hàng tự cập nhật họ tên, số điện thoại, địa chỉ (không đổi được vai trò)."""
-    return await svc.update_profile(current_user.email, body)
 
 
 # ── Quản trị viên: quản lý tài khoản người dùng ─────────────────────────────
@@ -67,28 +44,28 @@ async def get_user(
     _admin: CurrentUser = Depends(require_admin),
     svc: UserService = Depends(get_service),
 ) -> UserOut:
-    """Quản trị viên xem thông tin tài khoản bất kỳ."""
+    """Quản trị viên xem thông tin tài khoản bất kỳ theo ID."""
     return await svc.get_user(user_id)
 
 
-@router.post("", response_model=UserOut, status_code=201, summary="Tạo tài khoản người dùng")
+@router.post("", response_model=UserOut, status_code=201, summary="Tạo tài khoản quản trị viên")
 async def create_user(
     body: UserCreate,
     _admin: CurrentUser = Depends(require_admin),
     svc: UserService = Depends(get_service),
 ) -> UserOut:
-    """Quản trị viên tạo tài khoản mới (khách hàng hoặc quản trị viên)."""
+    """Tạo tài khoản quản trị viên mới (ADMIN)."""
     return await svc.create_user(body)
 
 
-@router.put("/{user_id}", response_model=UserOut, summary="Cập nhật tài khoản người dùng")
+@router.put("/{user_id}", response_model=UserOut, summary="Cập nhật tài khoản quản trị viên / Khóa tài khoản khách hàng")
 async def update_user(
     user_id: int,
     body: UserUpdate,
     _admin: CurrentUser = Depends(require_admin),
     svc: UserService = Depends(get_service),
 ) -> UserOut:
-    """Quản trị viên cập nhật thông tin tài khoản, đổi vai trò, kích hoạt/vô hiệu hoá."""
+    """Cập nhật thông tin tài khoản (quản trị viên: họ tên, số điện thoại, trạng thái; khách hàng: khóa/mở khóa tài khoản)."""
     return await svc.update_user(user_id, body)
 
 
@@ -100,4 +77,3 @@ async def delete_user(
 ) -> None:
     """Quản trị viên xoá tài khoản người dùng."""
     await svc.delete_user(user_id)
-

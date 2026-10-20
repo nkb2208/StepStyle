@@ -402,7 +402,7 @@ export default function Products() {
     <div className="space-y-6 relative">
       {/* Modal Xác nhận xóa sản phẩm */}
       {deletingProduct && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed min-h-screen inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
             <div className="p-6 text-center">
               <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4">
@@ -435,7 +435,7 @@ export default function Products() {
 
       {/* Modal Form thêm sản phẩm */}
       {showAddProduct && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 min-h-screen bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h3 className="font-bold text-slate-900 text-lg">Thêm sản phẩm mới</h3>
@@ -600,7 +600,7 @@ export default function Products() {
 
       {/* Modal Form Sửa sản phẩm */}
       {showEditProduct && editingProduct && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 min-h-screen bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h3 className="font-bold text-slate-900 text-lg">Chỉnh sửa sản phẩm</h3>
@@ -766,7 +766,7 @@ export default function Products() {
 
       {/* Modal Form Sửa biến thể riêng lẻ */}
       {showEditVariant && editingVariant && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed min-h-screen inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full overflow-hidden">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-white">
               <h3 className="font-bold text-slate-900 text-lg">Chỉnh sửa biến thể</h3>
@@ -851,7 +851,7 @@ export default function Products() {
 
       {/* Modal Quản lý danh mục */}
       {showCategoryModal && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed min-h-screen inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h3 className="font-bold text-slate-900 text-lg">Quản lý danh mục</h3>
@@ -954,21 +954,21 @@ export default function Products() {
                           return (
                             <tr key={cat.ma_danh_muc} className="hover:bg-slate-50">
                               <td className="py-2.5 px-4 text-slate-500 font-medium">#{cat.ma_danh_muc}</td>
-                              <td className="py-2.5 px-4 font-bold text-slate-900">{cat.ten_danh_muc}</td>
-                              <td className="py-2.5 px-4 text-slate-600">{cat.mo_ta || '-'}</td>
-                              <td className="py-2.5 px-4 text-slate-600">{parentCat ? parentCat.ten_danh_muc : '-'}</td>
+                              <td className="py-2.5 px-4 font-medium text-slate-900">{cat.ten_danh_muc}</td>
+                              <td className="py-2.5 px-4 text-slate-600 font-normal">{cat.mo_ta || '-'}</td>
+                              <td className="py-2.5 px-4 text-slate-600 font-normal">{parentCat ? parentCat.ten_danh_muc : '-'}</td>
                               <td className="py-2.5 px-4 flex justify-center gap-2">
                                 <button
                                   type="button"
                                   onClick={() => openEditCategory(cat)}
-                                  className="text-emerald-500 bg-emerald-50 px-3 py-1 rounded-lg font-bold text-xs hover:bg-emerald-100 transition-colors"
+                                  className="text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg font-medium text-xs hover:bg-emerald-100 transition-colors"
                                 >
                                   Sửa
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteCategory(cat.ma_danh_muc)}
-                                  className="text-red-500 bg-red-50 px-3 py-1 rounded-lg font-bold text-xs hover:bg-red-100 transition-colors"
+                                  className="text-red-500 bg-red-50 px-3 py-1 rounded-lg font-medium text-xs hover:bg-red-100 transition-colors"
                                 >
                                   Xóa
                                 </button>
@@ -988,10 +988,10 @@ export default function Products() {
 
       {/* Body */}
       <div className='w-full flex items-center justify-end gap-3 mb-3'>
-        <button onClick={() => setShowCategoryModal(true)} className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
+        <button onClick={() => setShowCategoryModal(true)} className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
           Quản lý danh mục
         </button>
-        <button onClick={() => setShowAddProduct(true)} className="bg-purple-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm shadow-purple-500/30 hover:bg-purple-600 transition-colors">
+        <button onClick={() => setShowAddProduct(true)} className="bg-purple-500 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm shadow-purple-500/30 hover:bg-purple-600 transition-colors">
           + Thêm sản phẩm
         </button>
       </div>
@@ -1051,7 +1051,7 @@ export default function Products() {
               <th className="text-left py-3 px-4 text-slate-500 font-semibold">Danh mục</th>
               <th className="text-left py-3 px-4 text-slate-500 font-semibold">Giá bán</th>
               <th className="text-left py-3 px-4 text-slate-500 font-semibold">Tồn kho</th>
-              <th className="text-left py-3 px-4 text-slate-500 font-semibold">Nổi bật</th>
+              <th className="text-left py-3 px-4 text-slate-500 font-semibold">Trạng thái</th>
               <th className="text-left py-3 px-4 text-slate-500 font-semibold rounded-tr-xl">Thao tác</th>
             </tr>
           </thead>
@@ -1093,34 +1093,34 @@ export default function Products() {
                           <img src={p.hinh_anh_dai_dien} alt={p.ten_san_pham} className="w-full h-full object-cover" />
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900">{p.ten_san_pham}</p>
-                          <span className="text-xs text-purple-500 font-medium">
+                          <p className="font-medium text-slate-900">{p.ten_san_pham}</p>
+                          <span className="text-xs text-indigo-600 font-normal">
                             {isExpanded ? 'Thu gọn biến thể' : `Xem biến thể (${p.danh_sach_bien_the?.length || 0})`}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-600 font-medium">
+                    <td className="py-3 px-4 text-slate-600 font-normal">
                       {categories.find(c => c.ma_danh_muc === p.ma_danh_muc)?.ten_danh_muc || p.ma_danh_muc || '-'}
                     </td>
-                    <td className="py-3 px-4 font-bold text-slate-900">{formatPrice(p.gia_goc || 0)}</td>
+                    <td className="py-3 px-4 font-semibold text-slate-900">{formatPrice(p.gia_goc || 0)}</td>
 
                     <td className="py-3 px-4">
-                      <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md">
+                      <span className="text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded-md">
                         {tongTonKho}
                       </span>
                     </td>
 
                     <td className="py-3 px-4">
                       {p.trang_thai === 'ACTIVE'
-                        ? <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-md">Hoạt động</span>
-                        : <span className="text-slate-600 font-bold bg-slate-100 px-2 py-1 rounded-md">Ẩn</span>
+                        ? <span className="text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded-md">Hoạt động</span>
+                        : <span className="text-slate-600 font-medium bg-slate-100 px-2 py-1 rounded-md">Ẩn</span>
                       }
                     </td>
 
                     <td className="py-3 px-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => openEditModal(p)} className="text-emerald-500 bg-emerald-50 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-100 transition-colors">Sửa</button>
-                      <button onClick={() => setDeletingProduct(p)} className="text-red-500 bg-red-50 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-red-100 transition-colors">Xóa</button>
+                      <button onClick={() => openEditModal(p)} className="text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-emerald-100 transition-colors">Sửa</button>
+                      <button onClick={() => setDeletingProduct(p)} className="text-red-500 bg-red-50 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-red-100 transition-colors">Xóa</button>
                     </td>
                   </tr>
 
@@ -1130,16 +1130,16 @@ export default function Products() {
                       <td colSpan="6" className="px-6 py-3">
                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70 shadow-inner transition-all">
                           <div className="flex items-center justify-between mb-3">
-                            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            <p className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                               Danh sách biến thể — {p.ten_san_pham}
                             </p>
-                            <span className="text-xs text-slate-500 font-medium">
+                            <span className="text-xs text-slate-500 font-normal">
                               Tổng: {p.danh_sach_bien_the?.length || 0} phân loại
                             </span>
                           </div>
 
                           {!p.danh_sach_bien_the || p.danh_sach_bien_the.length === 0 ? (
-                            <p className="text-xs text-slate-400 italic py-2 text-center">
+                            <p className="text-xs text-slate-400 italic py-2 text-center font-normal">
                               Sản phẩm này chưa có biến thể nào.
                             </p>
                           ) : (
@@ -1147,10 +1147,10 @@ export default function Products() {
                               <table className="w-full text-xs">
                                 <thead className="bg-slate-100/80 text-slate-500 border-b border-slate-100">
                                   <tr>
-                                    <th className="text-left py-2.5 px-4 font-semibold">Hình ảnh biến thể</th>
-                                    <th className="text-left py-2.5 px-4 font-semibold">Kích cỡ</th>
-                                    <th className="text-left py-2.5 px-4 font-semibold">Màu sắc</th>
-                                    <th className="text-left py-2.5 px-4 font-semibold">Số lượng kho</th>
+                                    <th className="text-left py-2.5 px-4 font-medium">Hình ảnh biến thể</th>
+                                    <th className="text-left py-2.5 px-4 font-medium">Kích cỡ</th>
+                                    <th className="text-left py-2.5 px-4 font-medium">Màu sắc</th>
+                                    <th className="text-left py-2.5 px-4 font-medium">Số lượng kho</th>
                                     <th>Thao tác</th>
                                   </tr>
                                 </thead>
@@ -1172,19 +1172,19 @@ export default function Products() {
                                             )}
                                           </div>
                                         </td>
-                                        <td className="py-2.5 px-4 font-bold text-slate-800">
-                                          <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md">
+                                        <td className="py-2.5 px-4 font-medium text-slate-800">
+                                          <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-medium">
                                             Size {size}
                                           </span>
                                         </td>
-                                        <td className="py-2.5 px-4 font-medium text-slate-700">
-                                          <span className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md font-semibold">
+                                        <td className="py-2.5 px-4 font-normal text-slate-700">
+                                          <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md font-medium">
                                             {color}
                                           </span>
                                         </td>
                                         <td className="py-2.5 px-4">
                                           <span
-                                            className={`font-bold px-2.5 py-1 rounded-md ${
+                                            className={`font-medium px-2.5 py-1 rounded-md ${
                                               stock > 0
                                                 ? 'bg-emerald-50 text-emerald-600'
                                                 : 'bg-red-50 text-red-500'
@@ -1195,10 +1195,10 @@ export default function Products() {
                                         </td>
 
                                         <td className="flex items-center justify-center py-2.5 px-4 gap-2">
-                                          <button type="button" onClick={() => openEditVariantModal(variant, p.ma_san_pham)} className="text-emerald-500 bg-emerald-50 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-100 transition-colors">
+                                          <button type="button" onClick={() => openEditVariantModal(variant, p.ma_san_pham)} className="text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-emerald-100 transition-colors">
                                             Sửa
                                           </button>
-                                          <button type="button" onClick={() => handleRemoveVariant(variant.ma_bien_the)} className="text-red-500 bg-red-50 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-red-100 transition-colors">
+                                          <button type="button" onClick={() => handleRemoveVariant(variant.ma_bien_the)} className="text-red-500 bg-red-50 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-red-100 transition-colors">
                                             Xóa
                                           </button>
                                         </td>

@@ -9,8 +9,16 @@ from typing import Annotated
 from database import SessionLocal, engine
 from fastapi.middleware.cors import CORSMiddleware
 from security import require_admin
+from settings_router import router as settings_router
 
-app = FastAPI(title="StepStyle Product Service")
+app = FastAPI(
+    title="StepStyle Product Service",
+    description=(
+        "Product catalog (categories, products, variants) **and** system "
+        "settings (store information, payment-method toggles, shipping-carrier "
+        "toggles) under `/api/v1/settings`."
+    ),
+)
 
 cors_origins = [
     origin.strip()
@@ -29,6 +37,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Store configuration endpoints (`/api/v1/settings/...`) documented in the
+# same Swagger UI as the product catalog.
+app.include_router(settings_router)
+
 
 @app.get("/health", tags=["discovery"])
 async def health():
@@ -39,14 +51,14 @@ class BienTheSanPhamRequest(BaseModel):
     kich_co: str
     mau_sac: str
     so_luong_kho: int = 0
-    hinh_anh_bien_the: str
+    hinh_anh_bien_the: str | None = None
 
 class BienTheResponse(BaseModel):
     ma_bien_the: int
     kich_co: str
     mau_sac: str
     so_luong_kho: int
-    hinh_anh_bien_the: str
+    hinh_anh_bien_the: str | None = None
 
     class Config:
         from_attributes = True
@@ -61,7 +73,7 @@ class SanPhamRequest(BaseModel):
     ma_danh_muc:int | None = None
 
 class SanPhamResponse(BaseModel):
-    ma_san_pham: int  # Cần có ID để Frontend dùng
+    ma_san_pham: int  
     ten_san_pham: str
     gia_goc: float
     gia_khuyen_mai: float
@@ -69,7 +81,6 @@ class SanPhamResponse(BaseModel):
     trang_thai: str
     ma_danh_muc: int | None
 
-    # Mảng biến thể lồng bên trong
     danh_sach_bien_the: list[BienTheResponse] = []
 
     class Config:
@@ -108,10 +119,10 @@ admin_dependency = Annotated[dict, Depends(require_admin)]
 async def get_all_products(db: db_dependency, _admin: admin_dependency):
     return db.query(SanPham).all()
 
-# get product by id
-@app.get("/products/{id}")
-async def get_product_by_id(id: int, db: db_dependency, _admin: admin_dependency):
-    return db.query(SanPham).filter(SanPham.ma_san_pham == id).first()
+# get all categories
+@app.get("/products/categories", response_model=list[DanhMucResponse])
+async def get_all_categories(db: db_dependency, _admin: admin_dependency):
+    return db.query(DanhMuc).all()
 
 # find product by category, name and status
 @app.get("/products/find", response_model=list[SanPhamResponse])
@@ -130,6 +141,11 @@ def find_product(db: db_dependency, _admin: admin_dependency, product_name: str 
         raise HTTPException(status_code=404, detail="Khong tim thay san pham")
 
     return products
+
+# get product by id
+@app.get("/products/{id}")
+async def get_product_by_id(id: int, db: db_dependency, _admin: admin_dependency):
+    return db.query(SanPham).filter(SanPham.ma_san_pham == id).first()
 
 
 
@@ -155,6 +171,7 @@ async def update_product(id: int, db: db_dependency, update_product: SanPhamRequ
     product.mo_ta = update_product.mo_ta
     product.hinh_anh_dai_dien = update_product.hinh_anh_dai_dien
     product.ma_danh_muc = update_product.ma_danh_muc
+    product.trang_thai = update_product.trang_thai
 
     db.add(product)
     db.commit()
@@ -212,11 +229,6 @@ async def delete_variant(id: int, db: db_dependency, _admin: admin_dependency):
     db.delete(variant_model)
     db.commit()
     return "Da xoa bien the san pham thanh cong"
-
-# get all categories
-@app.get("/products/categories", response_model=list[DanhMucResponse])
-async def get_all_categories(db: db_dependency, _admin: admin_dependency):
-    return db.query(DanhMuc).all()
 
 # create categories
 @app.post("/products/categories/create")

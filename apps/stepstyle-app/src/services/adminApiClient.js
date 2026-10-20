@@ -42,7 +42,10 @@ const createClient = (baseURL) => {
   client.interceptors.request.use(addAuthToken, (error) => Promise.reject(error));
   client.interceptors.response.use(unwrapEnvelope, async (error) => {
     const originalConfig = error.config;
-    if (error.response?.status === 401 && originalConfig && !originalConfig._retry) {
+    const isAuthExpiredOrRotated =
+      error.response?.status === 401 ||
+      error.response?.data?.detail?.code === 'UNKNOWN_KEY';
+    if (isAuthExpiredOrRotated && originalConfig && !originalConfig._retry) {
       originalConfig._retry = true;
       const storedRefresh = localStorage.getItem('refreshToken');
       if (!storedRefresh) {
@@ -77,9 +80,9 @@ const createClient = (baseURL) => {
   return client;
 };
 
-// Admin Product CRUD service on port 8001.
+// Admin Product CRUD service on port 4008.
 const adminApiClient = createClient(
-  import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:8001'
+  import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:4008'
 );
 
 // System Configuration Service on /api/v1/settings (store, payment methods,
@@ -98,9 +101,9 @@ export const reportingApiClient = createClient(
   import.meta.env.VITE_REPORTING_API_URL || 'http://localhost:4006/api/v1/reports'
 );
 
-// Product Management Service on port 8001
+// Product Management Service on port 4008
 export const productApiClient = createClient(
-  import.meta.env.VITE_PRODUCT_API_URL || 'http://localhost:8001'
+  import.meta.env.VITE_PRODUCT_API_URL || 'http://localhost:4008'
 );
 
 // Order Management Service (FastAPI) on /api/v1

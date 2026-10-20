@@ -49,6 +49,26 @@ Base path `/` · interactive docs at `/docs` · OpenAPI at `/openapi.json`.
 |PUT|`/products/variant/update/{id}`|Variants|Update variant details \& stock|
 |DELETE|`/products/variant/delete/{id}`|Variants|Delete a specific variant|
 
+### System settings (`/api/v1/settings`)
+
+The store configuration owned by `system-config-service` is also exposed here, so
+the whole admin API is documented in a single Swagger UI at `http://localhost:4008/docs`.
+
+|Method|Path|Target|Description|
+|-|-|-|-|
+|GET|`/api/v1/settings/public`|`caidat*`|Public storefront config — enabled options only, no auth|
+|GET|`/api/v1/settings/store`|`caidatcuahang`|Read the store configuration|
+|PUT|`/api/v1/settings/store`|`caidatcuahang`|Partial update of the store configuration|
+|GET|`/api/v1/settings/payment-methods`|`caidatphuongthucthanhtoan`|List payment methods|
+|PUT|`/api/v1/settings/payment-methods/{id}`|`caidatphuongthucthanhtoan`|Enable/disable a payment method|
+|GET|`/api/v1/settings/shipping-partners`|`caidatdoitacvanchuyen`|List shipping carriers|
+|PUT|`/api/v1/settings/shipping-partners/{id}`|`caidatdoitacvanchuyen`|Enable/disable a shipping carrier|
+
+The store singleton, the six payment methods and the four carriers are created
+with their defaults (all disabled) on first access. Disabling an option only
+flips `kich_hoat`; no row is ever deleted. Every route except `/public` requires
+an `ADMIN` bearer token.
+
 ### Products \& Variants Structure
 
 `GET /products` returns a list of products. Because of SQLAlchemy relationships, each product includes its nested variants (`danh\_sach\_bien\_the`).
@@ -130,22 +150,25 @@ mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS stepstyle\_db;"
 
 # 3. Run the service
 # The metadata.create\_all(bind=engine) in main.py will auto-create tables if missing
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --port 4008
 ```
 
 ### Sanity checks
 
 ```bash
-curl http://localhost:8000/products/categories
-curl "http://localhost:8000/products/find?product\_name=Giay\&product\_status=ACTIVE"
+curl http://localhost:4008/products/categories
+curl "http://localhost:4008/products/find?product\_name=Giay\&product\_status=ACTIVE"
+curl http://localhost:4008/api/v1/settings/public
 ```
 
 ## Project structure
 
 ```text
 database.py                 SQLAlchemy engine, connection string, and sessionmaker
-main.py                     FastAPI app, CORS, Pydantic schemas, and REST routes
-models.py                   SQLAlchemy ORM models (SanPham, DanhMuc, BienTheSanPham)
+main.py                     FastAPI app, CORS, Pydantic schemas, and product REST routes
+models.py                   SQLAlchemy ORM models (SanPham, DanhMuc, BienTheSanPham, CaiDat*)
+security.py                 JWKS verification and the `ADMIN` guard
+settings_router.py          System settings routes under `/api/v1/settings`
 ```
 
 ## Notes
