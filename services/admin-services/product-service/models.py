@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DECIMAL, Enum, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DECIMAL, Enum, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -40,4 +40,50 @@ class BienTheSanPham(Base):
     hinh_anh_bien_the =  Column(String(255))
 
     san_pham = relationship("SanPham", back_populates="danh_sach_bien_the")
+
+
+# ── System settings (caidat* tables, shared with system-config-service) ──────
+
+class CaiDatCuaHang(Base):
+    """Store settings — one row for the shop (`caidatcuahang`)."""
+
+    __tablename__ = 'caidatcuahang'
+    ma_cai_dat = Column(Integer, primary_key=True, index=True)
+    ten_cua_hang = Column(String(255), nullable=False, default='Not configured')
+    email_lien_he = Column(String(255))
+    so_dien_thoai = Column(String(20))
+    dia_chi_kho = Column(String(255))
+    phuong_xa = Column(String(100))
+    quan_huyen = Column(String(100))
+    tinh_thanh = Column(String(100))
+    phi_van_chuyen_co_ban = Column(DECIMAL(15, 0), nullable=False, default=35000)
+    nguong_mien_phi_van_chuyen = Column(DECIMAL(15, 0), nullable=False, default=500000)
+    ngay_tao = Column(DateTime, server_default=func.now())
+    ngay_cap_nhat = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class CaiDatPhuongThucThanhToan(Base):
+    """Toggleable payment method of the store (`caidatphuongthucthanhtoan`)."""
+
+    __tablename__ = 'caidatphuongthucthanhtoan'
+
+    ma_cai_dat_phuong_thuc = Column(Integer, primary_key=True, index=True)
+    ma_cai_dat = Column(Integer, ForeignKey("caidatcuahang.ma_cai_dat"), nullable=False)
+    code_phuong_thuc = Column(String(30), nullable=False)
+    ten_phuong_thuc = Column(String(100), nullable=False)
+    mo_ta = Column(String(255))
+    kich_hoat = Column(Boolean, nullable=False, default=False)
+
+
+class CaiDatDoiTacVanChuyen(Base):
+    """Toggleable shipping carrier of the store (`caidatdoitacvanchuyen`)."""
+
+    __tablename__ = 'caidatdoitacvanchuyen'
+
+    ma_cai_dat_doi_tac = Column(Integer, primary_key=True, index=True)
+    ma_cai_dat = Column(Integer, ForeignKey("caidatcuahang.ma_cai_dat"), nullable=False)
+    code_doi_tac = Column(String(30), nullable=False)
+    ten_doi_tac = Column(String(100), nullable=False)
+    mo_ta = Column(String(255))
+    kich_hoat = Column(Boolean, nullable=False, default=False)
 

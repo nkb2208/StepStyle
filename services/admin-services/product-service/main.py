@@ -9,8 +9,16 @@ from typing import Annotated
 from database import SessionLocal, engine
 from fastapi.middleware.cors import CORSMiddleware
 from security import require_admin
+from settings_router import router as settings_router
 
-app = FastAPI(title="StepStyle Product Service")
+app = FastAPI(
+    title="StepStyle Product Service",
+    description=(
+        "Product catalog (categories, products, variants) **and** system "
+        "settings (store information, payment-method toggles, shipping-carrier "
+        "toggles) under `/api/v1/settings`."
+    ),
+)
 
 cors_origins = [
     origin.strip()
@@ -28,6 +36,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Store configuration endpoints (`/api/v1/settings/...`) documented in the
+# same Swagger UI as the product catalog.
+app.include_router(settings_router)
 
 
 @app.get("/health", tags=["discovery"])
