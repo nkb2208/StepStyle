@@ -34,9 +34,7 @@ class UserService:
         return UserOut.model_validate(user)
 
     async def create_user(self, data: UserCreate) -> UserOut:
-        """Tạo người dùng mới (quản trị viên)."""
-        if data.vai_tro not in _VALID_ROLES:
-            raise bad_request("INVALID_VAI_TRO", f"Vai trò '{data.vai_tro}' không hợp lệ")
+        """Tạo tài khoản quản trị viên mới (ADMIN)."""
         existing = await self._repo.get_by_email(data.email)
         if existing is not None:
             raise conflict("EMAIL_TAKEN", f"Email '{data.email}' đã được sử dụng")
@@ -44,9 +42,7 @@ class UserService:
         return UserOut.model_validate(user)
 
     async def update_user(self, user_id: int, data: UserUpdate) -> UserOut:
-        """Cập nhật thông tin người dùng (quản trị viên)."""
-        if data.vai_tro is not None and data.vai_tro not in _VALID_ROLES:
-            raise bad_request("INVALID_VAI_TRO", f"Vai trò '{data.vai_tro}' không hợp lệ")
+        """Cập nhật thông tin tài khoản quản trị viên (họ tên, số điện thoại, trạng thái)."""
         user = await self._repo.get_by_id(user_id)
         if user is None:
             raise not_found("Người dùng")

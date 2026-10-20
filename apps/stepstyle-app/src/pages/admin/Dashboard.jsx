@@ -154,25 +154,69 @@ export default function Dashboard() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Chào mừng trở lại 👋</h2>
-        <p className="text-slate-400 text-sm mt-0.5">
-          Tổng quan hệ thống StepStyle — cập nhật lúc {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+        <h2 className="text-2xl font-bold text-slate-900">Tổng quan hệ thống</h2>
+        <p className="text-slate-400 text-sm mt-0.5 font-normal">
+          Thống kê hoạt động StepStyle — cập nhật lúc {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Tổng doanh thu', value: formatPrice(overview.totalRevenue), delta: `${overview.totalOrders} đơn hàng`, good: true, icon: '💰', bg: 'bg-purple-50', text: 'text-purple-600' },
-          { label: 'Khách hàng', value: overview.buyers.toString(), delta: 'tài khoản khách hàng', good: true, icon: '👥', bg: 'bg-sky-50', text: 'text-sky-600' },
-          { label: 'Nhân sự', value: overview.staff.toString(), delta: 'đang hoạt động', good: true, icon: '🧑‍💼', bg: 'bg-emerald-50', text: 'text-emerald-600' },
-          { label: 'Tỉ lệ huỷ đơn', value: `${overview.cancelRate}%`, delta: overview.cancelRate < 8 ? 'Tốt' : 'Cần chú ý', good: overview.cancelRate < 8, icon: '📉', bg: 'bg-amber-50', text: 'text-amber-600' },
+          {
+            label: 'Tổng doanh thu',
+            value: formatPrice(overview.totalRevenue),
+            delta: `${overview.totalOrders} đơn hàng`,
+            good: true,
+            icon: (
+              <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ),
+            bg: 'bg-indigo-50',
+          },
+          {
+            label: 'Khách hàng',
+            value: overview.buyers.toString(),
+            delta: 'tài khoản khách hàng',
+            good: true,
+            icon: (
+              <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ),
+            bg: 'bg-sky-50',
+          },
+          {
+            label: 'Nhân sự',
+            value: overview.staff.toString(),
+            delta: 'đang hoạt động',
+            good: true,
+            icon: (
+              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            ),
+            bg: 'bg-emerald-50',
+          },
+          {
+            label: 'Tỉ lệ huỷ đơn',
+            value: `${overview.cancelRate}%`,
+            delta: overview.cancelRate < 8 ? 'Tốt' : 'Cần chú ý',
+            good: overview.cancelRate < 8,
+            icon: (
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+              </svg>
+            ),
+            bg: 'bg-amber-50',
+          },
         ].map((k) => (
           <div key={k.label} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-            <div className={`w-10 h-10 ${k.bg} rounded-xl flex items-center justify-center text-xl mb-3`}>{k.icon}</div>
+            <div className={`w-10 h-10 ${k.bg} rounded-xl flex items-center justify-center mb-3`}>{k.icon}</div>
             <p className="text-2xl font-bold text-slate-900">{k.value}</p>
-            <p className="text-sm text-slate-500 font-medium">{k.label}</p>
-            <p className={`text-xs mt-1 font-semibold ${k.good ? 'text-emerald-500' : 'text-red-500'}`}>{k.delta}</p>
+            <p className="text-sm text-slate-500 font-normal">{k.label}</p>
+            <p className={`text-xs mt-1 font-medium ${k.good ? 'text-emerald-500' : 'text-red-500'}`}>{k.delta}</p>
           </div>
         ))}
       </div>
@@ -183,7 +227,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-slate-900">Doanh thu theo tháng (triệu đ)</h3>
-            <span className="text-xs text-purple-600 font-semibold bg-purple-50 px-3 py-1.5 rounded-lg">
+            <span className="text-xs text-indigo-600 font-medium bg-indigo-50 px-3 py-1.5 rounded-lg">
               Năm {currentYear}
             </span>
           </div>
@@ -199,8 +243,8 @@ export default function Dashboard() {
             {userDistribution.map((r) => (
               <div key={r.role}>
                 <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="font-medium text-slate-700">{r.label}</span>
-                  <span className="font-bold text-slate-900">{r.count}</span>
+                  <span className="font-normal text-slate-700">{r.label}</span>
+                  <span className="font-semibold text-slate-900">{r.count}</span>
                 </div>
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div className={`h-full rounded-full ${r.color}`} style={{ width: `${(r.count / totalUsers) * 100}%` }}></div>

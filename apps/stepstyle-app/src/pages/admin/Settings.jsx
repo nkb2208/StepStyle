@@ -266,7 +266,7 @@ export default function Settings() {
         <button
           type="button"
           onClick={load}
-          className="bg-purple-500 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-purple-600 transition-colors"
+          className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
         >
           Thử lại
         </button>
@@ -290,7 +290,7 @@ export default function Settings() {
           <button
             type="submit"
             disabled={disabled}
-            className="bg-purple-500 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {disabled ? 'Đang lưu...' : 'Lưu thay đổi'}
           </button>
@@ -298,7 +298,7 @@ export default function Settings() {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2" htmlFor="store_name">
+            <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="store_name">
               Tên cửa hàng
             </label>
             <input
@@ -308,14 +308,14 @@ export default function Settings() {
               value={form.store_name}
               onChange={handleChange}
               disabled={disabled}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 disabled:bg-slate-50"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-600 disabled:bg-slate-50"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label
-                className="block text-sm font-semibold text-slate-700 mb-2"
+                className="block text-sm font-medium text-slate-700 mb-2"
                 htmlFor="contact_email"
               >
                 Email liên hệ

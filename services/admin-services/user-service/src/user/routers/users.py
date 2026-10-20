@@ -2,9 +2,9 @@
 
 Phân quyền (chỉ dành cho quản trị viên):
 - ``GET  /users``          → danh sách tất cả tài khoản (có phân trang)
-- ``POST /users``          → tạo tài khoản mới
+- ``POST /users``          → tạo tài khoản quản trị viên mới
 - ``GET  /users/{id}``     → xem tài khoản theo ID
-- ``PUT  /users/{id}``     → cập nhật tài khoản (đổi vai trò, kích hoạt/khoá)
+- ``PUT  /users/{id}``     → cập nhật tài khoản quản trị viên hoặc khoá/mở khoá tài khoản
 - ``DELETE /users/{id}``   → xoá tài khoản
 """
 
@@ -44,28 +44,28 @@ async def get_user(
     _admin: CurrentUser = Depends(require_admin),
     svc: UserService = Depends(get_service),
 ) -> UserOut:
-    """Quản trị viên xem thông tin tài khoản bất kỳ."""
+    """Quản trị viên xem thông tin tài khoản bất kỳ theo ID."""
     return await svc.get_user(user_id)
 
 
-@router.post("", response_model=UserOut, status_code=201, summary="Tạo tài khoản người dùng")
+@router.post("", response_model=UserOut, status_code=201, summary="Tạo tài khoản quản trị viên")
 async def create_user(
     body: UserCreate,
     _admin: CurrentUser = Depends(require_admin),
     svc: UserService = Depends(get_service),
 ) -> UserOut:
-    """Quản trị viên tạo tài khoản mới (khách hàng hoặc quản trị viên)."""
+    """Tạo tài khoản quản trị viên mới (ADMIN)."""
     return await svc.create_user(body)
 
 
-@router.put("/{user_id}", response_model=UserOut, summary="Cập nhật tài khoản người dùng")
+@router.put("/{user_id}", response_model=UserOut, summary="Cập nhật tài khoản quản trị viên / Khóa tài khoản khách hàng")
 async def update_user(
     user_id: int,
     body: UserUpdate,
     _admin: CurrentUser = Depends(require_admin),
     svc: UserService = Depends(get_service),
 ) -> UserOut:
-    """Quản trị viên cập nhật thông tin tài khoản, đổi vai trò, kích hoạt/vô hiệu hoá."""
+    """Cập nhật thông tin tài khoản (quản trị viên: họ tên, số điện thoại, trạng thái; khách hàng: khóa/mở khóa tài khoản)."""
     return await svc.update_user(user_id, body)
 
 

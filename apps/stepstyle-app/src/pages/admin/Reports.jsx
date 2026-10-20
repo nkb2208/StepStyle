@@ -233,7 +233,7 @@ export default function Reports() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="border border-slate-200 rounded-xl px-4 py-2 text-sm font-semibold outline-none focus:border-purple-500 bg-white"
+            className="border border-slate-200 rounded-xl px-4 py-2 text-sm font-medium outline-none focus:border-indigo-600 bg-white"
           >
             {[2026, 2025, 2024, 2023].map((yr) => (
               <option key={yr} value={yr}>Năm {yr}</option>
@@ -242,7 +242,7 @@ export default function Reports() {
           <button
             onClick={() => loadReports(selectedYear)}
             disabled={loading}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm shadow-purple-500/20 disabled:opacity-50"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-all shadow-xs disabled:opacity-50"
           >
             {loading ? 'Đang tải...' : 'Làm mới'}
           </button>
@@ -250,7 +250,7 @@ export default function Reports() {
       </div>
 
       {errorNotice && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-3 rounded-xl">
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-3 rounded-xl font-normal">
           {errorNotice}
         </div>
       )}
@@ -258,18 +258,55 @@ export default function Reports() {
       {/* KPI Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: `Tổng doanh thu (Năm ${selectedYear})`, value: formatPrice(overview.total_revenue), icon: '💰', sub: `Tháng cao nhất: ${overview.top_month}` },
-          { label: 'Tổng số đơn hàng', value: `${overview.total_orders} đơn`, icon: '📦', sub: `Giao thành công: ${overview.successful_orders}` },
-          { label: 'Giá trị đơn TB (AOV)', value: formatPrice(overview.average_order_value), icon: '📈', sub: 'Trung bình mỗi đơn đặt' },
-          { label: 'Tỉ lệ hủy đơn', value: `${overview.cancel_rate}%`, icon: '📉', sub: `${overview.cancelled_orders} đơn đã bị hủy`, alert: overview.cancel_rate > 10 },
+          {
+            label: `Tổng doanh thu (Năm ${selectedYear})`,
+            value: formatPrice(overview.total_revenue),
+            icon: (
+              <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ),
+            sub: `Tháng cao nhất: ${overview.top_month}`,
+          },
+          {
+            label: 'Tổng số đơn hàng',
+            value: `${overview.total_orders} đơn`,
+            icon: (
+              <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            ),
+            sub: `Giao thành công: ${overview.successful_orders}`,
+          },
+          {
+            label: 'Giá trị đơn TB (AOV)',
+            value: formatPrice(overview.average_order_value),
+            icon: (
+              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            ),
+            sub: 'Trung bình mỗi đơn đặt',
+          },
+          {
+            label: 'Tỉ lệ hủy đơn',
+            value: `${overview.cancel_rate}%`,
+            icon: (
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+              </svg>
+            ),
+            sub: `${overview.cancelled_orders} đơn đã bị hủy`,
+            alert: overview.cancel_rate > 10,
+          },
         ].map((k) => (
           <div key={k.label} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-            <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center text-xl mb-3">
+            <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center mb-3">
               {k.icon}
             </div>
             <p className="text-2xl font-bold text-slate-900">{k.value}</p>
-            <p className="text-sm text-slate-500 font-medium mt-0.5">{k.label}</p>
-            <p className={`text-xs mt-2 font-medium ${k.alert ? 'text-red-500' : 'text-slate-400'}`}>
+            <p className="text-sm text-slate-500 font-normal mt-0.5">{k.label}</p>
+            <p className={`text-xs mt-2 font-normal ${k.alert ? 'text-red-500' : 'text-slate-400'}`}>
               {k.sub}
             </p>
           </div>
@@ -282,7 +319,7 @@ export default function Reports() {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-slate-900 text-base">Doanh thu & Số lượng đơn theo tháng</h3>
-            <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-3 py-1 rounded-lg">
+            <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">
               Năm {selectedYear}
             </span>
           </div>
@@ -299,12 +336,12 @@ export default function Reports() {
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-center">
             <div className="p-2 bg-emerald-50 rounded-xl">
-              <span className="text-xs text-emerald-600 font-medium">Thành công</span>
-              <p className="text-sm font-bold text-emerald-700">{overview.successful_orders} đơn</p>
+              <span className="text-xs text-emerald-600 font-normal">Thành công</span>
+              <p className="text-sm font-semibold text-emerald-700">{overview.successful_orders} đơn</p>
             </div>
             <div className="p-2 bg-red-50 rounded-xl">
-              <span className="text-xs text-red-500 font-medium">Đã hủy</span>
-              <p className="text-sm font-bold text-red-600">{overview.cancelled_orders} đơn</p>
+              <span className="text-xs text-red-500 font-normal">Đã hủy</span>
+              <p className="text-sm font-semibold text-red-600">{overview.cancelled_orders} đơn</p>
             </div>
           </div>
         </div>
@@ -314,29 +351,29 @@ export default function Reports() {
       <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-bold text-slate-900 text-lg">Top 5 đôi giày bán chạy nhất</h3>
-          <span className="text-xs text-slate-400">Xếp hạng theo số lượng bán</span>
+          <span className="text-xs text-slate-400 font-normal">Xếp hạng theo số lượng bán</span>
         </div>
         <div className="space-y-4">
           {topProducts.map((p, idx) => (
             <div key={p.product_name + idx} className="flex items-center gap-4">
               <span
-                className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0 ${
-                  idx === 0 ? 'bg-amber-400' : idx === 1 ? 'bg-slate-400' : idx === 2 ? 'bg-amber-700' : 'bg-slate-200 text-slate-600'
+                className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-semibold text-white shrink-0 ${
+                  idx === 0 ? 'bg-amber-500' : idx === 1 ? 'bg-slate-400' : idx === 2 ? 'bg-amber-700' : 'bg-slate-200 text-slate-600'
                 }`}
               >
                 {idx + 1}
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-bold text-slate-900 truncate">{p.product_name}</p>
+                  <p className="text-sm font-medium text-slate-900 truncate">{p.product_name}</p>
                   <div className="text-right shrink-0 ml-3">
-                    <span className="text-sm font-bold text-purple-600">{formatPrice(p.total_revenue)}</span>
-                    <span className="text-xs text-slate-400 ml-2">({p.total_sold} đôi)</span>
+                    <span className="text-sm font-semibold text-indigo-600">{formatPrice(p.total_revenue)}</span>
+                    <span className="text-xs text-slate-400 ml-2 font-normal">({p.total_sold} đôi)</span>
                   </div>
                 </div>
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-purple-500 rounded-full transition-all"
+                    className="h-full bg-indigo-600 rounded-full transition-all"
                     style={{ width: `${Math.min(100, Math.round((p.total_sold / maxSold) * 100))}%` }}
                   ></div>
                 </div>
@@ -353,33 +390,33 @@ export default function Reports() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left py-3.5 px-4 text-slate-600 font-semibold rounded-tl-xl">Tháng</th>
-                <th className="text-left py-3.5 px-4 text-slate-600 font-semibold">Doanh thu</th>
-                <th className="text-left py-3.5 px-4 text-slate-600 font-semibold">Tổng đơn</th>
-                <th className="text-left py-3.5 px-4 text-slate-600 font-semibold">Đơn thành công</th>
-                <th className="text-left py-3.5 px-4 text-slate-600 font-semibold">Đơn hủy</th>
-                <th className="text-left py-3.5 px-4 text-slate-600 font-semibold">Tỉ lệ hủy</th>
-                <th className="text-left py-3.5 px-4 text-slate-600 font-semibold rounded-tr-xl">Giá trị TB</th>
+                <th className="text-left py-3.5 px-4 text-slate-500 font-medium rounded-tl-xl">Tháng</th>
+                <th className="text-left py-3.5 px-4 text-slate-500 font-medium">Doanh thu</th>
+                <th className="text-left py-3.5 px-4 text-slate-500 font-medium">Tổng đơn</th>
+                <th className="text-left py-3.5 px-4 text-slate-500 font-medium">Đơn thành công</th>
+                <th className="text-left py-3.5 px-4 text-slate-500 font-medium">Đơn hủy</th>
+                <th className="text-left py-3.5 px-4 text-slate-500 font-medium">Tỉ lệ hủy</th>
+                <th className="text-left py-3.5 px-4 text-slate-500 font-medium rounded-tr-xl">Giá trị TB</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {monthlyData.map((m) => (
                 <tr key={m.month} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-slate-900">{m.month_label}</td>
-                  <td className="py-3.5 px-4 font-bold text-purple-600">{formatPrice(m.revenue)}</td>
-                  <td className="py-3.5 px-4 text-slate-700">{m.total_orders}</td>
-                  <td className="py-3.5 px-4 text-emerald-600 font-semibold">{m.successful_orders}</td>
-                  <td className="py-3.5 px-4 text-red-500 font-semibold">{m.cancelled_orders}</td>
+                  <td className="py-3.5 px-4 font-medium text-slate-900">{m.month_label}</td>
+                  <td className="py-3.5 px-4 font-semibold text-indigo-600">{formatPrice(m.revenue)}</td>
+                  <td className="py-3.5 px-4 text-slate-700 font-normal">{m.total_orders}</td>
+                  <td className="py-3.5 px-4 text-emerald-600 font-medium">{m.successful_orders}</td>
+                  <td className="py-3.5 px-4 text-red-500 font-medium">{m.cancelled_orders}</td>
                   <td className="py-3.5 px-4">
                     <span
-                      className={`text-xs font-bold px-2.5 py-1 rounded-md ${
+                      className={`text-xs font-medium px-2.5 py-1 rounded-md ${
                         m.cancel_rate > 10 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'
                       }`}
                     >
                       {m.cancel_rate}%
                     </span>
                   </td>
-                  <td className="py-3.5 px-4 text-slate-600">{formatPrice(m.average_value)}</td>
+                  <td className="py-3.5 px-4 text-slate-600 font-normal">{formatPrice(m.average_value)}</td>
                 </tr>
               ))}
             </tbody>

@@ -15,7 +15,7 @@ export const getUserById = async (id) => {
 export const createUser = async (data) => {
   const response = await userApiClient.post('/users', data);
   try {
-    const rawRole = (data.vai_tro || data.role || 'CUSTOMER').toUpperCase();
+    const rawRole = (response.data?.vai_tro || data.vai_tro || data.role || 'ADMIN').toUpperCase();
     const authRole = rawRole === 'STAFF' ? 'SELLER' : rawRole;
     await authUsersApiClient.post('/', {
       email: data.email,

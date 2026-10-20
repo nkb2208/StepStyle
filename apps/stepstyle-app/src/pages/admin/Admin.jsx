@@ -67,69 +67,121 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
-      <aside className="w-64 bg-white border-r border-slate-100 flex flex-col fixed h-full z-30 shadow-sm">
+    <div className="min-h-screen flex bg-slate-50 font-sans text-slate-800">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r border-slate-200/80 flex flex-col fixed h-full z-30 shadow-xs">
+        {/* Brand Header */}
         <div className="h-16 flex items-center px-5 border-b border-slate-100 gap-3">
-          <div className="w-8 h-8 bg-purple-500 rounded-xl flex items-center justify-center shrink-0">
-            <span className="text-white text-sm font-bold">A</span>
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-xs">
+            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 16.5C5 17.8 8 18.2 11.5 17.8C15.5 17.4 19 17.9 21.2 16.7C21.8 16.3 22 15.5 21.6 14.8C20.2 13.2 17.5 12.5 13 13C9 13.5 6 15 4 16.5Z" fill="currentColor" fillOpacity="0.25" />
+              <path d="M6 14.2C7 11.2 9.5 7.8 12.5 6.2C14 5.4 15.5 6.2 16 7.8C16.5 9 15.8 10.2 14.5 11C17 10.7 19.5 11.7 21 13.7" />
+              <path d="M10 11.5c2-.5 4.5-.3 7 1" />
+            </svg>
           </div>
-          <div>
-            <p className="font-bold text-sm text-slate-900">StepStyle Admin</p>
-            <p className="text-xs text-purple-500 font-medium">Super Admin</p>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-base text-slate-900 tracking-tight">Step<span className="text-indigo-600">Style</span></span>
+              <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">Hub</span>
+            </div>
+            <p className="text-[11px] text-slate-500 font-normal truncate">Quản trị & Vận hành</p>
           </div>
         </div>
 
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-3 bg-purple-50 rounded-2xl px-4 py-3">
-            <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center shrink-0">
-              <span className="text-white font-bold">{adminInitial}</span>
+        {/* User Profile Card */}
+        <div className="px-4 py-3.5">
+          <div className="flex items-center gap-3 bg-slate-50/80 border border-slate-200/70 rounded-2xl p-2.5 shadow-xs">
+            <div className="relative shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-xs">
+                {adminInitial}
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-slate-900 truncate">{adminName}</p>
-              <p className="text-xs text-purple-500 font-medium">Quản trị viên</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-slate-900 truncate">{adminName}</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                <p className="text-[10px] text-indigo-700 font-medium uppercase tracking-wider">Quản trị viên</p>
+              </div>
             </div>
           </div>
         </div>
 
+        {/* Navigation */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-          {navItems.map(item => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)}
-              className={"w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all " + (activeTab === item.id ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20' : 'text-slate-600 hover:bg-slate-50')}>
-              <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-              </svg>
-              <span className="leading-tight">{item.label}</span>
-            </button>
-          ))}
+          {navItems.map(item => {
+            const isActive = activeTab === item.id;
+            return (
+              <button 
+                key={item.id} 
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  isActive 
+                    ? 'bg-indigo-600 text-white shadow-xs' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+                }`}
+              >
+                <svg className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={item.icon} />
+                </svg>
+                <span className="leading-tight">{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-          <button onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 w-full transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+        {/* Footer / Logout */}
+        <div className="p-3 border-t border-slate-100">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50/80 w-full transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
             Đăng xuất
           </button>
         </div>
       </aside>
 
-      <div className="flex-1 ml-64">
-        <header className="bg-white border-b border-slate-100 h-16 flex items-center justify-between px-8 sticky top-0 z-20">
-          <h1 className="text-xl font-bold text-slate-900">
-            {navItems.find(i => i.id === activeTab)?.label}
-          </h1>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-sm shadow-emerald-500/50"></div>
-            Hệ thống hoạt động bình thường
+      {/* Main Content Area */}
+      <div className="flex-1 ml-64 min-w-0">
+        <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 h-16 flex items-center justify-between px-8 sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            <h1 className="text-base font-bold text-slate-900 tracking-tight">
+              {navItems.find(i => i.id === activeTab)?.label}
+            </h1>
+            <span className="text-xs text-slate-300">|</span>
+            <span className="text-xs text-slate-500 font-normal">Bảng điều khiển StepStyle</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-xs font-medium text-emerald-700">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+              Hệ thống ổn định
+            </div>
+            <a 
+              href="/home" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-200 bg-white transition-all shadow-2xs"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Xem cửa hàng
+            </a>
           </div>
         </header>
-        <div className="p-8">
+
+        <main className="p-8">
           {activeTab === 'dashboard' && <Dashboard MONTHLY={MONTHLY} maxRev={maxRev} />}
           {activeTab === 'products' && <Products />}
           {activeTab === 'users' && <Users />}
           {activeTab === 'reports' && <Reports MONTHLY={MONTHLY} maxRev={maxRev} />}
           {activeTab === 'orders' && <Orders />}
           {activeTab === 'settings' && <Settings />}
-        </div>
+        </main>
       </div>
     </div>
   );

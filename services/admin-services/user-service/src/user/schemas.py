@@ -33,36 +33,20 @@ def _normalize_role(v: str | None) -> str | None:
 # ── Request bodies ───────────────────────────────────────────────────────────
 
 class UserCreate(BaseModel):
-    """Tạo người dùng mới."""
+    """Tạo tài khoản quản trị viên mới."""
 
-    ho_ten: str = Field(..., min_length=1, max_length=255)
-    email: EmailStr
-    mat_khau: str | None = Field(default="123456", min_length=4, max_length=128)
-    so_dien_thoai: str | None = Field(None, max_length=20)
-    dia_chi: str | None = Field(None, max_length=500)
-    vai_tro: str = Field(default=VaiTro.CUSTOMER.value)
-    kich_hoat: bool = True
-
-    @field_validator("vai_tro", mode="before")
-    @classmethod
-    def validate_vai_tro(cls, v: str) -> str:
-        return _normalize_role(v) or VaiTro.CUSTOMER.value
+    ho_ten: str = Field(..., min_length=1, max_length=255, description="Họ và tên")
+    email: EmailStr = Field(..., description="Email đăng nhập")
+    mat_khau: str = Field(default="123456", min_length=4, max_length=128, description="Mật khẩu")
+    so_dien_thoai: str | None = Field(None, max_length=20, description="Số điện thoại")
 
 
 class UserUpdate(BaseModel):
-    """Cập nhật thông tin — chỉ dành cho quản trị viên."""
+    """Cập nhật thông tin quản trị viên hoặc khóa/mở khóa tài khoản."""
 
-    ho_ten: str | None = Field(None, min_length=1, max_length=255)
-    mat_khau: str | None = Field(None, min_length=4, max_length=128)
-    so_dien_thoai: str | None = Field(None, max_length=20)
-    dia_chi: str | None = Field(None, max_length=500)
-    vai_tro: str | None = None
-    kich_hoat: bool | None = None
-
-    @field_validator("vai_tro", mode="before")
-    @classmethod
-    def validate_vai_tro(cls, v: str | None) -> str | None:
-        return _normalize_role(v)
+    ho_ten: str | None = Field(None, min_length=1, max_length=255, description="Họ và tên")
+    so_dien_thoai: str | None = Field(None, max_length=20, description="Số điện thoại")
+    kich_hoat: bool | None = Field(None, description="Trạng thái tài khoản (True: Hoạt động, False: Khóa)")
 
 
 # ── Response bodies ──────────────────────────────────────────────────────────
