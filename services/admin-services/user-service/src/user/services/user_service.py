@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from user.errors import bad_request, conflict, not_found
 from user.models import NguoiDung, VaiTro
 from user.repositories.user_repository import UserRepository
-from user.schemas import ProfileOut, ProfileUpdate, UserCreate, UserListOut, UserOut, UserUpdate
+from user.schemas import UserCreate, UserListOut, UserOut, UserUpdate
 
 _VALID_ROLES = {v.value for v in VaiTro}
 
@@ -15,8 +15,6 @@ _VALID_ROLES = {v.value for v in VaiTro}
 class UserService:
     def __init__(self, session: AsyncSession) -> None:
         self._repo = UserRepository(session)
-
-    # ── Admin operations ─────────────────────────────────────────────────────
 
     async def list_users(self, *, page: int = 1, page_size: int = 20) -> UserListOut:
         """Lấy danh sách người dùng có phân trang (quản trị viên)."""
@@ -61,34 +59,3 @@ class UserService:
         if user is None:
             raise not_found("Người dùng")
         await self._repo.delete(user)
-
-    # ── Customer (self) operations ───────────────────────────────────────────
-
-    async def get_profile(self, email: str) -> ProfileOut:
-        """Xem thông tin cá nhân — khách hàng tự xem theo email từ JWT."""
-        user = await self._repo.get_by_email(email)
-        if user is None:
-            raise not_found("Người dùng")
-        return ProfileOut.model_validate(user)
-
-    async def get_profile_by_id(self, user_id: int) -> ProfileOut:
-        """Xem thông tin cá nhân theo auth_user_id (MongoDB ObjectId dưới dạng string mapping)."""
-        user = await self._repo.get_by_id(user_id)
-        if user is None:
-            raise not_found("Người dùng")
-        return ProfileOut.model_validate(user)
-
-    async def update_profile(self, email: str, data: ProfileUpdate) -> ProfileOut:
-        """Khách hàng tự cập nhật thông tin cá nhân (không thể đổi vai trò hay trạng thái)."""
-        user = await self._repo.get_by_email(email)
-        if user is None:
-            raise not_found("Người dùng")
-        # Map ProfileUpdate -> UserUpdate (chỉ các trường được phép)
-        patch = UserUpdate(
-            ho_ten=data.ho_ten,
-            so_dien_thoai=data.so_dien_thoai,
-            dia_chi=data.dia_chi,
-        )
-        updated = await self._repo.update(user, patch)
-        return ProfileOut.model_validate(updated)
-
