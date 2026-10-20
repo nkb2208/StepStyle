@@ -9,7 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY requirements.txt ./
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-COPY database.py models.py security.py main.py ./
+COPY database.py models.py security.py settings_router.py main.py ./
 
 EXPOSE 4008
 
