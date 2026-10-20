@@ -10,10 +10,12 @@ from sqlalchemy.pool import StaticPool  # noqa: E402
 from order.db import Base, get_session  # noqa: E402
 from order.main import app  # noqa: E402
 from order.models import (  # noqa: E402
+    BienTheSanPham,
     ChiTietDonHang,
     DonHang,
     NguoiDung,
     PhuongThucThanhToan,
+    SanPham,
     ThanhToan,
 )
 from order.security import CurrentUser, get_current_user  # noqa: E402
@@ -29,6 +31,14 @@ async def session_factory():
     factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     async with factory() as s:
         s.add_all([NguoiDung(id=1, ho_ten="Nguyễn A", email="a@x.com"), PhuongThucThanhToan(id=1, ten_phuong_thuc="COD")])
+        s.add_all(
+            [
+                SanPham(id=1, ten_san_pham="Giày X", gia_goc=200, gia_khuyen_mai=150, trang_thai="ACTIVE"),
+                SanPham(id=2, ten_san_pham="Giày cũ", gia_goc=100, trang_thai="INACTIVE"),
+                BienTheSanPham(id=1, ma_san_pham=1, kich_co="42", mau_sac="Đen", so_luong_kho=5),
+                BienTheSanPham(id=2, ma_san_pham=2, kich_co="40", mau_sac="Trắng", so_luong_kho=5),
+            ]
+        )
         s.add_all(
             [
                 DonHang(id=1, ma_nguoi_dung=1, ten_nguoi_nhan="Nguyễn A", so_dien_thoai_nhan="0901",

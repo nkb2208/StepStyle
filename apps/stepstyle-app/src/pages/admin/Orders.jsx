@@ -6,6 +6,11 @@ import {
   getOrderById,
   updateOrderStatus,
   updatePaymentStatus,
+  createOrder,
+  updateOrder,
+  deleteOrder,
+  getVariantOptions,
+  getPaymentMethods,
 } from '../../services/adminOrderService';
 
 const PAGE_SIZE = 10;
@@ -28,6 +33,20 @@ const PAYMENT = {
 const errMsg = (err) =>
   err?.response?.data?.error?.message || err?.message || 'Đã có lỗi xảy ra, vui lòng thử lại';
 
+const EDITABLE = ['PENDING', 'PROCESSING'];
+const EMPTY_FORM = {
+  ten_nguoi_nhan: '',
+  so_dien_thoai_nhan: '',
+  dia_chi_giao_hang: '',
+  ghi_chu: '',
+  ma_phuong_thuc: '',
+  phi_van_chuyen: 0,
+  tien_giam_gia: 0,
+  items: [{ ma_bien_the: '', so_luong: 1 }],
+};
+const inputCls =
+  'w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-400';
+
 const fmtDate = (v) => (v ? new Date(v).toLocaleString('vi-VN') : '');
 
 export default function Orders() {
@@ -45,6 +64,17 @@ export default function Orders() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [detailError, setDetailError] = useState(null);
+
+  // Sửa thông tin giao hàng (trong popup chi tiết)
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({});
+
+  // Tạo đơn mới
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [variants, setVariants] = useState([]);
+  const [methods, setMethods] = useState([]);
+  const [formError, setFormError] = useState(null);
 
   // Debounce ô tìm kiếm để không gọi API mỗi lần gõ phím.
   useEffect(() => {
@@ -88,6 +118,7 @@ export default function Orders() {
   const refreshAll = () => { loadOrders(); loadStats(); };
 
   const openDetail = async (id) => {
+    setEditing(false);
     setDetail({ id });
     setDetailLoading(true);
     setDetailError(null);
@@ -127,6 +158,109 @@ export default function Orders() {
     }
   };
 
+  // ── Sửa thông tin giao hàng ──
+  const startEdit = () => {
+    setEditForm({
+      ten_nguoi_nhan: detail.ten_nguoi_nhan,
+      so_dien_thoai_nhan: detail.so_dien_thoai_nhan,
+      dia_chi_giao_hang: detail.dia_chi_giao_hang,
+      ghi_chu: detail.ghi_chu || '',
+    });
+    setDetailError(null);
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    setSaving(true);
+    setDetailError(null);
+    try {
+      setDetail(await updateOrder(detail.id, { ...editForm, ghi_chu: editForm.ghi_chu.trim() || null }));
+      setEditing(false);
+      refreshAll();
+    } catch (err) {
+      setDetailError(errMsg(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Xóa đơn (chỉ đơn đã hủy) ──
+  const removeOrder = async () => {
+    if (!window.confirm(`Xóa vĩnh viễn đơn #${detail.id}? Thao tác này không thể hoàn tác.`)) return;
+    setSaving(true);
+    setDetailError(null);
+    try {
+      await deleteOrder(detail.id);
+      setDetail(null);
+      refreshAll();
+    } catch (err) {
+      setDetailError(errMsg(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Tạo đơn ──
+  const openCreate = async () => {
+    setForm(EMPTY_FORM);
+    setFormError(null);
+    setCreating(true);
+    try {
+      const [v, m] = await Promise.all([getVariantOptions(), getPaymentMethods()]);
+      setVariants(v);
+      setMethods(m);
+    } catch (err) {
+      setFormError(errMsg(err));
+    }
+  };
+
+  const setField = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const setItem = (i, k, v) =>
+    setForm((f) => ({ ...f, items: f.items.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)) }));
+  const addItem = () => setForm((f) => ({ ...f, items: [...f.items, { ma_bien_the: '', so_luong: 1 }] }));
+  const removeItem = (i) =>
+    setForm((f) => ({ ...f, items: f.items.length > 1 ? f.items.filter((_, idx) => idx !== i) : f.items }));
+
+  const variantById = (id) => variants.find((v) => v.ma_bien_the === Number(id));
+  const subtotal = form.items.reduce(
+    (sum, it) => sum + (variantById(it.ma_bien_the)?.don_gia || 0) * (Number(it.so_luong) || 0),
+    0
+  );
+  const grandTotal = subtotal - (Number(form.tien_giam_gia) || 0) + (Number(form.phi_van_chuyen) || 0);
+
+  const submitCreate = async () => {
+    if (form.items.some((it) => !it.ma_bien_the)) {
+      setFormError('Vui lòng chọn sản phẩm cho tất cả các dòng');
+      return;
+    }
+    setSaving(true);
+    setFormError(null);
+    try {
+      const created = await createOrder({
+        ten_nguoi_nhan: form.ten_nguoi_nhan,
+        so_dien_thoai_nhan: form.so_dien_thoai_nhan,
+        dia_chi_giao_hang: form.dia_chi_giao_hang,
+        ghi_chu: form.ghi_chu.trim() || null,
+        ma_phuong_thuc: form.ma_phuong_thuc ? Number(form.ma_phuong_thuc) : null,
+        phi_van_chuyen: Number(form.phi_van_chuyen) || 0,
+        tien_giam_gia: Number(form.tien_giam_gia) || 0,
+        items: form.items.map((it) => ({ ma_bien_the: Number(it.ma_bien_the), so_luong: Number(it.so_luong) })),
+      });
+      setCreating(false);
+      setStatusFilter('');
+      setSearchInput('');
+      setPage(1);
+      refreshAll();
+      setDetail(created);
+    } catch (err) {
+      setFormError(
+        err?.response?.status === 422 ? 'Dữ liệu chưa hợp lệ, vui lòng kiểm tra lại các ô đã nhập' : errMsg(err)
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const pickFilter = (s) => { setStatusFilter((cur) => (cur === s ? '' : s)); setPage(1); };
 
@@ -153,6 +287,10 @@ export default function Orders() {
           <h3 className="font-bold text-slate-900 text-lg">
             {total} đơn hàng{statusFilter && ` · ${STATUS[statusFilter].label}`}
           </h3>
+          <button onClick={openCreate}
+            className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-bold whitespace-nowrap">
+            + Tạo đơn
+          </button>
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -236,11 +374,34 @@ export default function Orders() {
                   </span>
                 </div>
 
-                <div className="text-sm text-slate-700 space-y-1">
-                  <p><b>Người nhận:</b> {detail.ten_nguoi_nhan} · {detail.so_dien_thoai_nhan}</p>
-                  <p><b>Địa chỉ:</b> {detail.dia_chi_giao_hang}</p>
-                  {detail.ghi_chu && <p><b>Ghi chú:</b> {detail.ghi_chu}</p>}
-                </div>
+                {editing ? (
+                  <div className="space-y-2 text-sm">
+                    <input className={inputCls} placeholder="Tên người nhận" value={editForm.ten_nguoi_nhan}
+                      onChange={(e) => setEditForm({ ...editForm, ten_nguoi_nhan: e.target.value })} />
+                    <input className={inputCls} placeholder="Số điện thoại" value={editForm.so_dien_thoai_nhan}
+                      onChange={(e) => setEditForm({ ...editForm, so_dien_thoai_nhan: e.target.value })} />
+                    <textarea className={inputCls} rows={2} placeholder="Địa chỉ giao hàng" value={editForm.dia_chi_giao_hang}
+                      onChange={(e) => setEditForm({ ...editForm, dia_chi_giao_hang: e.target.value })} />
+                    <textarea className={inputCls} rows={2} placeholder="Ghi chú" value={editForm.ghi_chu}
+                      onChange={(e) => setEditForm({ ...editForm, ghi_chu: e.target.value })} />
+                    <div className="flex gap-2 justify-end">
+                      <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs">Hủy sửa</button>
+                      <button disabled={saving} onClick={saveEdit}
+                        className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold disabled:opacity-50">Lưu</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-700 space-y-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <p><b>Người nhận:</b> {detail.ten_nguoi_nhan} · {detail.so_dien_thoai_nhan}</p>
+                      {EDITABLE.includes(detail.trang_thai) && (
+                        <button onClick={startEdit} className="text-xs font-bold text-purple-600 underline whitespace-nowrap">Sửa thông tin</button>
+                      )}
+                    </div>
+                    <p><b>Địa chỉ:</b> {detail.dia_chi_giao_hang}</p>
+                    {detail.ghi_chu && <p><b>Ghi chú:</b> {detail.ghi_chu}</p>}
+                  </div>
+                )}
 
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50">
@@ -289,7 +450,13 @@ export default function Orders() {
                 {detailError && <p className="text-sm text-red-500">{detailError}</p>}
 
                 <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-                  <button onClick={() => setDetail(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm">Đóng</button>
+                  <div className="flex gap-2">
+                    <button onClick={() => setDetail(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm">Đóng</button>
+                    {detail.trang_thai === 'CANCELLED' && (
+                      <button disabled={saving} onClick={removeOrder}
+                        className="px-4 py-2 rounded-xl border border-red-300 text-red-600 text-sm font-bold disabled:opacity-50">Xóa đơn</button>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     {detail.trang_thai_ke_tiep.map((next) => (
                       <button key={next} disabled={saving} onClick={() => changeStatus(next)}
@@ -303,6 +470,76 @@ export default function Orders() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Tạo đơn mới */}
+      {creating && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setCreating(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-slate-900">Tạo đơn hàng mới</h3>
+
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <input className={inputCls} placeholder="Tên người nhận *" value={form.ten_nguoi_nhan}
+                onChange={(e) => setField('ten_nguoi_nhan', e.target.value)} />
+              <input className={inputCls} placeholder="Số điện thoại *" value={form.so_dien_thoai_nhan}
+                onChange={(e) => setField('so_dien_thoai_nhan', e.target.value)} />
+              <textarea className={`${inputCls} col-span-2`} rows={2} placeholder="Địa chỉ giao hàng *" value={form.dia_chi_giao_hang}
+                onChange={(e) => setField('dia_chi_giao_hang', e.target.value)} />
+              <select className={inputCls} value={form.ma_phuong_thuc} onChange={(e) => setField('ma_phuong_thuc', e.target.value)}>
+                <option value="">-- Phương thức thanh toán --</option>
+                {methods.map((m) => <option key={m.ma_phuong_thuc} value={m.ma_phuong_thuc}>{m.ten_phuong_thuc}</option>)}
+              </select>
+              <input className={inputCls} placeholder="Ghi chú" value={form.ghi_chu}
+                onChange={(e) => setField('ghi_chu', e.target.value)} />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-slate-700">Sản phẩm</p>
+              {form.items.map((it, i) => (
+                <div key={i} className="flex gap-2 items-center text-sm">
+                  <select className={`${inputCls} flex-1`} value={it.ma_bien_the} onChange={(e) => setItem(i, 'ma_bien_the', e.target.value)}>
+                    <option value="">-- Chọn sản phẩm --</option>
+                    {variants.map((v) => (
+                      <option key={v.ma_bien_the} value={v.ma_bien_the} disabled={v.so_luong_kho === 0}>
+                        {v.ten_san_pham} · {v.kich_co} · {v.mau_sac} · {formatPrice(v.don_gia)} (kho: {v.so_luong_kho})
+                      </option>
+                    ))}
+                  </select>
+                  <input type="number" min="1" className={`${inputCls} w-20`} value={it.so_luong}
+                    onChange={(e) => setItem(i, 'so_luong', e.target.value)} />
+                  <button onClick={() => removeItem(i)} className="text-red-500 font-bold px-2" title="Xóa dòng">×</button>
+                </div>
+              ))}
+              <button onClick={addItem} className="text-xs font-bold text-purple-600 underline">+ Thêm sản phẩm</button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <label className="text-slate-600">Giảm giá (đ)
+                <input type="number" min="0" className={inputCls} value={form.tien_giam_gia}
+                  onChange={(e) => setField('tien_giam_gia', e.target.value)} />
+              </label>
+              <label className="text-slate-600">Phí vận chuyển (đ)
+                <input type="number" min="0" className={inputCls} value={form.phi_van_chuyen}
+                  onChange={(e) => setField('phi_van_chuyen', e.target.value)} />
+              </label>
+            </div>
+
+            <div className="text-right text-sm text-slate-700">
+              <p>Tiền hàng: {formatPrice(subtotal)}</p>
+              <p className="text-lg font-bold text-purple-600">Tổng: {formatPrice(Math.max(grandTotal, 0))}</p>
+              <p className="text-xs text-slate-400">Giá cuối cùng do hệ thống tính lại từ giá sản phẩm trong CSDL.</p>
+            </div>
+
+            {formError && <p className="text-sm text-red-500">{formError}</p>}
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+              <button onClick={() => setCreating(false)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm">Hủy</button>
+              <button disabled={saving} onClick={submitCreate}
+                className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-bold disabled:opacity-50">
+                {saving ? 'Đang tạo...' : 'Tạo đơn'}
+              </button>
+            </div>
           </div>
         </div>
       )}
