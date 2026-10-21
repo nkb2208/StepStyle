@@ -9,11 +9,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from order.db import get_session
 from order.schemas import (
+    OrderCreate,
     OrderDetailOut,
     OrderListOut,
     OrderStatsOut,
     OrderStatusUpdate,
+    OrderUpdate,
+    PaymentMethodOut,
     PaymentStatusUpdate,
+    VariantOptionOut,
 )
 from order.security import CurrentUser, require_staff
 from order.services.order_service import OrderService
@@ -55,6 +59,37 @@ async def order_stats(
     return await svc.stats()
 
 
+@router.get(
+    "/variants", response_model=list[VariantOptionOut], summary="Biến thể sản phẩm để chọn khi tạo đơn"
+)
+async def list_variants(
+    search: str | None = Query(None, max_length=100, description="Tìm theo tên sản phẩm"),
+    limit: int = Query(200, ge=1, le=500),
+    _user: CurrentUser = Depends(require_staff),
+    svc: OrderService = Depends(get_service),
+) -> list[VariantOptionOut]:
+    return await svc.list_variant_options(search, limit)
+
+
+@router.get(
+    "/payment-methods", response_model=list[PaymentMethodOut], summary="Danh sách phương thức thanh toán"
+)
+async def list_payment_methods(
+    _user: CurrentUser = Depends(require_staff),
+    svc: OrderService = Depends(get_service),
+) -> list[PaymentMethodOut]:
+    return await svc.list_payment_methods()
+
+
+@router.post("", response_model=OrderDetailOut, status_code=201, summary="Tạo đơn hàng (admin)")
+async def create_order(
+    body: OrderCreate,
+    _user: CurrentUser = Depends(require_staff),
+    svc: OrderService = Depends(get_service),
+) -> OrderDetailOut:
+    return await svc.create_order(body)
+
+
 @router.get("/{order_id}", response_model=OrderDetailOut, summary="Chi tiết đơn hàng")
 async def get_order(
     order_id: int,
@@ -84,3 +119,22 @@ async def update_payment_status(
     svc: OrderService = Depends(get_service),
 ) -> OrderDetailOut:
     return await svc.update_payment_status(order_id, body.trang_thai_thanh_toan)
+
+
+@router.put("/{order_id}", response_model=OrderDetailOut, summary="Sửa thông tin giao hàng")
+async def update_order(
+    order_id: int,
+    body: OrderUpdate,
+    _user: CurrentUser = Depends(require_staff),
+    svc: OrderService = Depends(get_service),
+) -> OrderDetailOut:
+    return await svc.update_order(order_id, body)
+
+
+@router.delete("/{order_id}", status_code=204, summary="Xóa đơn hàng đã hủy")
+async def delete_order(
+    order_id: int,
+    _user: CurrentUser = Depends(require_staff),
+    svc: OrderService = Depends(get_service),
+) -> None:
+    await svc.delete_order(order_id)

@@ -6,17 +6,32 @@ from datetime import date, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from order.errors import bad_request, not_found
-from order.models import DonHang, TrangThaiDonHang, TrangThaiThanhToan
+from order.errors import bad_request, conflict, not_found
+from order.models import (
+    ChiTietDonHang,
+    DonHang,
+    ThanhToan,
+    TrangThaiDonHang,
+    TrangThaiThanhToan,
+)
 from order.repositories.order_repository import OrderRepository
 from order.schemas import (
+    OrderCreate,
     OrderDetailOut,
     OrderItemOut,
     OrderListOut,
     OrderStatsOut,
     OrderSummaryOut,
+    OrderUpdate,
+    PaymentMethodOut,
     PaymentOut,
+    VariantOptionOut,
 )
+
+# Chỉ được sửa thông tin giao hàng khi đơn chưa giao cho đơn vị vận chuyển.
+EDITABLE_STATUSES = {"PENDING", "PROCESSING"}
+# Chỉ được xóa đơn đã hủy (đơn đã giao / đang xử lý phải giữ để đối soát, báo cáo).
+DELETABLE_STATUSES = {"CANCELLED"}
 
 # Luồng trạng thái hợp lệ. DELIVERED / CANCELLED là trạng thái cuối.
 ALLOWED_TRANSITIONS: dict[str, list[str]] = {
@@ -84,6 +99,8 @@ def _detail(o: DonHang) -> OrderDetailOut:
             for p in o.thanh_toan
         ],
         trang_thai_ke_tiep=ALLOWED_TRANSITIONS.get(o.trang_thai, []),
+        co_the_sua=o.trang_thai in EDITABLE_STATUSES,
+        co_the_xoa=o.trang_thai in DELETABLE_STATUSES,
     )
 
 
@@ -164,5 +181,131 @@ class OrderService:
 
     async def _reload(self, order_id: int) -> OrderDetailOut:
         order = await self._repo.get_by_id(order_id)
-        await self._repo._session.refresh(order)  # lấy ngay_cap_nhat mới
+        await self._repo.session.refresh(order)  # lấy ngay_cap_nhat mới
         return _detail(order)
+
+    # ── Tạo / sửa / xóa ──────────────────────────────────────────────────────
+
+    async def create_order(self, data: OrderCreate) -> OrderDetailOut:
+        if data.ma_nguoi_dung is not None and not await self._repo.user_exists(data.ma_nguoi_dung):
+            raise bad_request("USER_NOT_FOUND", "Khách hàng không tồn tại")
+        if data.ma_phuong_thuc is not None and not await self._repo.payment_method_exists(
+            data.ma_phuong_thuc
+        ):
+            raise bad_request("PAYMENT_METHOD_NOT_FOUND", "Phương thức thanh toán không tồn tại")
+
+        # Gộp các dòng trùng biến thể (bảng chitietdonhang có UNIQUE (đơn, biến thể)).
+        qty_by_variant: dict[int, int] = {}
+        for it in data.items:
+            qty_by_variant[it.ma_bien_the] = qty_by_variant.get(it.ma_bien_the, 0) + it.so_luong
+
+        variants = await self._repo.get_variants(list(qty_by_variant))
+        items: list[ChiTietDonHang] = []
+        subtotal = 0
+        for variant_id, qty in qty_by_variant.items():
+            v = variants.get(variant_id)
+            if v is None:
+                raise bad_request("VARIANT_NOT_FOUND", f"Biến thể sản phẩm #{variant_id} không tồn tại")
+            product = v.san_pham
+            if product.trang_thai != "ACTIVE":
+                raise bad_request("PRODUCT_INACTIVE", f"Sản phẩm '{product.ten_san_pham}' đã ngừng bán")
+            if qty > v.so_luong_kho:
+                raise bad_request(
+                    "OUT_OF_STOCK",
+                    f"'{product.ten_san_pham}' ({v.kich_co}/{v.mau_sac}) chỉ còn {v.so_luong_kho} sản phẩm",
+                )
+            # Giá luôn lấy từ DB — không tin giá do client gửi lên.
+            price = int(product.gia_khuyen_mai if product.gia_khuyen_mai is not None else product.gia_goc)
+            subtotal += price * qty
+            items.append(
+                ChiTietDonHang(
+                    ma_bien_the=variant_id,
+                    ten_san_pham=product.ten_san_pham,
+                    kich_co=v.kich_co,
+                    mau_sac=v.mau_sac,
+                    so_luong=qty,
+                    don_gia=price,
+                )
+            )
+
+        if data.tien_giam_gia > subtotal:
+            raise bad_request("DISCOUNT_TOO_HIGH", "Tiền giảm giá không được lớn hơn tiền hàng")
+        total = subtotal - data.tien_giam_gia + data.phi_van_chuyen
+
+        order = DonHang(
+            ma_nguoi_dung=data.ma_nguoi_dung,
+            ten_nguoi_nhan=data.ten_nguoi_nhan,
+            so_dien_thoai_nhan=data.so_dien_thoai_nhan,
+            dia_chi_giao_hang=data.dia_chi_giao_hang,
+            tong_tien_hang=subtotal,
+            tien_giam_gia=data.tien_giam_gia,
+            phi_van_chuyen=data.phi_van_chuyen,
+            tong_thanh_toan=total,
+            trang_thai=TrangThaiDonHang.PENDING.value,
+            ghi_chu=data.ghi_chu,
+            items=items,
+            thanh_toan=(
+                [
+                    ThanhToan(
+                        ma_phuong_thuc=data.ma_phuong_thuc,
+                        so_tien=total,
+                        trang_thai=TrangThaiThanhToan.PENDING.value,
+                    )
+                ]
+                if data.ma_phuong_thuc is not None
+                else []
+            ),
+        )
+        self._repo.add(order)
+        await self._repo.flush()
+        return await self._reload(order.id)
+
+    async def update_order(self, order_id: int, data: OrderUpdate) -> OrderDetailOut:
+        order = await self._repo.get_by_id(order_id)
+        if order is None:
+            raise not_found("Đơn hàng")
+        if order.trang_thai not in EDITABLE_STATUSES:
+            raise bad_request(
+                "ORDER_LOCKED",
+                f"Không thể sửa đơn ở trạng thái {order.trang_thai}",
+            )
+        for field, value in data.model_dump(exclude_unset=True).items():
+            setattr(order, field, value)
+        await self._repo.flush()
+        return await self._reload(order_id)
+
+    async def delete_order(self, order_id: int) -> None:
+        order = await self._repo.get_by_id(order_id)
+        if order is None:
+            raise not_found("Đơn hàng")
+        if order.trang_thai not in DELETABLE_STATUSES:
+            raise bad_request(
+                "ORDER_NOT_DELETABLE",
+                "Chỉ được xóa đơn đã hủy. Hãy hủy đơn trước nếu muốn xóa.",
+            )
+        await self._repo.delete(order)
+
+    # ── Dữ liệu phụ trợ cho form tạo đơn ─────────────────────────────────────
+
+    async def list_variant_options(self, search: str | None, limit: int) -> list[VariantOptionOut]:
+        return [
+            VariantOptionOut(
+                ma_bien_the=v.id,
+                ten_san_pham=v.san_pham.ten_san_pham,
+                kich_co=v.kich_co,
+                mau_sac=v.mau_sac,
+                don_gia=int(
+                    v.san_pham.gia_khuyen_mai
+                    if v.san_pham.gia_khuyen_mai is not None
+                    else v.san_pham.gia_goc
+                ),
+                so_luong_kho=v.so_luong_kho,
+            )
+            for v in await self._repo.list_variants(search, limit)
+        ]
+
+    async def list_payment_methods(self) -> list[PaymentMethodOut]:
+        return [
+            PaymentMethodOut(ma_phuong_thuc=m.id, ten_phuong_thuc=m.ten_phuong_thuc)
+            for m in await self._repo.list_payment_methods()
+        ]

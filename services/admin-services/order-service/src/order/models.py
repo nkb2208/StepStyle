@@ -48,6 +48,28 @@ class PhuongThucThanhToan(Base):
     ten_phuong_thuc: Mapped[str] = mapped_column(String(100), nullable=False)
 
 
+class SanPham(Base):
+    __tablename__ = "sanpham"
+
+    id: Mapped[int] = mapped_column("ma_san_pham", Integer, primary_key=True, autoincrement=True)
+    ten_san_pham: Mapped[str] = mapped_column(String(255), nullable=False)
+    gia_goc: Mapped[int] = mapped_column(Numeric(15, 0), nullable=False, default=0)
+    gia_khuyen_mai: Mapped[int | None] = mapped_column(Numeric(15, 0), nullable=True)
+    trang_thai: Mapped[str] = mapped_column(String(10), nullable=False, default="ACTIVE")
+
+
+class BienTheSanPham(Base):
+    __tablename__ = "bienthesanpham"
+
+    id: Mapped[int] = mapped_column("ma_bien_the", Integer, primary_key=True, autoincrement=True)
+    ma_san_pham: Mapped[int] = mapped_column(Integer, ForeignKey("sanpham.ma_san_pham"), nullable=False)
+    kich_co: Mapped[str] = mapped_column(String(20), nullable=False)
+    mau_sac: Mapped[str] = mapped_column(String(50), nullable=False)
+    so_luong_kho: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    san_pham: Mapped[SanPham] = relationship(lazy="joined")
+
+
 class DonHang(Base):
     __tablename__ = "donhang"
 
@@ -73,10 +95,16 @@ class DonHang(Base):
 
     nguoi_dung: Mapped[NguoiDung | None] = relationship(lazy="selectin")
     items: Mapped[list[ChiTietDonHang]] = relationship(
-        back_populates="don_hang", lazy="selectin", order_by="ChiTietDonHang.id"
+        back_populates="don_hang",
+        lazy="selectin",
+        order_by="ChiTietDonHang.id",
+        cascade="save-update, merge, delete, delete-orphan",
     )
     thanh_toan: Mapped[list[ThanhToan]] = relationship(
-        back_populates="don_hang", lazy="selectin", order_by="ThanhToan.id"
+        back_populates="don_hang",
+        lazy="selectin",
+        order_by="ThanhToan.id",
+        cascade="save-update, merge, delete, delete-orphan",
     )
 
 
