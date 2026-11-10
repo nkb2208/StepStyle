@@ -12,7 +12,7 @@ const unwrapEnvelope = (response) => {
 
 // Attach the bearer token issued by the auth service when one is stored.
 const addAuthToken = (config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('admin_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -22,9 +22,9 @@ const addAuthToken = (config) => {
 let refreshPromise = null;
 
 const clearSessionAndRedirect = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_refreshToken');
+  localStorage.removeItem('admin_user');
   if (
     typeof window !== 'undefined' &&
     window.location.pathname.startsWith('/admin') &&

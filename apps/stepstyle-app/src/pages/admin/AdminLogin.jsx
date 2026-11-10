@@ -30,8 +30,8 @@ export default function AdminLogin() {
         return;
       }
 
-      localStorage.setItem('token', accessToken);
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('admin_token', accessToken);
+      if (refreshToken) localStorage.setItem('admin_refreshToken', refreshToken);
 
       try {
         const usersData = await getUsers({ page: 1, page_size: 100 });
@@ -41,9 +41,9 @@ export default function AdminLogin() {
         );
         if (matched && matched.kich_hoat === false) {
           await logoutRequest().catch(() => {});
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
+          localStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_refreshToken');
+          localStorage.removeItem('admin_user');
           setError('Tài khoản của bạn đã bị khóa.');
           return;
         }
@@ -51,7 +51,7 @@ export default function AdminLogin() {
         // Ignore if user-service check is unavailable
       }
 
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('admin_user', JSON.stringify(user));
       navigate('/admin');
     } catch (err) {
       setError(apiErrorMessage(err));

@@ -30,7 +30,7 @@ export default function Admin() {
   const navigate = useNavigate();
   const [session] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('user') || 'null');
+      return JSON.parse(localStorage.getItem('admin_user') || 'null');
     } catch {
       return null;
     }
@@ -39,8 +39,8 @@ export default function Admin() {
   const adminName = session?.name || session?.email || 'Quản trị viên';
   const adminInitial = adminName.trim().charAt(0).toUpperCase() || 'A';
 
-  const token = localStorage.getItem('token');
-  const isAuthorized = Boolean(token && session?.role === 'ADMIN');
+  const token = localStorage.getItem('admin_token');
+  const isAuthorized = Boolean(token && String(session?.role || '').toUpperCase() === 'ADMIN');
 
   // The admin panel is only reachable with an administrator's access token.
   useEffect(() => {
@@ -60,9 +60,9 @@ export default function Admin() {
     } catch {
       // Ignore — the local session is cleared regardless.
     }
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_refreshToken');
+    localStorage.removeItem('admin_user');
     navigate('/admin/login');
   };
 
