@@ -16,6 +16,14 @@ class OrderController extends Controller
 {
     //
     public function checkout(Request $request){
+        $token = $request->bearerToken();
+        if(!$token){
+            return response()->json([
+                'status'=>'error',
+                'message'=> 'Bạn cần phải đăng nhập trước khi thanh toán'
+            ],401);
+        }
+
         $request->validate([
             'ma_nguoi_dung'=> 'required|integer',
             'ten_nguoi_nhan' => 'required|string|max:255',

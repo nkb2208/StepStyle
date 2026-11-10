@@ -5,7 +5,6 @@ import { useState, useEffect, useMemo } from "react";
 import { getCart, checkout, createMomoPayment, createVnpayPayment } from "../services/orderApiService";
 import { getPublicSettings } from "../services/storefrontSettingsService";
 
-// Shown only when the settings service is unreachable, so checkout keeps working.
 const DEFAULT_PAYMENT_OPTIONS = [
     { code: 'cod', name: 'Thanh toán khi nhận hàng (COD)', description: null },
     { code: 'card', name: 'Thẻ Tín dụng/Ghi nợ', description: null },
@@ -13,8 +12,6 @@ const DEFAULT_PAYMENT_OPTIONS = [
     { code: 'vnpay', name: 'Thanh toán qua VNPAY', description: null },
 ];
 
-// Store-configuration payment `code` → numeric `ma_phuong_thuc` used by the
-// order service (see `phuongthucthanhtoan` in StepStyle-v2.sql).
 const PAYMENT_METHOD_IDS = {
     cod: 1,
     card: 2,
@@ -142,6 +139,18 @@ function CustomerInfo({ info, setInfo }) {
 }
 
 function Purchase({ paymentMethod, setPaymentMethod, paymentOptions }) {
+    const navigate = useNavigate();
+    const handleToGoCheckOut = () =>{
+        const token = localStorage.getItem('token');
+        const user = localStorage.getItem('user');
+
+        if(!token || !user){
+            alert('Bạn cần đăng nhập trước khi thanh toán');
+            navigate("/login");
+            return;
+        }
+        navigate("/checkout/confirm");
+    }
     return(
         <>
             <p className="font-bold">Phương thức thanh toán</p>
@@ -186,7 +195,7 @@ function Purchase({ paymentMethod, setPaymentMethod, paymentOptions }) {
 
                 <div className="flex mt-4 gap-3">
                     <Link to='/checkout/info' className="w-1/2 flex items-center justify-center p-3 border border-gray-300 rounded-xl font-bold">Quay lại </Link>
-                    <Link to='/checkout/confirm' className="w-1/2 flex items-center justify-center p-3 bg-orange-400 rounded-xl text-white font-bold">Tiếp tục</Link>
+                    <button onClick={handleToGoCheckOut} className="cursor-pointer w-1/2 flex items-center justify-center p-3 bg-orange-400 rounded-xl text-white font-bold">Tiếp tục</button>
                 </div>
             </div>
         </>
@@ -195,7 +204,6 @@ function Purchase({ paymentMethod, setPaymentMethod, paymentOptions }) {
 
 function Confirmation({ info, paymentMethod, paymentOptions, cartItems, handleCheckout }) {
     const paymentName = paymentOptions.find(option => option.code === paymentMethod)?.name || '';
-
     return(
         <>
             <p className="font-bold">Xác nhận đơn hàng</p>
@@ -254,7 +262,6 @@ function CheckOut(){
         fetchCart();
     }, []);
 
-    // Payment methods / shipping rules configured by the administrator.
     useEffect(() => {
         const fetchSettings = async () => {
             try {
@@ -274,8 +281,6 @@ function CheckOut(){
     const totalItems = cartItems.reduce((acc, item) => acc + item.so_luong, 0);
     const totalPrice = cartItems.reduce((acc, item) => acc + (item.so_luong * item.don_gia), 0);
 
-    // Only methods an admin enabled are offered; fall back to the built-in list
-    // while the settings are still loading (or if the service is unreachable).
     const paymentOptions = useMemo(
         () => (storeSettings ? (storeSettings.payment_methods ?? []) : DEFAULT_PAYMENT_OPTIONS),
         [storeSettings]
@@ -284,7 +289,6 @@ function CheckOut(){
         ? selectedPayment
         : (paymentOptions[0]?.code ?? 'cod');
 
-    // `order_value >= free_shipping_threshold ? 0 : base_shipping_fee`.
     const shippingFee = useMemo(() => {
         const base = Number(storeSettings?.base_shipping_fee ?? 0);
         const threshold = Number(storeSettings?.free_shipping_threshold ?? 0);
