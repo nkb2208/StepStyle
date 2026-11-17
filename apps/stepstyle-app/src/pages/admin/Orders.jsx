@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { formatPrice } from '../../data';
+import { getUsers } from '../../services/adminUserService';
 import {
   getOrders,
   getOrderStats,
@@ -76,6 +77,24 @@ export default function Orders() {
   const [methods, setMethods] = useState([]);
   const [formError, setFormError] = useState(null);
 
+  const [customerFilter, setCustomerFilter] = useState('');
+  const [customers, setCustomers] = useState([]);
+
+
+  useEffect(() =>{
+    const loadCustomers = async ()=>{
+      try {
+        const data = await getUsers({ page: 1, page_size: 1000 });
+        const list = data?.items || (Array.isArray(data) ? data : []);
+        const onlyCustomers = list.filter(u => String(u.vai_tro || u.role || 'CUSTOMER').toUpperCase() === 'CUSTOMER');
+        setCustomers(onlyCustomers);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    loadCustomers();
+  }, []);
+
   // Debounce ô tìm kiếm để không gọi API mỗi lần gõ phím.
   useEffect(() => {
     const t = setTimeout(() => {
@@ -102,6 +121,7 @@ export default function Orders() {
         page_size: PAGE_SIZE,
         status: statusFilter || undefined,
         search: search || undefined,
+        user_id : customerFilter || undefined,
       });
       setOrders(data.items);
       setTotal(data.total);
@@ -110,7 +130,7 @@ export default function Orders() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, search]);
+  }, [page, statusFilter, search, customerFilter]);
 
   useEffect(() => { loadOrders(); }, [loadOrders]);
   useEffect(() => { loadStats(); }, [loadStats]);
@@ -287,16 +307,36 @@ export default function Orders() {
           <h3 className="font-bold text-slate-900 text-lg">
             {total} đơn hàng{statusFilter && ` · ${STATUS[statusFilter].label}`}
           </h3>
-          <button onClick={openCreate}
-            className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-bold whitespace-nowrap">
-            + Tạo đơn
-          </button>
-          <input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Tìm mã đơn, tên, số điện thoại..."
-            className="w-72 px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-400"
-          />
+          <div className="flex items-center gap-3">
+            <button onClick={openCreate}
+              className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-bold whitespace-nowrap">
+              + Tạo đơn
+            </button>
+            
+            {/* THÊM DROPDOWN LỌC KHÁCH HÀNG Ở ĐÂY */}
+            <select
+              value={customerFilter}
+              onChange={(e) => {
+                setCustomerFilter(e.target.value);
+                setPage(1); // Reset về trang 1 khi đổi bộ lọc
+              }}
+              className="w-48 px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-400 bg-white"
+            >
+              <option value="">-- Tất cả khách hàng --</option>
+              {customers.map(c => (
+                <option key={c.id || c.ma_nguoi_dung} value={c.id || c.ma_nguoi_dung}>
+                  {c.ho_ten || c.name || c.email}
+                </option>
+              ))}
+            </select>
+
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Tìm mã đơn, tên, số điện thoại..."
+              className="w-72 px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-400"
+            />
+          </div>
         </div>
 
         {loading ? (

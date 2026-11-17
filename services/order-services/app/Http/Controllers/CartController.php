@@ -27,8 +27,9 @@ class CartController extends Controller
         $cartItem = CartItem::where('ma_gio_hang', $cart->ma_gio_hang)->where('ma_bien_the', $variantID)->first();
 
         if ($cartItem) {
-            $cartItem->so_luong += $quantity;
-            $cartItem->save();
+            CartItem::where('ma_gio_hang', $cart->ma_gio_hang)
+                    ->where('ma_bien_the', $variantID)
+                    ->update(['so_luong' => $cartItem->so_luong + $quantity]);
         } else {
             CartItem::create([
                 'ma_gio_hang' => $cart->ma_gio_hang,

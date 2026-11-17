@@ -31,6 +31,7 @@ class OrderRepository:
         search: str | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
+        user_id: int | None = None,
     ) -> tuple[list[DonHang], int]:
         conditions = []
         if status:
@@ -48,6 +49,8 @@ class OrderRepository:
             conditions.append(DonHang.ngay_dat >= datetime.combine(date_from, time.min))
         if date_to:  # bao gồm cả ngày date_to
             conditions.append(DonHang.ngay_dat < datetime.combine(date_to + timedelta(days=1), time.min))
+        if user_id is not None:
+            conditions.append(DonHang.ma_nguoi_dung == user_id)
 
         total = (
             await self._session.execute(select(func.count()).select_from(DonHang).where(*conditions))

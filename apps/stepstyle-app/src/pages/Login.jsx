@@ -1,6 +1,39 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { login, apiErrorMessage } from "../services/authService";
 
 function Login(){
+    const navigate = useNavigate();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+
+        if (!email.trim() || !password) {
+            setError("Vui lòng nhập đầy đủ email và mật khẩu.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { user, accessToken, refreshToken } = await login(email.trim(), password);
+            localStorage.setItem("token", accessToken);
+            if (refreshToken) {
+                localStorage.setItem("refreshToken", refreshToken);
+            }
+            localStorage.setItem("user", JSON.stringify(user));
+            navigate("/home");
+        } catch (err) {
+            setError(apiErrorMessage(err));
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return(
         <div className="flex min-h-screen">
             {/* Left Side */}
@@ -42,23 +75,54 @@ function Login(){
                 <div className="w-2/3">
                     <p className="text-4xl font-bold">Chào mừng trở lại!</p>
                     <p>Đăng nhập để tiếp tục mua sắm.</p>
-                    <form action="" className="mt-4 ">
+
+                    {error && (
+                        <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="mt-4 ">
                         <div>
-                            <label htmlFor="" className="font-bold text-xs">
+                            <label htmlFor="login-email" className="font-bold text-xs">
                                 Email
                             </label>
-                            <input className="mt-2 w-full border border-gray-300 rounded-xl p-2" type="email" name="" id="" placeholder="email@example.com" required/>
+                            <input
+                                className="mt-2 w-full border border-gray-300 rounded-xl p-2"
+                                type="email"
+                                name="email"
+                                id="login-email"
+                                placeholder="email@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
                         </div>
 
 
                         <div className="mt-4">
-                            <label htmlFor="" className="font-bold text-xs">
+                            <label htmlFor="login-password" className="font-bold text-xs">
                                 Mật khẩu
                             </label>
-                            <input className="mt-2 w-full border border-gray-300 rounded-xl p-2" type="password" name="" id="" placeholder="••••••••" required/>
+                            <input
+                                className="mt-2 w-full border border-gray-300 rounded-xl p-2"
+                                type="password"
+                                name="password"
+                                id="login-password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
                         </div>
 
-                        <button className="mt-4 w-full flex items-center justify-center p-4 bg-orange-500 text-white font-bold rounded-xl">Đăng nhập</button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="mt-4 w-full flex items-center justify-center p-4 bg-orange-500 text-white font-bold rounded-xl disabled:opacity-60 cursor-pointer"
+                        >
+                            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+                        </button>
                     </form>
 
                     <p className="flex items-center justify-center mt-4">Chưa có tài khoản? <Link to="/register" className="ml-2 text-orange-400 font-bold">Đăng kí ngay</Link></p>

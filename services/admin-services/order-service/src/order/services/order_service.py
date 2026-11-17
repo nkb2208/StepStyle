@@ -117,6 +117,7 @@ class OrderService:
         search: str | None,
         date_from: date | None,
         date_to: date | None,
+        user_id: int | None = None,
     ) -> OrderListOut:
         status_norm = None
         if status:
@@ -132,6 +133,7 @@ class OrderService:
             search=search,
             date_from=date_from,
             date_to=date_to,
+            user_id=user_id,
         )
         return OrderListOut(
             items=[OrderSummaryOut(**_summary(o)) for o in orders],

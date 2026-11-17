@@ -37,6 +37,7 @@ async def list_orders(
     search: str | None = Query(None, max_length=100, description="Mã đơn / tên / SĐT người nhận"),
     date_from: date | None = None,
     date_to: date | None = None,
+    user_id: int |None = Query(None),
     _user: CurrentUser = Depends(require_staff),
     svc: OrderService = Depends(get_service),
 ) -> OrderListOut:
@@ -47,6 +48,7 @@ async def list_orders(
         search=search,
         date_from=date_from,
         date_to=date_to,
+        user_id=user_id,
     )
 
 

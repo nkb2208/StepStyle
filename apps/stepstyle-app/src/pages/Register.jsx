@@ -1,6 +1,57 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { register, apiErrorMessage } from "../services/authService";
 
 function Register(){
+    const navigate = useNavigate();
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+
+        if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+            setError("Vui lòng nhập đầy đủ thông tin.");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError("Mật khẩu xác nhận không khớp.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { user, accessToken, refreshToken } = await register({
+                name: name.trim(),
+                email: email.trim(),
+                password,
+                role: "CUSTOMER",
+            });
+
+            if (accessToken) {
+                localStorage.setItem("token", accessToken);
+            }
+            if (refreshToken) {
+                localStorage.setItem("refreshToken", refreshToken);
+            }
+            if (user) {
+                localStorage.setItem("user", JSON.stringify(user));
+            }
+
+            navigate("/home");
+        } catch (err) {
+            setError(apiErrorMessage(err));
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return(
         <div className="flex min-h-screen">
             {/* Left Side */}
@@ -65,39 +116,88 @@ function Register(){
                 <div className="w-2/3">
                     <p className="text-4xl font-bold">Tạo tài khoản</p>
                     <p>Tham gia StepStyle ngay hôm nay.</p>
-                    <form action="" className="mt-4 ">
+
+                    {error && (
+                        <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="mt-4 ">
                         <div>
-                            <label htmlFor="" className="font-bold text-xs">
+                            <label htmlFor="register-name" className="font-bold text-xs">
                                 Họ và tên
                             </label>
-                            <input className="mt-2 w-full border border-gray-300 rounded-xl p-2" type="text" name="" id="" placeholder="Nguyễn Văn A" required/>
+                            <input
+                                className="mt-2 w-full border border-gray-300 rounded-xl p-2"
+                                type="text"
+                                name="name"
+                                id="register-name"
+                                placeholder="Nguyễn Văn A"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                            />
                         </div>
 
 
                         <div>
-                            <label htmlFor="" className="font-bold text-xs">
+                            <label htmlFor="register-email" className="font-bold text-xs">
                                 Email
                             </label>
-                            <input className="mt-2 w-full border border-gray-300 rounded-xl p-2" type="email" name="" id="" placeholder="email@example.com" required/>
+                            <input
+                                className="mt-2 w-full border border-gray-300 rounded-xl p-2"
+                                type="email"
+                                name="email"
+                                id="register-email"
+                                placeholder="email@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
                         </div>
 
 
                         <div className="mt-4">
-                            <label htmlFor="" className="font-bold text-xs">
+                            <label htmlFor="register-password" className="font-bold text-xs">
                                 Mật khẩu
                             </label>
-                            <input className="mt-2 w-full border border-gray-300 rounded-xl p-2" type="password" name="" id="" placeholder="Ít nhất 6 ký tự" required/>
+                            <input
+                                className="mt-2 w-full border border-gray-300 rounded-xl p-2"
+                                type="password"
+                                name="password"
+                                id="register-password"
+                                placeholder="Ít nhất 6 ký tự"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
                         </div>
 
 
                         <div className="mt-4">
-                            <label htmlFor="" className="font-bold text-xs">
+                            <label htmlFor="register-confirm-password" className="font-bold text-xs">
                                 Xác nhận mật khẩu
                             </label>
-                            <input className="mt-2 w-full border border-gray-300 rounded-xl p-2" type="password" name="" id="" placeholder="Nhập lại mật khẩu" required/>
+                            <input
+                                className="mt-2 w-full border border-gray-300 rounded-xl p-2"
+                                type="password"
+                                name="confirmPassword"
+                                id="register-confirm-password"
+                                placeholder="Nhập lại mật khẩu"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required
+                            />
                         </div>
 
-                        <button className="mt-4 w-full flex items-center justify-center p-4 bg-orange-500 text-white font-bold rounded-xl">Đăng Ký</button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="mt-4 w-full flex items-center justify-center p-4 bg-orange-500 text-white font-bold rounded-xl disabled:opacity-60 cursor-pointer"
+                        >
+                            {loading ? "Đang đăng ký..." : "Đăng Ký"}
+                        </button>
                     </form>
 
                     <p className="text-center text-xs mt-4">Bằng cách đăng ký, bạn đồng ý với <span className="text-orange-400 hover: cursor-pointer hover:underline underline-offset-1">Điều khoản dịch vụ</span> và <span className="text-orange-400 hover: cursor-pointer hover:underline underline-offset-1">Chính sách bảo mật</span> của chúng tôi.</p>
