@@ -8,6 +8,11 @@ class DanhGiaSerializer(serializers.ModelSerializer):
         model = DanhGia
         fields = "__all__"
 
+class DanhGiaCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DanhGia
+        fields = ["ma_san_pham", "ma_don_hang", "so_sao", "noi_dung"]
+
 
 class DanhGiaUpdateSerializer(serializers.ModelSerializer):
     class Meta:

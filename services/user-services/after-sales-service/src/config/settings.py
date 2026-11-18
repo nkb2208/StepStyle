@@ -1,18 +1,29 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 import pymysql
 
-pymysql.install_as_MySQLdb()  # dùng PyMySQL để nối MySQL
+pymysql.install_as_MySQLdb()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "dev-only-change-me"
-DEBUG = True
+SERVICE_DIR = BASE_DIR.parent
+ROOT_DIR = BASE_DIR.parents[3]
+
+load_dotenv(SERVICE_DIR / ".env")
+load_dotenv(ROOT_DIR / ".env")
+
+SECRET_KEY = (
+    os.environ.get("SECRET_KEY")
+    or os.environ.get("BETTER_AUTH_SECRET")
+    or "django-insecure-fallback-key-for-local-dev"
+)
+DEBUG = os.environ.get("DEBUG", "False").strip().lower() in ("true", "1", "yes")
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
-    "django.contrib.staticfiles",  # để trang thử API hiện đẹp
+    "django.contrib.staticfiles",
     "rest_framework",
     "aftersales",
     'drf_spectacular',
@@ -41,7 +52,6 @@ DATABASES = {
 }
 
 REST_FRAMEWORK = {
-    # Chưa làm đăng nhập: ai cũng gọi được (sẽ thêm sau)
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [],
     "UNAUTHENTICATED_USER": None,

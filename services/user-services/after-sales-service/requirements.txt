@@ -2,3 +2,5 @@ Django>=5.2,<6
 djangorestframework>=3.16
 PyMySQL>=1.1
 cryptography>=42
+python-dotenv>=1.0.0
+drf_spectacular>=0.26.5

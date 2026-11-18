@@ -1,11 +1,12 @@
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 
 from .models import DanhGia, YeuCauHauMai
 from .serializers import (
     DanhGiaSerializer,
     DanhGiaUpdateSerializer,
+    DanhGiaCreateSerializer,
     YeuCauHauMaiSerializer,
     YeuCauHauMaiCreateSerializer,
     YeuCauHauMaiUpdateSerializer,
@@ -28,6 +29,30 @@ class DanhGiaViewSet(viewsets.ModelViewSet):
     queryset = DanhGia.objects.all().order_by("-ma_danh_gia")
     serializer_class = DanhGiaSerializer
     http_method_names = ["get", "post", "put", "delete", "head", "options"]
+
+    @extend_schema(
+        request=DanhGiaCreateSerializer,
+        responses={201: DanhGiaSerializer},
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = DanhGiaCreateSerializer(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        output_serializer = DanhGiaSerializer(
+            instance,
+            context=self.get_serializer_context(),
+        )
+        headers = self.get_success_headers(output_serializer.data)
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
+
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -58,11 +83,28 @@ class YeuCauHauMaiViewSet(viewsets.ModelViewSet):
     serializer_class = YeuCauHauMaiSerializer
     http_method_names = ["get", "post", "put", "delete", "head", "options"]
 
+    @extend_schema(
+        request=YeuCauHauMaiCreateSerializer,
+        responses={201: YeuCauHauMaiSerializer},
+    )
     def create(self, request, *args, **kwargs):
-        serializer = YeuCauHauMaiCreateSerializer(data=request.data)
+        serializer = YeuCauHauMaiCreateSerializer(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
         serializer.is_valid(raise_exception=True)
         instance = serializer.save(trang_thai="PENDING")
-        return Response(YeuCauHauMaiSerializer(instance).data, status=status.HTTP_201_CREATED)
+
+        output_serializer = YeuCauHauMaiSerializer(
+            instance,
+            context=self.get_serializer_context(),
+        )
+        headers = self.get_success_headers(output_serializer.data)
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
