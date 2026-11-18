@@ -231,15 +231,15 @@ function Order() {
                                             </div>
 
                                             {order.payment?.ma_phuong_thuc === 3 && order.payment?.trang_thai_thanh_toan !== 'SUCCESS' && order.trang_thai_don_hang === 'PENDING' && (
-                                                <button onClick={(e) => { e.stopPropagation(); handlePayMomo(order.ma_don_hang); }} className="mt-4 w-full font-bold p-3 bg-pink-500 hover:bg-pink-600 text-white text-md rounded-xl">Thanh toán MoMo ngay</button>
+                                                <button onClick={(e) => { e.stopPropagation(); handlePayMomo(order.ma_don_hang); }} className="cursor-pointer mt-4 w-full font-bold p-3 bg-pink-500 hover:bg-pink-600 text-white text-md rounded-xl">Thanh toán MoMo ngay</button>
                                             )}
 
                                             {order.payment?.ma_phuong_thuc === 5 && order.payment?.trang_thai_thanh_toan !== 'SUCCESS' && order.trang_thai_don_hang === 'PENDING' && (
-                                                <button onClick={(e) => { e.stopPropagation(); handlePayVnpay(order.ma_don_hang); }} className="mt-4 w-full font-bold p-3 bg-blue-600 hover:bg-blue-700 text-white text-md rounded-xl">Thanh toán VNPAY ngay</button>
+                                                <button onClick={(e) => { e.stopPropagation(); handlePayVnpay(order.ma_don_hang); }} className="cursor-pointer mt-4 w-full font-bold p-3 bg-blue-600 hover:bg-blue-700 text-white text-md rounded-xl">Thanh toán VNPAY ngay</button>
                                             )}
 
                                             {order.trang_thai_don_hang === 'PENDING' && (
-                                                <button onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.ma_don_hang); }} className="mt-2 w-full font-bold p-4 bg-red-400 text-white text-md hover:cursor-pointer hover:bg-red-500 rounded-xl">Hủy đơn</button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.ma_don_hang); }} className="cursor-pointer mt-2 w-full font-bold p-4 bg-red-400 text-white text-md hover:cursor-pointer hover:bg-red-500 rounded-xl">Hủy đơn</button>
                                             )}
                                         </div>
                                     )}

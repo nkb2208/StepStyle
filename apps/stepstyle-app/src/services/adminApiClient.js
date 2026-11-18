@@ -108,7 +108,7 @@ export const productApiClient = createClient(
 
 // Order Management Service (FastAPI) on /api/v1
 export const orderApiClient = createClient(
-  import.meta.env.VITE_ORDER_API_URL || 'http://localhost:8000/'
+  import.meta.env.VITE_ORDER_API_URL || 'http://localhost:4007/api/v1'
 );
 
 // Auth Service User Management on /api/users (port 4000)

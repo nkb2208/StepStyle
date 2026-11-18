@@ -128,7 +128,7 @@ class OrderController extends Controller
     {
         try {
             $userServiceUrl = env('USER_SERVICE_URL', 'http://127.0.0.1:8002');
-            $token = $request->bearerToken(); // Lấy JWT Token từ Header (do Service 1 cấp)
+            $token = $request->bearerToken(); 
 
             $response = Http::timeout(3)
                 ->withToken($token)
@@ -279,53 +279,61 @@ class OrderController extends Controller
             ],404);
         }
 
-        $endpoint = "https://test-payment.momo.vn/v2/gateway/api/create";
-        $partnerCode = 'MOMOBKUN20180529';
-        $accessKey = 'klm05TvNBzhg7h7j';
-        $secretKey = 'at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa';
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+        $endpoint = env('MOMO_ENDPOINT') ?: "https://test-payment.momo.vn/v2/gateway/api/create";
+        $partnerCode = env('MOMO_PARTNER_CODE') ?: 'MOMOBKUN20180529';
+        $accessKey = env('MOMO_ACCESS_KEY') ?: 'klm05TvNBzhg7h7j';
+        $secretKey = env('MOMO_SECRET_KEY') ?: 'at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa';
         $orderInfo = "Thanh toan don hang #" . $order->ma_don_hang;
         $amount = $order->tong_thanh_toan > 0 ? (string)(int)$order->tong_thanh_toan : "10000";
         $momoOrderId = $order->ma_don_hang . "_" . time();
-        $redirectUrl = "http://localhost:5173/order";
-        $ipnUrl = "http://127.0.0.1:8000/api/orders/{$order->ma_don_hang}/payment";
+        $redirectUrl = $frontendUrl . "/order";
+        $ipnUrl = (env('ORDER_SERVICE_URL') ?: 'http://127.0.0.1:8000') . "/api/orders/{$order->ma_don_hang}/payment";
         $extraData = "";
 
         $requestId = time() . "";
         $requestType = $request->input('requestType', 'captureWallet'); // default captureWallet, or payWithATM
 
-        $rawHash = "accessKey=" . $accessKey . "&amount=" . $amount . "&extraData=" . $extraData . "&ipnUrl=" . $ipnUrl . "&orderId=" . $momoOrderId . "&orderInfo=" . $orderInfo . "&partnerCode=" . $partnerCode . "&redirectUrl=" . $redirectUrl . "&requestId=" . $requestId . "&requestType=" . $requestType;
-        $signature = hash_hmac("sha256", $rawHash, $secretKey);
+        try {
+            $rawHash = "accessKey=" . $accessKey . "&amount=" . $amount . "&extraData=" . $extraData . "&ipnUrl=" . $ipnUrl . "&orderId=" . $momoOrderId . "&orderInfo=" . $orderInfo . "&partnerCode=" . $partnerCode . "&redirectUrl=" . $redirectUrl . "&requestId=" . $requestId . "&requestType=" . $requestType;
+            $signature = hash_hmac("sha256", $rawHash, $secretKey);
 
-        $response = \Illuminate\Support\Facades\Http::withoutVerifying()->post($endpoint, [
-            'partnerCode'=> $partnerCode,
-            'partnerName'=> "StepStyle Store",
-            'storeId'    => "StepStyle",
-            'requestId'  => $requestId,
-            'amount' => (int) $amount,
-            'orderId' => $momoOrderId,
-            'orderInfo' => $orderInfo,
-            'redirectUrl' => $redirectUrl,
-            'ipnUrl' => $ipnUrl,
-            'lang' => 'vi',
-            'extraData' => $extraData,
-            'requestType' => $requestType,
-            'signature' => $signature
-        ]);
+            $response = \Illuminate\Support\Facades\Http::timeout(10)->withoutVerifying()->post($endpoint, [
+                'partnerCode'=> $partnerCode,
+                'partnerName'=> "StepStyle Store",
+                'storeId'    => "StepStyle",
+                'requestId'  => $requestId,
+                'amount'     => (int) $amount,
+                'orderId'    => $momoOrderId,
+                'orderInfo'  => $orderInfo,
+                'redirectUrl'=> $redirectUrl,
+                'ipnUrl'     => $ipnUrl,
+                'lang'       => 'vi',
+                'extraData'  => $extraData,
+                'requestType'=> $requestType,
+                'signature'  => $signature
+            ]);
 
-        $result = $response->json();
+            $result = $response->json();
 
-        if(isset($result['payUrl'])) {
+            if (isset($result['payUrl'])) {
+                return response()->json([
+                    'status'=> 'success',
+                    'payUrl'=> $result['payUrl']
+                ], 200);
+            }
+
             return response()->json([
-                'status'=> 'success',
-                'payUrl'=> $result['payUrl']
-            ],200);
+                'status'  => 'error',
+                'message' => $result['message'] ?? 'Cổng MoMo chính thức từ chối kết nối (Mã phản hồi HTTP: ' . $response->status() . '). Vui lòng kiểm tra tài khoản MoMo Business và IP Whitelist.',
+                'detail'  => $result ?? $response->body()
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Lỗi kết nối đến cổng thanh toán MoMo: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'status' => 'error',
-            'message'=> 'Không tạo được cổng MoMo, chuyển sang chế độ giả lập',
-            'detail'=> $result
-        ],400);
     }
 
     public function payment_vnpay(Request $request, $orderID){
@@ -335,22 +343,25 @@ class OrderController extends Controller
         }
 
         date_default_timezone_set('Asia/Ho_Chi_Minh');
-        $vnp_TmnCode = "H0FXLGFO"; 
-        $vnp_HashSecret = "IJVDDNUKRJBYDUZUQPYVQCJEIBMTNRRU"; 
-        $vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"; 
-        $vnp_Returnurl = "http://localhost:5173/order"; 
+
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+        $vnp_TmnCode = env('VNPAY_TMN_CODE') ?: "H0FXLGFO"; 
+        $vnp_HashSecret = env('VNPAY_HASH_SECRET') ?: "IJVDDNUKRJBYDUZUQPYVQCJEIBMTNRRU"; 
+        $vnp_Url = env('VNPAY_URL') ?: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"; 
+        $vnp_Returnurl = $frontendUrl . "/order"; 
+
+        $amount = $order->tong_thanh_toan > 0 ? (int)$order->tong_thanh_toan : 10000;
+        $vnp_TxnRef = $order->ma_don_hang . "_" . time(); 
 
         $startTime = date("YmdHis");
         $expire = date('YmdHis', strtotime('+15 minutes', strtotime($startTime)));
 
-        $vnp_TxnRef = $order->ma_don_hang . "_" . time(); 
         $vnp_OrderInfo = "Thanh toan don hang StepStyle " . $order->ma_don_hang;
         $vnp_OrderType = 'billpayment';
-        $amount = $order->tong_thanh_toan > 0 ? $order->tong_thanh_toan : 10000;
-        $vnp_Amount = $amount * 100; // BẮT BUỘC NHÂN 100
+        $vnp_Amount = $amount * 100; 
         $vnp_Locale = 'vn';
         $vnp_BankCode = ''; 
-        $vnp_IpAddr = $request->ip();
+        $vnp_IpAddr = $request->ip() ?? '127.0.0.1';
 
         $inputData = array(
             "vnp_Version" => "2.1.0",
@@ -392,6 +403,6 @@ class OrderController extends Controller
         return response()->json([
             'status' => 'success',
             'payUrl' => $vnp_Url
-        ],200);
+        ], 200);
     }
 }

@@ -213,7 +213,30 @@ services:
       auth:
         condition: service_healthy
     restart: unless-stopped
-
+  checkout-service:
+    build: 
+      context: ./services/order-services
+      dockerfile: Dockerfile
+    container_name: laravel-checkout-service
+    ports:
+      -"8000":"8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: mysql
+      DB_HOST: mysql 
+      DB_PORT: 3306  
+      DB_DATABASE: stepstyle_db
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      FRONTEND_URL: http://localhost:5173
+      AUTH_SERVICE_URL: http://auth:4000
+    depends_on:
+      mysql:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    restart: unless-stopped
 volumes:
 
   mongodb-data:

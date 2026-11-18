@@ -24,6 +24,17 @@ function NavBar(){
         document.addEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const handleLogout = ()=>{
+        const token = localStorage.getItem("token");
+        if(!token){
+            return;
+        }
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user")
+    }
+
+
     return(
         <div ref={dropdownRef} className='border border-b border-gray-300 bg-white'>
             <div className="flex items-center justify-center text-white w-full bg-orange-400 text-xs p-2">
@@ -89,14 +100,14 @@ function NavBar(){
                                     <p>Đơn hàng</p>
                                 </Link>
 
-                                <Link className='hover:bg-red-200 p-2 rounded-xl text-red-400 mt-4 flex gap-2 items-center' to='/home'>
+                                <button onClick={handleLogout} className='hover:bg-red-200 p-2 rounded-xl text-red-400 mt-4 flex gap-2 items-center' to='/home'>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                                         <polyline points="16 17 21 12 16 7"></polyline>
                                         <line x1="21" y1="12" x2="9" y2="12"></line>
                                     </svg>
                                     <p>Đăng xuất</p>
-                                </Link>
+                                </button>
                             </div>
                         </div>
                     )}
