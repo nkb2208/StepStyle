@@ -27,3 +27,28 @@ export const updatePaymentStatus = async (id, trangThaiThanhToan) => {
   });
   return response.data;
 };
+
+export const createOrder = async (data) => {
+  const response = await orderApiClient.post('/orders', data);
+  return response.data;
+};
+
+export const updateOrder = async (id, data) => {
+  const response = await orderApiClient.put(`/orders/${id}`, data);
+  return response.data;
+};
+
+export const deleteOrder = async (id) => {
+  await orderApiClient.delete(`/orders/${id}`);
+};
+
+// Dữ liệu cho form tạo đơn
+export const getVariantOptions = async () => {
+  const response = await orderApiClient.get('/orders/variants');
+  return response.data;
+};
+
+export const getPaymentMethods = async () => {
+  const response = await orderApiClient.get('/orders/payment-methods');
+  return response.data;
+};
