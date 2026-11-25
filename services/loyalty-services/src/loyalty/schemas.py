@@ -58,3 +58,24 @@ class AddressOut(AddressBase):
 
     id: int
     mac_dinh: bool
+
+    
+class MembershipOut(BaseModel):
+    ma_hang: str
+    ten_hang: str
+    phan_tram_giam: int
+    mien_phi_van_chuyen: bool
+    tong_diem: int
+    ngay_het_han: datetime | None = None
+    con_han: bool
+
+
+class VipBenefitsOut(BaseModel):
+    """Contract với Service 4: key `discount_percent` nằm ở cấp cao nhất."""
+
+    user_id: str
+    tier: str
+    tier_name: str
+    discount_percent: int
+    free_shipping: bool
+    expires_at: datetime | None = None
