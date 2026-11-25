@@ -26,3 +26,35 @@ class ProfileUpdate(BaseModel):
     so_dien_thoai: str | None = Field(None, pattern=r"^(0|\+84)\d{9,10}$")
     ngay_sinh: datetime | None = None
     gioi_tinh: str | None = Field(None, pattern=r"^(NAM|NU|KHAC)$")
+
+
+class AddressBase(BaseModel):
+    ten_nguoi_nhan: str = Field(..., min_length=1, max_length=255)
+    so_dien_thoai: str = Field(..., pattern=r"^(0|\+84)\d{9,10}$")
+    tinh_thanh: str = Field(..., min_length=1, max_length=100)
+    quan_huyen: str = Field(..., min_length=1, max_length=100)
+    phuong_xa: str = Field(..., min_length=1, max_length=100)
+    dia_chi_chi_tiet: str = Field(..., min_length=1, max_length=500)
+
+
+class AddressCreate(AddressBase):
+    mac_dinh: bool = False
+
+
+class AddressUpdate(BaseModel):
+    """Chỉ gửi trường nào muốn đổi."""
+
+    ten_nguoi_nhan: str | None = Field(None, min_length=1, max_length=255)
+    so_dien_thoai: str | None = Field(None, pattern=r"^(0|\+84)\d{9,10}$")
+    tinh_thanh: str | None = Field(None, min_length=1, max_length=100)
+    quan_huyen: str | None = Field(None, min_length=1, max_length=100)
+    phuong_xa: str | None = Field(None, min_length=1, max_length=100)
+    dia_chi_chi_tiet: str | None = Field(None, min_length=1, max_length=500)
+    mac_dinh: bool | None = None
+
+
+class AddressOut(AddressBase):
+    model_config = {"from_attributes": True}
+
+    id: int
+    mac_dinh: bool
