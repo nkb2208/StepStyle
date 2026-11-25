@@ -55,10 +55,6 @@ public class ProductVariant {
         this.version = version != null ? version : 0L;
     }
 
-    /**
-     * Resolves the effective price: either the price override if present,
-     * or the parent product's base price.
-     */
     public BigDecimal getEffectivePrice() {
         if (priceOverride != null) {
             return priceOverride;

@@ -1,20 +1,15 @@
--- V1: Initialize Catalog & Search Database Schema for StepStyle
-
--- 1. Brands
 CREATE TABLE IF NOT EXISTS brands (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
     logo_url TEXT
 );
 
--- 2. Categories
 CREATE TABLE IF NOT EXISTS categories (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
     description TEXT
 );
 
--- 3. Products
 CREATE TABLE IF NOT EXISTS products (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -29,13 +24,11 @@ CREATE TABLE IF NOT EXISTS products (
     updated_at TIMESTAMP NOT NULL
 );
 
--- Indexes for products
 CREATE INDEX IF NOT EXISTS idx_products_brand_id ON products(brand_id);
 CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
 CREATE INDEX IF NOT EXISTS idx_products_base_price ON products(base_price);
 
--- 4. Product Variants
 CREATE TABLE IF NOT EXISTS product_variants (
     id BIGSERIAL PRIMARY KEY,
     product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -48,13 +41,11 @@ CREATE TABLE IF NOT EXISTS product_variants (
     CONSTRAINT uq_product_size_color UNIQUE (product_id, size, color)
 );
 
--- Indexes for product variants
 CREATE INDEX IF NOT EXISTS idx_variants_product_id ON product_variants(product_id);
 CREATE INDEX IF NOT EXISTS idx_variants_size ON product_variants(size);
 CREATE INDEX IF NOT EXISTS idx_variants_color ON product_variants(color);
 CREATE INDEX IF NOT EXISTS idx_variants_stock_quantity ON product_variants(stock_quantity);
 
--- 5. Product Metrics (1-1 with products, using product_id as PK)
 CREATE TABLE IF NOT EXISTS product_metrics (
     product_id BIGINT PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
     avg_rating DOUBLE PRECISION NOT NULL DEFAULT 0.0,
@@ -63,12 +54,10 @@ CREATE TABLE IF NOT EXISTS product_metrics (
     ranking_score DOUBLE PRECISION NOT NULL DEFAULT 0.0
 );
 
--- Indexes for ranking and metrics
 CREATE INDEX IF NOT EXISTS idx_metrics_ranking_score ON product_metrics(ranking_score DESC);
 CREATE INDEX IF NOT EXISTS idx_metrics_sold_count ON product_metrics(sold_count DESC);
 CREATE INDEX IF NOT EXISTS idx_metrics_avg_rating ON product_metrics(avg_rating DESC);
 
--- 6. Stock Transaction Logs (Idempotency and Audit for inventory)
 CREATE TABLE IF NOT EXISTS stock_transaction_logs (
     id BIGSERIAL PRIMARY KEY,
     transaction_id VARCHAR(150) NOT NULL UNIQUE,

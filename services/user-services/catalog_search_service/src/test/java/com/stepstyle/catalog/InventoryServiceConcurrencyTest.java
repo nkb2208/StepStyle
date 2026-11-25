@@ -79,7 +79,7 @@ class InventoryServiceConcurrencyTest {
                 "42",
                 "Triple White",
                 null,
-                3, // Initial stock: strictly 3 items
+                3,
                 0L
         );
         ProductVariant savedVariant = productVariantRepository.save(variant);
@@ -104,7 +104,7 @@ class InventoryServiceConcurrencyTest {
             executor.submit(() -> {
                 readyLatch.countDown();
                 try {
-                    // All threads wait for the start signal to maximize race contention
+
                     startLatch.await();
 
                     InventoryAdjustRequest request = new InventoryAdjustRequest(
@@ -126,11 +126,10 @@ class InventoryServiceConcurrencyTest {
             });
         }
 
-        // Wait until all threads are created and ready
         readyLatch.await(5, TimeUnit.SECONDS);
-        // Fire all threads simultaneously
+
         startLatch.countDown();
-        // Await completion
+
         boolean finished = doneLatch.await(15, TimeUnit.SECONDS);
         executor.shutdown();
 
@@ -139,7 +138,6 @@ class InventoryServiceConcurrencyTest {
         assertEquals(7, insufficientStockCount.get(), "Remaining 7 threads must encounter InsufficientStockException");
         assertEquals(0, unexpectedErrorCount.get(), "No unexpected errors should occur");
 
-        // Verify database final state
         ProductVariant finalVariant = productVariantRepository.findById(testVariantId).orElseThrow();
         assertEquals(0, finalVariant.getStockQuantity(), "Final stock must be exactly 0 (no overselling, never negative)");
     }
@@ -147,7 +145,7 @@ class InventoryServiceConcurrencyTest {
     @Test
     @DisplayName("Idempotency: Replaying identical transactionId twice must not deduct stock twice and return idempotentReplay=true")
     void testIdempotentDeductionReplay() {
-        // Reset stock to 10 for idempotency test
+
         ProductVariant variant = productVariantRepository.findById(testVariantId).orElseThrow();
         variant.setStockQuantity(10);
         productVariantRepository.saveAndFlush(variant);
@@ -160,23 +158,19 @@ class InventoryServiceConcurrencyTest {
                 InventoryAction.DEDUCT
         );
 
-        // First call: executes actual deduction
         InventoryAdjustResponse response1 = inventoryService.adjustInventory(request);
         assertNotNull(response1);
         assertFalse(response1.idempotentReplay(), "First call should NOT be an idempotent replay");
         assertEquals(8, response1.currentStock(), "Stock should be deducted from 10 to 8");
 
-        // Second call: duplicate transactionId
         InventoryAdjustResponse response2 = inventoryService.adjustInventory(request);
         assertNotNull(response2);
         assertTrue(response2.idempotentReplay(), "Second call MUST be an idempotent replay");
         assertEquals(8, response2.currentStock(), "Current stock must remain 8");
 
-        // Verify database state: variant stock was only modified once
         ProductVariant reloadedVariant = productVariantRepository.findById(testVariantId).orElseThrow();
         assertEquals(8, reloadedVariant.getStockQuantity(), "Stock in database must be exactly 8 (deducted only once)");
 
-        // Verify transaction log table contains strictly 1 record for this txId
         assertEquals(1, stockTransactionLogRepository.findByVariantIdOrderByCreatedAtDesc(testVariantId).size());
     }
 }

@@ -54,7 +54,6 @@ public class ProductService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", request.categoryId()));
 
-        // Generate and ensure unique slug
         String slug = (request.slug() != null && !request.slug().isBlank())
                 ? toSlug(request.slug())
                 : toSlug(request.name());
@@ -63,7 +62,6 @@ public class ProductService {
             slug = slug + "-" + UUID.randomUUID().toString().substring(0, 8);
         }
 
-        // Validate variants uniqueness within request
         Set<String> skus = new HashSet<>();
         Set<String> sizeColors = new HashSet<>();
         for (CreateVariantRequest v : request.variants()) {
@@ -89,7 +87,6 @@ public class ProductService {
         product.setThumbnailUrl(request.thumbnailUrl());
         product.setStatus(ProductStatus.ACTIVE);
 
-        // Attach variants
         for (CreateVariantRequest v : request.variants()) {
             ProductVariant variant = new ProductVariant();
             variant.setSku(v.sku().trim());
@@ -102,7 +99,6 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
 
-        // Initialize ProductMetrics
         double initialRanking = rankingService.calculateRankingScore(0.0, 0L, 0L);
         ProductMetrics metrics = new ProductMetrics(savedProduct, 0.0, 0L, 0L, initialRanking);
         savedProduct.setMetrics(metrics);

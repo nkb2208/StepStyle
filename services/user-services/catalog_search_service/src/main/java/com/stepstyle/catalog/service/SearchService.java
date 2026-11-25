@@ -37,7 +37,7 @@ public class SearchService {
                 criteria.minPrice(),
                 criteria.maxPrice(),
                 criteria.inStockOnly(),
-                null // minRating can be added or null
+                null
         );
 
         Specification<Product> spec = ProductSpecification.filterBy(specCriteria);

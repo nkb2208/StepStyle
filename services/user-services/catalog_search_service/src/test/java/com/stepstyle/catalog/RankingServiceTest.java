@@ -25,9 +25,6 @@ class RankingServiceTest {
     void testZeroReviewsAndZeroSales() {
         double score = rankingService.calculateRankingScore(0.0, 0L, 0L);
 
-        // weightedRating = (0 * 0.0 + 10.0 * 3.5) / 10.0 = 3.5
-        // logSold = ln(1 + 0) = 0.0, logReview = ln(1 + 0) = 0.0
-        // score = 2.0 * 3.5 + 0 + 0 = 7.00
         assertEquals(7.00, score, 0.01, "Baseline score for brand new product should equal 2 * priorMean");
         assertFalse(Double.isNaN(score), "Score must never be NaN");
         assertFalse(Double.isInfinite(score), "Score must never be infinite");
@@ -45,10 +42,9 @@ class RankingServiceTest {
     @Test
     @DisplayName("Bayesian damping: Product with 2 five-star reviews should rank lower than popular proven shoe")
     void testBayesianDampingOnLowSample() {
-        // Shoe A: 2 reviews, 5.0 stars, 5 sold
+
         double scoreA = rankingService.calculateRankingScore(5.0, 2L, 5L);
 
-        // Shoe B: 500 reviews, 4.6 stars, 1500 sold
         double scoreB = rankingService.calculateRankingScore(4.6, 500L, 1500L);
 
         assertTrue(scoreB > scoreA,

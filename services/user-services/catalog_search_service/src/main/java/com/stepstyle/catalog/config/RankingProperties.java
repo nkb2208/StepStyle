@@ -3,42 +3,18 @@ package com.stepstyle.catalog.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Configuration properties for product ranking calculation.
- * Implements Bayesian average rating combined with log-scaled sales & review volume.
- *
- * Formula:
- * rankingScore = ratingWeight * ((reviewCount * avgRating + minReviews * priorMean) / (reviewCount + minReviews))
- *              + soldWeight * ln(1 + soldCount)
- *              + reviewWeight * ln(1 + reviewCount)
- */
 @Configuration
 @ConfigurationProperties(prefix = "app.ranking")
 public class RankingProperties {
 
-    /**
-     * Prior global mean rating (C), typically around 3.5.
-     */
     private double priorMean = 3.5;
 
-    /**
-     * Minimum reviews threshold weight (m), damping volatile ratings on low-count items.
-     */
     private double minReviews = 10.0;
 
-    /**
-     * Weight multiplier for Bayesian adjusted rating (w1).
-     */
     private double ratingWeight = 2.0;
 
-    /**
-     * Weight multiplier for log-scaled sold count (w2).
-     */
     private double soldWeight = 1.5;
 
-    /**
-     * Weight multiplier for log-scaled review count (w3).
-     */
     private double reviewWeight = 1.0;
 
     public RankingProperties() {
@@ -92,9 +68,6 @@ public class RankingProperties {
         this.reviewWeight = reviewWeight;
     }
 
-    /**
-     * Computes the compound ranking score based on configured parameters.
-     */
     public double computeScore(double avgRating, long reviewCount, long soldCount) {
         double bayesianRating = (reviewCount * avgRating + minReviews * priorMean) / (reviewCount + minReviews);
         double logSold = Math.log(1.0 + Math.max(0, soldCount));
