@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: stepstyle-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stepstyle_catalog
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d stepstyle_catalog"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stepstyle-net
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stepstyle-catalog-service
+    restart: unless-stopped
+    ports:
+      - "8083:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/stepstyle_catalog
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SERVER_PORT: 8080
+      APP_RANKING_PRIOR_MEAN: 3.5
+      APP_RANKING_MIN_REVIEWS: 10.0
+      APP_RANKING_RATING_WEIGHT: 2.0
+      APP_RANKING_SOLD_WEIGHT: 1.5
+      APP_RANKING_REVIEW_WEIGHT: 1.0
+    networks:
+      - stepstyle-net
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  stepstyle-net:
+    driver: bridge

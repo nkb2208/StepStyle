@@ -1,0 +1,46 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: stepstyle-catalog-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/stepstyle_catalog}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+# Bayesian product search priority ranking configuration
+app:
+  ranking:
+    prior-mean: ${APP_RANKING_PRIOR_MEAN:3.5}
+    min-reviews: ${APP_RANKING_MIN_REVIEWS:10.0}
+    rating-weight: ${APP_RANKING_RATING_WEIGHT:2.0}
+    sold-weight: ${APP_RANKING_SOLD_WEIGHT:1.5}
+    review-weight: ${APP_RANKING_REVIEW_WEIGHT:1.0}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+  api-docs:
+    path: /v3/api-docs
