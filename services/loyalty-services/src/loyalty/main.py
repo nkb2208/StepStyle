@@ -13,7 +13,7 @@ from loyalty.bootstrap import init_loyalty_schema
 from loyalty.config import get_settings
 from loyalty.db import dispose_engine, engine
 from loyalty.errors import register_exception_handlers
-from loyalty.routers import addresses, membership, profile
+from loyalty.routers import addresses, membership, profile, vip
 
 logger = logging.getLogger("loyalty")
 
@@ -52,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(addresses.router, prefix="/api/v1")
     app.include_router(membership.router_me, prefix="/api/v1")
     app.include_router(membership.router_internal, prefix="/api")
+    app.include_router(vip.router, prefix="/api/v1")
     @app.get("/health", tags=["discovery"])
     async def health() -> dict:
         return {"status": "ok"}

@@ -79,3 +79,26 @@ class VipBenefitsOut(BaseModel):
     discount_percent: int
     free_shipping: bool
     expires_at: datetime | None = None
+    
+
+class VipPackageOut(BaseModel):
+    id: int
+    ten_goi: str
+    gia: int
+    so_ngay: int
+    ma_hang: str
+
+
+class PurchaseIn(BaseModel):
+    goi_id: int
+
+
+class TransactionOut(BaseModel):
+    model_config = {"from_attributes": True}
+
+    ma_giao_dich: str
+    goi_id: int
+    so_tien: int
+    trang_thai: str
+    ngay_tao: datetime
+    ngay_thanh_toan: datetime | None = None

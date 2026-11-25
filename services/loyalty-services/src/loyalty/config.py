@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     host: str = "0.0.0.0"
     port: int = 8002
+    vip_mock_payment: bool = True
     log_level: str = "info"
 
     # ── Database ────────────────────────────────────────────────────────────
