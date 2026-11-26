@@ -215,22 +215,35 @@ services:
     restart: unless-stopped
   checkout-service:
     build: 
-      context: ./services/order-services
+      context: ./services/user-services/order-services
       dockerfile: Dockerfile
     container_name: laravel-checkout-service
     ports:
       - "8000:8000"
     environment:
+      APP_NAME: Laravel
       APP_ENV: local
+      APP_KEY: ${ORDER_APP_KEY:-base64:sCKfjSraX4hzHkBJYmpJcmAtmboAqNHBaJShfZiSI9M=}
       APP_DEBUG: "true"
       DB_CONNECTION: mysql
-      DB_HOST: mysql 
-      DB_PORT: 3306  
+      DB_HOST: mysql
+      DB_PORT: 3306
       DB_DATABASE: stepstyle_db
       DB_USERNAME: root
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      SESSION_DRIVER: database
+      CACHE_STORE: database
       FRONTEND_URL: http://localhost:5173
+      ORDER_SERVICE_URL: http://127.0.0.1:8000
       AUTH_SERVICE_URL: http://auth:4000
+      USER_SERVICE_URL: http://loyalty:8002
+      MOMO_ENDPOINT: ${MOMO_ENDPOINT:-https://test-payment.momo.vn/v2/gateway/api/create}
+      MOMO_PARTNER_CODE: ${MOMO_PARTNER_CODE:-MOMOBKUN20180529}
+      MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY:-klm05TvNBzhg7h7j}
+      MOMO_SECRET_KEY: ${MOMO_SECRET_KEY:-at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa}
+      VNPAY_URL: ${VNPAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-H0FXLGFO}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-IJVDDNUKRJBYDUZUQPYVQCJEIBMTNRRU}
     depends_on:
       mysql:
         condition: service_healthy
@@ -239,7 +252,7 @@ services:
     restart: unless-stopped
   loyalty:
     build:
-      context: ./services/loyalty-services
+      context: ./services/user-services/loyalty-services
       dockerfile: Dockerfile
     container_name: loyalty-service
     ports:

@@ -32,7 +32,7 @@ Bảng được tạo và nạp dữ liệu mặc định (4 hạng, 3 gói) t�
 ## Chạy local
 
 ```powershell
-cd services\loyalty-services
+cd services\user-services\loyalty-services
 pip install -r requirements.txt
 $env:PYTHONPATH = "src"
 python -m uvicorn loyalty.main:app --port 8002 --reload
