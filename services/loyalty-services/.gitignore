@@ -30,3 +30,5 @@ htmlcov/
 
 # Ruff
 .ruff_cache/
+
+tests/.tmp/
