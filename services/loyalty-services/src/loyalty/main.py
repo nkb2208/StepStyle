@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from loyalty import __version__
 from loyalty.bootstrap import init_loyalty_schema
@@ -14,6 +15,7 @@ from loyalty.config import get_settings
 from loyalty.db import dispose_engine, engine
 from loyalty.errors import register_exception_handlers
 from loyalty.routers import addresses, membership, profile, vip
+from loyalty.storage import AVATAR_URL_PREFIX, avatar_dir
 
 logger = logging.getLogger("loyalty")
 
@@ -53,6 +55,7 @@ def create_app() -> FastAPI:
     app.include_router(membership.router_me, prefix="/api/v1")
     app.include_router(membership.router_internal, prefix="/api")
     app.include_router(vip.router, prefix="/api/v1")
+    app.mount(AVATAR_URL_PREFIX, StaticFiles(directory=avatar_dir()), name="avatars")
     @app.get("/health", tags=["discovery"])
     async def health() -> dict:
         return {"status": "ok"}

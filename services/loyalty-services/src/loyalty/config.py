@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8002
     vip_mock_payment: bool = True
+    avatar_dir: str = "uploads/avatars"
+    avatar_max_bytes: int = 2 * 1024 * 1024  # 2MB
     log_level: str = "info"
 
     # ── Database ────────────────────────────────────────────────────────────

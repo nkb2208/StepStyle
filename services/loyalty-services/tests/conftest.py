@@ -18,6 +18,7 @@ os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{(_TMP / 'test.db').as_posix(
 os.environ["JWKS_URL"] = "http://127.0.0.1:9/.well-known/jwks.json"
 os.environ["JWKS_FAIL_FAST"] = "false"
 os.environ["ENVIRONMENT"] = "test"
+os.environ["AVATAR_DIR"] = (_TMP / "avatars").as_posix()
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

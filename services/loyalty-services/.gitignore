@@ -32,3 +32,5 @@ htmlcov/
 .ruff_cache/
 
 tests/.tmp/
+
+uploads/

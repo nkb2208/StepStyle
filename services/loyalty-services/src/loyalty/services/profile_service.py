@@ -8,6 +8,7 @@ from loyalty.iam_client import fetch_me
 from loyalty.models import HoSoNguoiDung
 from loyalty.schemas import ProfileUpdate
 from loyalty.security import CurrentUser
+from loyalty.storage import delete_avatar, save_avatar
 
 
 class ProfileService:
@@ -45,4 +46,12 @@ class ProfileService:
                 continue  # cột ho_ten không cho phép NULL
             setattr(profile, field, value)
         await self._s.flush()
+        return profile
+    
+    async def set_avatar(self, user: CurrentUser, data: bytes) -> HoSoNguoiDung:
+        profile = await self.get_or_create(user)
+        old_url = profile.avatar_url
+        profile.avatar_url = save_avatar(data)
+        await self._s.flush()
+        delete_avatar(old_url)  # xóa ảnh cũ sau khi đã lưu ảnh mới
         return profile
