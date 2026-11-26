@@ -1,0 +1,38 @@
+import axios from 'axios';
+
+export const LOYALTY_ORIGIN =
+  import.meta.env.VITE_LOYALTY_API_URL || 'http://localhost:8002';
+
+const client = axios.create({ baseURL: `${LOYALTY_ORIGIN}/api/v1` });
+
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// Service bọc phản hồi dạng { success, data }, ở đây gỡ lớp bọc ra
+client.interceptors.response.use((res) => {
+  if (res.data && res.data.success !== undefined && res.data.data !== undefined) {
+    res.data = res.data.data;
+  }
+  return res;
+});
+
+export const getProfile = async () => (await client.get('/users/me')).data;
+
+export const updateProfile = async (payload) =>
+  (await client.put('/users/me', payload)).data;
+
+export const uploadAvatar = async (file) => {
+  const form = new FormData();
+  form.append('file', file); // không tự đặt Content-Type, axios tự thêm boundary
+  return (await client.post('/users/me/avatar', form)).data;
+};
+
+export const getMembership = async () =>
+  (await client.get('/users/me/membership')).data;
+
+// avatar_url từ service là đường dẫn tương đối (/static/avatars/...)
+export const avatarSrc = (url) =>
+  url ? (url.startsWith('http') ? url : `${LOYALTY_ORIGIN}${url}`) : null;
