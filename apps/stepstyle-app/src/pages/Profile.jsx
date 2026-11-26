@@ -9,6 +9,7 @@ import {
     updateProfile,
     uploadAvatar,
 } from "../services/loyaltyService";
+import AddressBook from "../components/profile/AddressBook";
 
 function Profile(){
     const navigate = useNavigate();
@@ -144,6 +145,7 @@ function Profile(){
                             <button className="mt-4 bg-orange-400 rounded-xl p-2 pr-3 pl-3 font-bold text-white">Lưu thay đổi</button>
                         </form>
                     </div>
+                    <AddressBook />
                     
                     <div className="mt-4 p-5 pr-8 pl-8 bg-white rounded-xl">
                         <p className="mb-3 font-bold text-red-500 text-xl">Đăng xuất</p>

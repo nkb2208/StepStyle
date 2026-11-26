@@ -36,3 +36,21 @@ export const getMembership = async () =>
 // avatar_url từ service là đường dẫn tương đối (/static/avatars/...)
 export const avatarSrc = (url) =>
   url ? (url.startsWith('http') ? url : `${LOYALTY_ORIGIN}${url}`) : null;
+
+
+// ── Sổ địa chỉ ──────────────────────────────────────────────────────────────
+export const listAddresses = async () =>
+  (await client.get('/users/me/addresses')).data;
+
+export const createAddress = async (payload) =>
+  (await client.post('/users/me/addresses', payload)).data;
+
+export const updateAddress = async (id, payload) =>
+  (await client.put(`/users/me/addresses/${id}`, payload)).data;
+
+export const setDefaultAddress = async (id) =>
+  (await client.put(`/users/me/addresses/${id}/default`)).data;
+
+export const deleteAddress = async (id) => {
+  await client.delete(`/users/me/addresses/${id}`);
+};
