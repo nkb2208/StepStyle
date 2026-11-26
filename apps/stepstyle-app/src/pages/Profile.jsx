@@ -10,6 +10,7 @@ import {
     uploadAvatar,
 } from "../services/loyaltyService";
 import AddressBook from "../components/profile/AddressBook";
+import VipPanel from "../components/profile/VipPanel";
 
 function Profile(){
     const navigate = useNavigate();
@@ -146,7 +147,7 @@ function Profile(){
                         </form>
                     </div>
                     <AddressBook />
-                    
+                    <VipPanel onChanged={() => getMembership().then(setMembership)} />
                     <div className="mt-4 p-5 pr-8 pl-8 bg-white rounded-xl">
                         <p className="mb-3 font-bold text-red-500 text-xl">Đăng xuất</p>
 

@@ -54,3 +54,16 @@ export const setDefaultAddress = async (id) =>
 export const deleteAddress = async (id) => {
   await client.delete(`/users/me/addresses/${id}`);
 };
+
+// ── Gói VIP ─────────────────────────────────────────────────────────────────
+export const listPackages = async () => (await client.get('/vip/packages')).data;
+
+export const purchasePackage = async (goiId) =>
+  (await client.post('/vip/purchase', { goi_id: goiId })).data;
+
+// Thanh toán giả lập (chỉ dùng demo, service phải bật VIP_MOCK_PAYMENT=true)
+export const mockPay = async (maGiaoDich) =>
+  (await client.post(`/vip/transactions/${maGiaoDich}/mock-pay`)).data;
+
+export const listTransactions = async () =>
+  (await client.get('/vip/transactions')).data;
