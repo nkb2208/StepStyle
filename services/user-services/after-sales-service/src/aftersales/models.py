@@ -3,19 +3,14 @@ from django.db import models
 
 
 class DanhGia(models.Model):
-    """Bảng `danhgia` (đã tạo bằng SQL, Django chỉ đọc/ghi)."""
+    """Bảng `danhgia` (đã tạo bằng SQL trong stepstyle_db, Django chỉ đọc/ghi)."""
 
     ma_danh_gia = models.BigAutoField(primary_key=True)
-    ma_nguoi_dung = models.IntegerField()
-    ma_san_pham = models.IntegerField()
-    ma_don_hang = models.BigIntegerField()
-    so_sao = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    ma_nguoi_dung = models.PositiveIntegerField()
+    ma_san_pham = models.PositiveIntegerField()
+    ma_don_hang = models.PositiveBigIntegerField()
+    so_sao = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     noi_dung = models.TextField(null=True, blank=True)
-    trang_thai = models.CharField(
-        max_length=10,
-        default="PENDING",
-        choices=[("PENDING", "PENDING"), ("APPROVED", "APPROVED"), ("HIDDEN", "HIDDEN")],
-    )
     ngay_tao = models.DateTimeField(auto_now_add=True)
     ngay_cap_nhat = models.DateTimeField(auto_now=True)
 
@@ -28,10 +23,10 @@ class YeuCauHauMai(models.Model):
     """Bảng `yeucauhaumai`: yêu cầu đổi size / trả hàng / hỗ trợ."""
 
     ma_yeu_cau = models.BigAutoField(primary_key=True)
-    ma_nguoi_dung = models.IntegerField()
-    ma_don_hang = models.BigIntegerField()
-    ma_bien_the = models.IntegerField(null=True, blank=True)
-    ma_bien_the_moi = models.IntegerField(null=True, blank=True)
+    ma_nguoi_dung = models.PositiveIntegerField()
+    ma_don_hang = models.PositiveBigIntegerField()
+    ma_bien_the = models.PositiveIntegerField(null=True, blank=True)
+    ma_bien_the_moi = models.PositiveIntegerField(null=True, blank=True)
     loai_yeu_cau = models.CharField(
         max_length=10,
         choices=[("EXCHANGE", "EXCHANGE"), ("RETURN", "RETURN"), ("SUPPORT", "SUPPORT")],

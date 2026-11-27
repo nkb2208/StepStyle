@@ -9,10 +9,9 @@ pymysql.install_as_MySQLdb()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SERVICE_DIR = BASE_DIR.parent
-ROOT_DIR = BASE_DIR.parents[3]
-
 load_dotenv(SERVICE_DIR / ".env")
-load_dotenv(ROOT_DIR / ".env")
+if len(BASE_DIR.parents) > 3:
+    load_dotenv(BASE_DIR.parents[3] / ".env")
 
 SECRET_KEY = (
     os.environ.get("SECRET_KEY")
@@ -26,7 +25,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "aftersales",
-    'drf_spectacular',
+    "drf_spectacular",
+]
+
+MIDDLEWARE = [
+    "django.middleware.common.CommonMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -51,21 +54,55 @@ DATABASES = {
     }
 }
 
+# ── Inter-service contract: Order Service (Service 4) ──
+ORDER_SERVICE_URL = os.environ.get("ORDER_SERVICE_URL", "http://127.0.0.1:8000").rstrip("/")
+ORDER_SERVICE_TIMEOUT = float(os.environ.get("ORDER_SERVICE_TIMEOUT", "5.0"))
+INTERNAL_API_KEY = os.environ.get("INTERNAL_API_KEY", "")
+
+# ── Inter-service contract: Catalog & Search Service (Service 3) ──
+CATALOG_SERVICE_URL = os.environ.get("CATALOG_SERVICE_URL", "http://127.0.0.1:8083").rstrip("/")
+CATALOG_SERVICE_TIMEOUT = float(os.environ.get("CATALOG_SERVICE_TIMEOUT", "3.0"))
+CATALOG_SYNC_ENABLED = os.environ.get("CATALOG_SYNC_ENABLED", "true").strip().lower() in ("true", "1", "yes")
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [],
     "UNAUTHENTICATED_USER": None,
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'After-Sales & Feedback Service API',
-    'DESCRIPTION': 'API Hậu mãi & Đánh giá',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    'TAGS': [
-        {"name": "1. Feedback (Đánh giá sản phẩm)", "description": "Các API quản lý đánh giá của khách hàng"},
-        {"name": "2. After-Sales (Yêu cầu hậu mãi & Đổi trả)", "description": "Các API xử lý đổi trả, bảo hành, khiếu nại"},
+    "TITLE": "After-Sales & Feedback Service API",
+    "DESCRIPTION": (
+        "API Hậu mãi & Đánh giá sản phẩm (Service 5). "
+        "Xác minh chủ sở hữu đơn hàng và sản phẩm đã mua thông qua API contract với Order Service."
+    ),
+    "VERSION": "1.2.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "ENUM_NAME_OVERRIDES": {
+        "AfterSalesRequestStatusEnum": [
+            ("PENDING", "PENDING"),
+            ("APPROVED", "APPROVED"),
+            ("REJECTED", "REJECTED"),
+            ("COMPLETED", "COMPLETED"),
+            ("CANCELLED", "CANCELLED"),
+        ],
+        "AfterSalesProcessStatusEnum": [
+            ("APPROVED", "APPROVED"),
+            ("REJECTED", "REJECTED"),
+            ("COMPLETED", "COMPLETED"),
+        ],
+    },
+    "TAGS": [
+        {
+            "name": "1. Feedback (Đánh giá sản phẩm)",
+            "description": "CRUD đánh giá sản phẩm và thống kê điểm đánh giá",
+        },
+        {
+            "name": "2. After-Sales (Yêu cầu hậu mãi & Đổi trả)",
+            "description": "CRUD yêu cầu đổi size, trả hàng, hỗ trợ, hủy yêu cầu và xử lý của Admin",
+        },
     ],
 }
 

@@ -97,6 +97,8 @@ services:
       # Store-configuration schema (caidatcuahang, caidatphuongthucthanhtoan,
       # caidatdoitacvanchuyen) — loaded on first boot.
       - ./services/admin-services/system-config-service/StepStyle-v2.sql:/docker-entrypoint-initdb.d/stepstyle-v2.sql:ro
+      # After-Sales & Feedback schema (danhgia, yeucauhaumai) — runs after stepstyle-v2.sql on fresh DB init.
+      - ./services/user-services/after-sales-service/migrations/001_after_sales.sql:/docker-entrypoint-initdb.d/zz-after-sales.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD:-root}"]
       interval: 10s
@@ -270,6 +272,40 @@ services:
         condition: service_healthy
       auth:
         condition: service_healthy
+    restart: unless-stopped
+
+  after-sales:
+    build:
+      context: ./services/user-services/after-sales-service
+      dockerfile: Dockerfile
+    container_name: after-sales-service
+    ports:
+      - "8005:8005"
+    environment:
+      SECRET_KEY: ${AFTER_SALES_SECRET_KEY:-dev-only-change-me}
+      DEBUG: "false"
+      DB_NAME: stepstyle_db
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      ORDER_SERVICE_URL: http://checkout-service:8000
+      ORDER_SERVICE_TIMEOUT: "5"
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+      CATALOG_SERVICE_URL: ${CATALOG_SERVICE_URL:-http://host.docker.internal:8083}
+      CATALOG_SERVICE_TIMEOUT: "3"
+      CATALOG_SYNC_ENABLED: "true"
+      JWKS_URL: http://auth:4000/.well-known/jwks.json
+      JWT_ISSUER: ${JWT_ISSUER:-auth.yourdomain.com}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-api.yourdomain.com}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      checkout-service:
+        condition: service_started
     restart: unless-stopped
 volumes:
 

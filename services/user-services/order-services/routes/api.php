@@ -29,3 +29,8 @@ Route::prefix('orders')->group(function () {
     Route::post('/{orderId}/momo', [OrderController::class, 'payment_momo']); 
     Route::post('/{orderId}/vnpay', [OrderController::class, 'payment_vnpay']);  
 });
+
+// Internal API contract for downstream services (e.g., after-sales-service)
+Route::prefix('internal/orders')->group(function () {
+    Route::get('/{orderId}/verify-purchase', [OrderController::class, 'verifyPurchase']);
+});

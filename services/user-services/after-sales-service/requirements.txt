@@ -4,3 +4,4 @@ PyMySQL>=1.1
 cryptography>=42
 python-dotenv>=1.0.0
 drf_spectacular>=0.26.5
+gunicorn>=22.0

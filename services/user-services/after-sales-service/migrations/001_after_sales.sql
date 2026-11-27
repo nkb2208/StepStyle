@@ -1,17 +1,17 @@
+SET NAMES utf8mb4;
 USE stepstyle_db;
 
--- ═══ BẢNG DANHGIA: đánh giá sản phẩm sau khi mua ═══
+-- ═══ BẢNG DANHGIA: đánh giá sản phẩm sau khi mua (không dùng cột trang_thai) ═══
 CREATE TABLE IF NOT EXISTS danhgia
 (
     ma_danh_gia   BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    ma_nguoi_dung INT UNSIGNED                          NOT NULL,
-    ma_san_pham   INT UNSIGNED                          NOT NULL,
-    ma_don_hang   BIGINT UNSIGNED                       NOT NULL,
-    so_sao        TINYINT UNSIGNED                      NOT NULL,
+    ma_nguoi_dung INT UNSIGNED    NOT NULL,
+    ma_san_pham   INT UNSIGNED    NOT NULL,
+    ma_don_hang   BIGINT UNSIGNED NOT NULL,
+    so_sao        TINYINT UNSIGNED NOT NULL,
     noi_dung      TEXT,
-    trang_thai    ENUM ('PENDING', 'APPROVED', 'HIDDEN') NOT NULL DEFAULT 'PENDING',
-    ngay_tao      DATETIME                              NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ngay_cap_nhat DATETIME                              NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    ngay_tao      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ngay_cap_nhat DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_danhgia_nguoidung FOREIGN KEY (ma_nguoi_dung)
         REFERENCES nguoidung (ma_nguoi_dung) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_danhgia_sanpham FOREIGN KEY (ma_san_pham)
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS danhgia
         REFERENCES donhang (ma_don_hang) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT uq_danhgia_donhang_sanpham UNIQUE (ma_don_hang, ma_san_pham), -- mỗi sản phẩm trong đơn chỉ đánh giá 1 lần
     CONSTRAINT chk_danhgia_sao CHECK (so_sao BETWEEN 1 AND 5),
-    INDEX idx_danhgia_sp_tt (ma_san_pham, trang_thai)
+    INDEX idx_danhgia_sanpham (ma_san_pham)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;

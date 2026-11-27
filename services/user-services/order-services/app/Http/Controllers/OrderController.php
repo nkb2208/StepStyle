@@ -405,4 +405,128 @@ class OrderController extends Controller
             'payUrl' => $vnp_Url
         ], 200);
     }
+
+    /**
+     * Internal API Contract cho After-Sales Service:
+     * Xác minh đúng chủ đơn hàng, trạng thái đơn hàng và sản phẩm/biến thể có thuộc đơn hàng hay không.
+     *
+     * GET /api/internal/orders/{orderId}/verify-purchase
+     * Query params:
+     *   - ma_nguoi_dung (required|integer|min:1)
+     *   - ma_san_pham (nullable|integer|min:1)
+     *   - ma_bien_the (nullable|integer|min:1)
+     *   - require_delivered (nullable|boolean, default: true)
+     */
+    public function verifyPurchase(Request $request, $orderID)
+    {
+        $configuredKey = env('INTERNAL_API_KEY');
+        if (!empty($configuredKey) && $request->header('X-Internal-Api-Key') !== $configuredKey) {
+            return response()->json([
+                'eligible'    => false,
+                'reason_code' => 'UNAUTHORIZED_INTERNAL_CALL',
+                'message'     => 'Internal API key không hợp lệ.',
+                'order'       => null,
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'ma_nguoi_dung'     => 'required|integer|min:1',
+            'ma_san_pham'       => 'nullable|integer|min:1',
+            'ma_bien_the'       => 'nullable|integer|min:1',
+            'require_delivered' => 'nullable|in:0,1,true,false',
+        ]);
+
+        $userId = (int) $validated['ma_nguoi_dung'];
+        $productId = isset($validated['ma_san_pham']) ? (int) $validated['ma_san_pham'] : null;
+        $variantId = isset($validated['ma_bien_the']) ? (int) $validated['ma_bien_the'] : null;
+        $requireDelivered = !isset($validated['require_delivered'])
+            ? true
+            : in_array(strtolower((string) $validated['require_delivered']), ['1', 'true'], true);
+
+        $order = Order::find($orderID);
+        if (!$order) {
+            return response()->json([
+                'eligible'    => false,
+                'reason_code' => 'ORDER_NOT_FOUND',
+                'message'     => 'Không tìm thấy đơn hàng.',
+                'checks'      => [
+                    'order_exists' => false,
+                    'is_owner'     => false,
+                    'is_delivered' => false,
+                    'has_product'  => $productId !== null ? false : null,
+                    'has_variant'  => $variantId !== null ? false : null,
+                ],
+                'order' => null,
+            ], 404);
+        }
+
+        $itemRows = DB::table('chitietdonhang')
+            ->leftJoin('bienthesanpham', 'chitietdonhang.ma_bien_the', '=', 'bienthesanpham.ma_bien_the')
+            ->where('chitietdonhang.ma_don_hang', $order->ma_don_hang)
+            ->select('chitietdonhang.ma_bien_the', 'bienthesanpham.ma_san_pham')
+            ->get();
+
+        $variantIds = $itemRows
+            ->pluck('ma_bien_the')
+            ->filter(fn ($v) => $v !== null)
+            ->map(fn ($v) => (int) $v)
+            ->unique()
+            ->values()
+            ->all();
+
+        $productIds = $itemRows
+            ->pluck('ma_san_pham')
+            ->filter(fn ($v) => $v !== null)
+            ->map(fn ($v) => (int) $v)
+            ->unique()
+            ->values()
+            ->all();
+
+        $isOwner = ((int) $order->ma_nguoi_dung === $userId);
+        $isDelivered = ($order->trang_thai_don_hang === 'DELIVERED');
+        $hasProduct = $productId !== null ? in_array($productId, $productIds, true) : null;
+        $hasVariant = $variantId !== null ? in_array($variantId, $variantIds, true) : null;
+
+        $eligible = true;
+        $reasonCode = 'ELIGIBLE';
+        $message = 'Xác minh đơn hàng hợp lệ.';
+
+        if (!$isOwner) {
+            $eligible = false;
+            $reasonCode = 'NOT_ORDER_OWNER';
+            $message = 'Bạn không phải chủ sở hữu của đơn hàng này.';
+        } elseif ($requireDelivered && !$isDelivered) {
+            $eligible = false;
+            $reasonCode = 'ORDER_NOT_DELIVERED';
+            $message = "Đơn hàng hiện ở trạng thái '{$order->trang_thai_don_hang}', chỉ đơn hàng đã giao (DELIVERED) mới được thực hiện thao tác này.";
+        } elseif ($productId !== null && !$hasProduct) {
+            $eligible = false;
+            $reasonCode = 'PRODUCT_NOT_IN_ORDER';
+            $message = 'Sản phẩm này không có trong đơn hàng đã chọn.';
+        } elseif ($variantId !== null && !$hasVariant) {
+            $eligible = false;
+            $reasonCode = 'VARIANT_NOT_IN_ORDER';
+            $message = 'Biến thể sản phẩm này không có trong đơn hàng đã chọn.';
+        }
+
+        return response()->json([
+            'eligible'    => $eligible,
+            'reason_code' => $reasonCode,
+            'message'     => $message,
+            'checks'      => [
+                'order_exists' => true,
+                'is_owner'     => $isOwner,
+                'is_delivered' => $isDelivered,
+                'has_product'  => $hasProduct,
+                'has_variant'  => $hasVariant,
+            ],
+            'order' => [
+                'ma_don_hang'         => (int) $order->ma_don_hang,
+                'ma_nguoi_dung'       => (int) $order->ma_nguoi_dung,
+                'trang_thai_don_hang' => $order->trang_thai_don_hang,
+                'product_ids'         => $productIds,
+                'variant_ids'         => $variantIds,
+            ],
+        ], 200);
+    }
 }
