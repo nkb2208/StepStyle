@@ -4,7 +4,7 @@ from models import SanPham, DanhMuc, BienTheSanPham
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.params import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Annotated
 from database import SessionLocal, engine
 from fastapi.middleware.cors import CORSMiddleware
@@ -100,6 +100,21 @@ class DanhMucResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class PublicSanPhamResponse(BaseModel):
+    ma_san_pham: int
+    ten_san_pham: str
+    gia_goc: float
+    gia_khuyen_mai: float | None = None
+    mo_ta: str | None = None
+    hinh_anh_dai_dien: str | None = None
+    trang_thai: str
+    ma_danh_muc: int | None = None
+    danh_muc: DanhMucResponse | None = None
+    danh_sach_bien_the: list[BienTheResponse] = []
+
+    class Config:
+        from_attributes = True
+
 models.Base.metadata.create_all(bind=engine)
 
 
@@ -112,6 +127,61 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 admin_dependency = Annotated[dict, Depends(require_admin)]
+
+
+# ── Public Storefront Endpoints (Customer Home / Products / Detail) ──────────
+
+@app.get("/public/categories", response_model=list[DanhMucResponse], tags=["public-storefront"])
+async def get_public_categories(db: db_dependency):
+    return db.query(DanhMuc).order_by(DanhMuc.ma_danh_muc.asc()).all()
+
+
+@app.get("/public/products", response_model=list[PublicSanPhamResponse], tags=["public-storefront"])
+async def get_public_products(
+    db: db_dependency,
+    category_id: int | None = None,
+    search: str | None = None,
+    max_price: float | None = None,
+    sort: str | None = None,
+):
+    query = (
+        db.query(SanPham)
+        .options(joinedload(SanPham.danh_sach_bien_the), joinedload(SanPham.danh_muc))
+        .filter(SanPham.trang_thai == "ACTIVE")
+    )
+
+    if category_id is not None:
+        query = query.filter(SanPham.ma_danh_muc == category_id)
+    if search and search.strip():
+        query = query.filter(SanPham.ten_san_pham.ilike(f"%{search.strip()}%"))
+
+    products = query.order_by(SanPham.ma_san_pham.desc()).all()
+
+    if max_price is not None and max_price > 0:
+        products = [
+            p for p in products
+            if float(p.gia_khuyen_mai if (p.gia_khuyen_mai and p.gia_khuyen_mai > 0) else p.gia_goc) <= max_price
+        ]
+
+    if sort == "price_asc":
+        products.sort(key=lambda p: float(p.gia_khuyen_mai if (p.gia_khuyen_mai and p.gia_khuyen_mai > 0) else p.gia_goc))
+    elif sort == "price_desc":
+        products.sort(key=lambda p: float(p.gia_khuyen_mai if (p.gia_khuyen_mai and p.gia_khuyen_mai > 0) else p.gia_goc), reverse=True)
+
+    return products
+
+
+@app.get("/public/products/{id}", response_model=PublicSanPhamResponse, tags=["public-storefront"])
+async def get_public_product_by_id(id: int, db: db_dependency):
+    product = (
+        db.query(SanPham)
+        .options(joinedload(SanPham.danh_sach_bien_the), joinedload(SanPham.danh_muc))
+        .filter(SanPham.ma_san_pham == id)
+        .first()
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail=f"Khong tim thay san pham co id:{id}")
+    return product
 
 
 # get all products

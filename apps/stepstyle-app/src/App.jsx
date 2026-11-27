@@ -25,6 +25,7 @@ export default function App() {
         <Route path='/order' element={<Order/>}/>
         <Route path='/checkout/*' element={<CheckOut/>}/>
         <Route path='/detail' element={<ProDuctDetail/>}/>
+        <Route path='/detail/:id' element={<ProDuctDetail/>}/>
         
         <Route path='/admin/login' element={<AdminLogin/>}/>
         <Route path='/admin/*' element={<Admin/>}/>

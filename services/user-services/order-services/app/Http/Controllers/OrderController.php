@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use PhpParser\Node\Stmt\TryCatch;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -22,6 +21,15 @@ class OrderController extends Controller
                 'status'=>'error',
                 'message'=> 'Bạn cần phải đăng nhập trước khi thanh toán'
             ],401);
+        }
+
+        // Kết nối với Service 1
+        $iamCheck = $this->verifyTokenWithIam($token);
+        if (!$iamCheck['valid']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $iamCheck['message'] ?? 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn',
+            ], 401);
         }
 
         $request->validate([
@@ -53,12 +61,17 @@ class OrderController extends Controller
             }
             $ship_cost = $request->phi_van_chuyen ?? 0;
 
-            $vipPercent = $this->getVipDiscountPercent($request, $request->ma_nguoi_dung);
+            // Kết nối với Service 2 (User & Loyalty)
+            $vipBenefits = $this->getVipBenefits($request, $request->ma_nguoi_dung);
+            $vipPercent = $vipBenefits['discount_percent'];
+            if ($vipBenefits['free_shipping']) {
+                $ship_cost = 0;
+            }
             $vipDiscountAmount = ($total_product_cost * $vipPercent) / 100;
             $voucherDiscountAmount = $request->tien_giam_gia ?? 0;
             $sale_cost = $vipDiscountAmount+$voucherDiscountAmount;
 
-            $total_cost = $total_product_cost+ $ship_cost-$sale_cost;
+            $total_cost = max(0, $total_product_cost + $ship_cost - $sale_cost);
 
             $order = Order::create([
                 'ma_nguoi_dung'       => $request->ma_nguoi_dung,
@@ -88,6 +101,12 @@ class OrderController extends Controller
                     'don_gia' => $item['don_gia']
                 ]);
                 $variantID[] = $item['ma_bien_the'];
+
+                // Đồng bộ trừ tồn kho trên bảng bienthesanpham (nếu biến thể tồn tại)
+                DB::table('bienthesanpham')
+                    ->where('ma_bien_the', $item['ma_bien_the'])
+                    ->where('so_luong_kho', '>=', (int) $item['so_luong'])
+                    ->decrement('so_luong_kho', (int) $item['so_luong']);
             }
 
             Payment::create([
@@ -106,6 +125,9 @@ class OrderController extends Controller
 
             DB::commit();
 
+            // Kết nối với Service 3 (Catalog & Search)
+            $this->syncCatalogAfterCheckout($order->ma_don_hang, $request->items);
+
             return response()->json([
                 'message'=> 'Dat hang thanh cong',
                 'data'=> $order->load(['items', 'payment'])
@@ -123,25 +145,111 @@ class OrderController extends Controller
     }
 
 
-    // Kết nối với service 2
-    private function getVipDiscountPercent(Request $request, $userId)
+    // Kết nối với Service 1 (IAM)
+    private function verifyTokenWithIam(string $token): array
     {
         try {
-            $userServiceUrl = env('USER_SERVICE_URL', 'http://127.0.0.1:8002');
-            $token = $request->bearerToken(); 
+            $authServiceUrl = rtrim(env('AUTH_SERVICE_URL', 'http://127.0.0.1:4000'), '/');
+            $response = Http::timeout(3)
+                ->withToken($token)
+                ->acceptJson()
+                ->get("{$authServiceUrl}/api/auth/me");
+
+            if ($response->successful()) {
+                return ['valid' => true, 'user' => $response->json('data') ?? $response->json()];
+            }
+
+            if (in_array($response->status(), [401, 403], true)) {
+                return ['valid' => false, 'message' => 'Token đăng nhập không hợp lệ hoặc đã hết hạn'];
+            }
+        } catch (\Exception $e) {
+        }
+
+        return ['valid' => true, 'user' => null];
+    }
+
+    // Kết nối với Service 2 (User & Loyalty)
+    private function getVipBenefits(Request $request, $userId): array
+    {
+        try {
+            $userServiceUrl = rtrim(env('USER_SERVICE_URL', 'http://127.0.0.1:8002'), '/');
+            $token = $request->bearerToken();
 
             $response = Http::timeout(3)
                 ->withToken($token)
                 ->get("{$userServiceUrl}/api/users/{$userId}/vip-benefits");
 
             if ($response->successful()) {
-                return $response->json('discount_percent') ?? 0;
+                return [
+                    'discount_percent' => (float) ($response->json('discount_percent') ?? 0),
+                    'free_shipping'    => (bool) ($response->json('free_shipping') ?? false),
+                    'tier'             => $response->json('tier') ?? 'STANDARD',
+                ];
             }
         } catch (\Exception $e) {
-            return 0;
+            return ['discount_percent' => 0, 'free_shipping' => false, 'tier' => 'STANDARD'];
         }
 
-        return 0;
+        return ['discount_percent' => 0, 'free_shipping' => false, 'tier' => 'STANDARD'];
+    }
+
+    // Kết nối với Service 3 (Catalog & Search)
+    private function syncCatalogAfterCheckout($orderId, array $items): void
+    {
+        $catalogUrl = rtrim(env('CATALOG_SERVICE_URL', ''), '/');
+        if (empty($catalogUrl)) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            $variantId = (int) $item['ma_bien_the'];
+            $qty = (int) $item['so_luong'];
+            try {
+                Http::timeout(2)->post("{$catalogUrl}/api/v1/internal/inventory/adjust", [
+                    'transactionId' => "ORDER-{$orderId}-DEDUCT-V{$variantId}",
+                    'variantId'     => $variantId,
+                    'quantity'      => $qty,
+                    'action'        => 'DEDUCT',
+                ]);
+
+                $productId = DB::table('bienthesanpham')
+                    ->where('ma_bien_the', $variantId)
+                    ->value('ma_san_pham');
+
+                if ($productId) {
+                    Http::timeout(2)->post("{$catalogUrl}/api/v1/internal/products/{$productId}/metrics", [
+                        'soldCountDelta' => $qty,
+                    ]);
+                }
+            } catch (\Exception $e) {
+            }
+        }
+    }
+
+    private function syncCatalogReleaseInventory($order): void
+    {
+        $catalogUrl = rtrim(env('CATALOG_SERVICE_URL', ''), '/');
+        foreach ($order->items as $item) {
+            $variantId = (int) $item->ma_bien_the;
+            $qty = (int) $item->so_luong;
+
+            DB::table('bienthesanpham')
+                ->where('ma_bien_the', $variantId)
+                ->increment('so_luong_kho', $qty);
+
+            if (!empty($catalogUrl)) {
+                try {
+                    Http::timeout(2)->post("{$catalogUrl}/api/v1/internal/inventory/adjust", [
+                        'transactionId' => "ORDER-{$order->ma_don_hang}-RELEASE-V{$variantId}",
+                        'variantId'     => $variantId,
+                        'quantity'      => $qty,
+                        'action'        => 'RELEASE',
+                    ]);
+                } catch (\Exception $e) {
+                    // Best-effort
+                }
+            }
+        }
     }
 
     public function getOrders($userID){
@@ -165,7 +273,7 @@ class OrderController extends Controller
     }
 
     public function cancelOrder($orderID){
-        $order = Order::find($orderID);
+        $order = Order::with('items')->find($orderID);
 
         if (!$order) {
             return response()->json([
@@ -183,6 +291,9 @@ class OrderController extends Controller
             'trang_thai_don_hang' => 'CANCELLED',
             'ngay_cap_nhat' => now()
         ]);
+
+        // Hoàn lại tồn kho khi hủy đơn & đồng bộ với Service 3 (Catalog)
+        $this->syncCatalogReleaseInventory($order);
 
         return response()->json([
             'message'=>'Huy don hang thanh cong',

@@ -239,6 +239,7 @@ services:
       ORDER_SERVICE_URL: http://127.0.0.1:8000
       AUTH_SERVICE_URL: http://auth:4000
       USER_SERVICE_URL: http://loyalty:8002
+      CATALOG_SERVICE_URL: ${CATALOG_SERVICE_URL:-http://host.docker.internal:8083}
       MOMO_ENDPOINT: ${MOMO_ENDPOINT:-https://test-payment.momo.vn/v2/gateway/api/create}
       MOMO_PARTNER_CODE: ${MOMO_PARTNER_CODE:-MOMOBKUN20180529}
       MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY:-klm05TvNBzhg7h7j}
@@ -306,6 +307,15 @@ services:
         condition: service_healthy
       checkout-service:
         condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./apps/stepstyle-app
+      dockerfile: Dockerfile
+    container_name: stepstyle-frontend
+    ports:
+      - "5173:80"
     restart: unless-stopped
 volumes:
 

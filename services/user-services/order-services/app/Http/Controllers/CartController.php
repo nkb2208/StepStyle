@@ -67,7 +67,7 @@ class CartController extends Controller
         ],200);
     }
 
-    // Cập nhật số lượng và phân loại (size, màu sắc) sản phẩm trong giỏ hàng
+    // Cập nhật số lượng và phân loại sản phẩm trong giỏ hàng
     public function updateQuantity(Request $request)
     {
         $request->validate([
