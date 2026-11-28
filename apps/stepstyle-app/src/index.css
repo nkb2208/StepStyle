@@ -41,6 +41,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.01em;
+    overflow-x: clip;
   }
 
   /* Làm mịn thanh cuộn cho bảng điều khiển */

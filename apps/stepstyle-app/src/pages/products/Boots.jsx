@@ -1,7 +1,7 @@
 import { quickAddToCart } from '../../utils/cartHelper';
 function Boots(){
     return(
-        <div className='flex gap-4 mt-4 grid grid-cols-4 pl-10 pr-10'>
+        <div className='gap-3 sm:gap-4 mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 px-4 sm:px-8'>
             <div className='hover:shadow-md hover:scale-105 transition duration-300 col-span-1 rounded-xl bg-white'>
                 <img className=' rounded-t-xl' src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format" alt="" />
                 <div className='mt-4 p-3'>

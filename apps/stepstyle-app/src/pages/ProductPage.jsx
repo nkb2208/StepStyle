@@ -111,23 +111,23 @@ function ProductPage() {
             </div>
 
             {/* Body */}
-            <div className="p-10 flex-1">
-                <div className="mr-10 ml-10">
-                    <p className='text-2xl font-bold'>{selectedCategoryName}</p>
-                    <p className='text-gray-500'><span>{filteredProducts.length}</span> sản phẩm</p>
+            <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 lg:px-10 py-6 sm:py-10 flex-1">
+                <div>
+                    <p className='text-2xl sm:text-3xl font-bold'>{selectedCategoryName}</p>
+                    <p className='text-sm text-gray-500 mt-0.5'><span>{filteredProducts.length}</span> sản phẩm</p>
                 </div>
 
-                <div className='flex mt-10 mr-10 ml-10'>
-                    <div className='w-1/6'>
-                        <div className="bg-white p-5 rounded-2xl">
-                            <p className="text-md font-bold">Danh mục</p>
-                            <div className="p-1 grid grid-cols-1">
+                <div className='flex flex-col lg:flex-row gap-6 mt-6'>
+                    <div className='w-full lg:w-64 shrink-0'>
+                        <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-xs">
+                            <p className="text-base font-bold">Danh mục</p>
+                            <div className="mt-3 flex flex-wrap lg:flex-col gap-2">
                                 <button
                                     onClick={() => handleSelectCategory("all")}
                                     className={
                                         selectedCategory === "all"
-                                            ? 'flex items-center justify-start transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl cursor-pointer'
-                                            : 'flex items-center justify-start mt-4 p-2 pr-3 pl-3 font-bold rounded-xl hover:bg-gray-100 cursor-pointer'
+                                            ? 'flex items-center justify-start transition duration-300 px-3 py-2 bg-orange-400 text-white text-sm font-bold rounded-xl cursor-pointer'
+                                            : 'flex items-center justify-start px-3 py-2 text-sm font-bold rounded-xl bg-gray-50 lg:bg-transparent hover:bg-gray-100 cursor-pointer'
                                     }
                                 >
                                     Tất cả
@@ -141,8 +141,8 @@ function ProductPage() {
                                             onClick={() => handleSelectCategory(String(cat.ma_danh_muc))}
                                             className={
                                                 active
-                                                    ? 'flex items-center justify-start transition duration-300 mt-4 p-2 pr-3 pl-3 bg-orange-400 text-white font-bold rounded-xl cursor-pointer'
-                                                    : 'flex items-center justify-start mt-4 p-2 pr-3 pl-3 font-bold rounded-xl hover:bg-gray-100 cursor-pointer'
+                                                    ? 'flex items-center justify-start transition duration-300 px-3 py-2 bg-orange-400 text-white text-sm font-bold rounded-xl cursor-pointer'
+                                                    : 'flex items-center justify-start px-3 py-2 text-sm font-bold rounded-xl bg-gray-50 lg:bg-transparent hover:bg-gray-100 cursor-pointer'
                                             }
                                         >
                                             {cat.ten_danh_muc}
@@ -151,7 +151,7 @@ function ProductPage() {
                                 })}
                             </div>
 
-                            <p className="mt-6 text-md font-bold">Giá tối đa</p>
+                            <p className="mt-5 text-base font-bold">Giá tối đa</p>
                             <div className="mt-2">
                                 <input
                                     type="range"
@@ -169,12 +169,12 @@ function ProductPage() {
                         </div>
                     </div>
 
-                    <div className='w-5/6'>
-                        <div className="pr-10 pl-10 flex items-center gap-3">
-                            <form className="w-5/6" onSubmit={(e) => e.preventDefault()}>
+                    <div className='flex-1 min-w-0'>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                            <form className="flex-1" onSubmit={(e) => e.preventDefault()}>
                                 <div className="flex items-center">
-                                    <div className="rounded-l-xl border-t border-b border-l border-gray-300 p-2 pr-3 pl-3 bg-white">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <div className="rounded-l-xl border-t border-b border-l border-gray-300 px-3 py-2.5 bg-white text-gray-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <circle cx="11" cy="11" r="8"></circle>
                                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                         </svg>
@@ -182,17 +182,17 @@ function ProductPage() {
                                     <input
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full p-2 pr-3 pl-3 border-gray-300 rounded-r-xl border-r border-b border-t bg-white"
+                                        className="w-full px-3 py-2 text-sm sm:text-base border-gray-300 rounded-r-xl border-r border-b border-t bg-white outline-none focus:border-orange-400"
                                         type="text"
                                         placeholder="Tìm kiếm giày..."
                                     />
                                 </div>
                             </form>
-                            <div className="w-1/6">
+                            <div className="w-full sm:w-48 shrink-0">
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
-                                    className="bg-white rounded-xl border-orange-400 border p-2 pr-3 w-full"
+                                    className="bg-white rounded-xl border-orange-400 border px-3 py-2 text-sm sm:text-base w-full outline-none"
                                 >
                                     <option value="popular">Phổ biến nhất</option>
                                     <option value="price_desc">Giá giảm dần</option>

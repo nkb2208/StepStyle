@@ -436,7 +436,7 @@ export default function Settings() {
 
       {/* B. Phương thức thanh toán */}
       <div className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6">
-        <div className="flex justify-between items-center mb-5">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 mb-5">
           <h3 className="font-bold text-slate-900 text-lg">Phương thức thanh toán</h3>
           <span className="text-xs text-slate-400">Bật/tắt hiển thị cho khách hàng</span>
         </div>
@@ -476,7 +476,7 @@ export default function Settings() {
 
       {/* C. Đối tác vận chuyển */}
       <div className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6">
-        <div className="flex justify-between items-center mb-5">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 mb-5">
           <h3 className="font-bold text-slate-900 text-lg">Đối tác vận chuyển</h3>
           <span className="text-xs text-slate-400">Bật/tắt đối tác hoạt động</span>
         </div>

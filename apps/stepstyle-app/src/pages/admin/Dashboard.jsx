@@ -161,7 +161,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
             label: 'Tổng doanh thu',
@@ -212,9 +212,9 @@ export default function Dashboard() {
             bg: 'bg-amber-50',
           },
         ].map((k) => (
-          <div key={k.label} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+          <div key={k.label} className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-sm">
             <div className={`w-10 h-10 ${k.bg} rounded-xl flex items-center justify-center mb-3`}>{k.icon}</div>
-            <p className="text-2xl font-bold text-slate-900">{k.value}</p>
+            <p className="text-xl sm:text-2xl font-bold text-slate-900 break-words">{k.value}</p>
             <p className="text-sm text-slate-500 font-normal">{k.label}</p>
             <p className={`text-xs mt-1 font-medium ${k.good ? 'text-emerald-500' : 'text-red-500'}`}>{k.delta}</p>
           </div>

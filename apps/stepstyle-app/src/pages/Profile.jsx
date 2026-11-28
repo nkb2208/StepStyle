@@ -82,11 +82,11 @@ function Profile(){
                 <NavBar/>
             </div>
 
-            <div className="mt-10 w-full flex items-center justify-center">
-                <div className="w-1/2 m-10">
-                    <p className="text-3xl font-bold">Hồ sơ của tôi</p>
+            <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+                <div>
+                    <p className="text-2xl sm:text-3xl font-bold">Hồ sơ của tôi</p>
 
-                    <div className="flex items-center mt-4 p-5 pr-8 pl-8 gap-3 bg-white rounded-xl">
+                    <div className="flex flex-col sm:flex-row items-center text-center sm:text-left mt-4 p-5 sm:px-8 gap-4 bg-white rounded-xl shadow-2xs">
                         <input
                             ref={fileRef}
                             type="file"
@@ -97,7 +97,7 @@ function Profile(){
                         <div
                             onClick={() => fileRef.current?.click()}
                             title="Bấm để đổi ảnh đại diện"
-                            className="cursor-pointer flex items-center justify-center w-32 h-32 overflow-hidden text-3xl font-bold text-orange-400 rounded-xl bg-orange-100"
+                            className="cursor-pointer flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 shrink-0 overflow-hidden text-3xl font-bold text-orange-400 rounded-xl bg-orange-100"
                         >
                             {profile?.avatar_url ? (
                                 <img src={avatarSrc(profile.avatar_url)} alt="avatar" className="w-full h-full object-cover" />
@@ -105,55 +105,52 @@ function Profile(){
                                 (profile?.ho_ten || "?").charAt(0).toUpperCase()
                             )}
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold">{profile?.ho_ten}</p>
-                            <p className="text-gray-500">{profile?.email}</p>
-                            <p className="mt-1 p-1 pr-3 pl-3 text-orange-400 bg-orange-100 rounded-xl">
+                        <div className="min-w-0">
+                            <p className="text-xl sm:text-2xl font-bold truncate">{profile?.ho_ten}</p>
+                            <p className="text-sm sm:text-base text-gray-500 break-all">{profile?.email}</p>
+                            <p className="mt-2 inline-block px-3 py-1 text-xs sm:text-sm font-medium text-orange-500 bg-orange-100 rounded-xl">
                                 Hạng {membership?.ten_hang}
                                 {membership?.phan_tram_giam > 0 && ` · giảm ${membership.phan_tram_giam}%`}
                             </p>
                         </div>
                     </div>
 
-                    
-                    <div className="mt-4 p-5 pr-8 pl-8 bg-white rounded-xl">
+                    <div className="mt-4 p-5 sm:px-8 bg-white rounded-xl shadow-2xs">
                         <p className="font-bold">Thông tin cá nhân</p>
 
                         <form className="mt-4" onSubmit={handleSave}>
                             <div className='mt-4'>
-                                <label className="font-bold text-md" htmlFor="">Họ và tên</label>
-                                <input className="mt-2 border border-gray-500 rounded-xl p-3 w-full" type="text" value={form.ho_ten} onChange={(e) => setForm({ ...form, ho_ten: e.target.value })} />
-                            </div>
-                            
-
-                            <div className='mt-4'>
-                                <label className="font-bold text-md" htmlFor="">Email</label>
-                               <input className="mt-2 border border-gray-500 rounded-xl p-3 w-full bg-gray-100" type="email" value={profile?.email || ""} readOnly />
-                                <p className="text-xs text-gray-500 mt-2">Email không thể thay đổi</p>
-                            </div>
-
-
-                            <div className='mt-4'>
-                                <label className="font-bold text-md" htmlFor="">Số điện thoại</label>
-                                <input className="mt-2 border border-gray-500 rounded-xl p-3 w-full" type="text" value={form.so_dien_thoai} onChange={(e) => setForm({ ...form, so_dien_thoai: e.target.value })} placeholder="0912345678" />
+                                <label className="font-bold text-sm" htmlFor="">Họ và tên</label>
+                                <input className="mt-2 border border-gray-300 rounded-xl p-3 text-sm sm:text-base w-full outline-none focus:border-orange-400" type="text" value={form.ho_ten} onChange={(e) => setForm({ ...form, ho_ten: e.target.value })} />
                             </div>
 
                             <div className='mt-4'>
-                                <label className="font-bold text-md" htmlFor="">Địa chỉ</label>
-                                <input className="mt-2 border border-gray-500 rounded-xl p-3 w-full" type="text" name="" id="" placeholder="789 Hai Bà Trưng, Q3, TP.HCM" />
+                                <label className="font-bold text-sm" htmlFor="">Email</label>
+                                <input className="mt-2 border border-gray-300 rounded-xl p-3 text-sm sm:text-base w-full bg-gray-100" type="email" value={profile?.email || ""} readOnly />
+                                <p className="text-xs text-gray-500 mt-1.5">Email không thể thay đổi</p>
+                            </div>
+
+                            <div className='mt-4'>
+                                <label className="font-bold text-sm" htmlFor="">Số điện thoại</label>
+                                <input className="mt-2 border border-gray-300 rounded-xl p-3 text-sm sm:text-base w-full outline-none focus:border-orange-400" type="text" value={form.so_dien_thoai} onChange={(e) => setForm({ ...form, so_dien_thoai: e.target.value })} placeholder="0912345678" />
+                            </div>
+
+                            <div className='mt-4'>
+                                <label className="font-bold text-sm" htmlFor="">Địa chỉ</label>
+                                <input className="mt-2 border border-gray-300 rounded-xl p-3 text-sm sm:text-base w-full outline-none focus:border-orange-400" type="text" name="" id="" placeholder="789 Hai Bà Trưng, Q3, TP.HCM" />
                             </div>
                             {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
-                            <button className="mt-4 bg-orange-400 rounded-xl p-2 pr-3 pl-3 font-bold text-white">Lưu thay đổi</button>
+                            <button className="mt-4 w-full sm:w-auto bg-orange-400 hover:bg-orange-500 rounded-xl px-5 py-2.5 font-bold text-white cursor-pointer">Lưu thay đổi</button>
                         </form>
                     </div>
                     <AddressBook />
                     <VipPanel onChanged={() => getMembership().then(setMembership)} />
-                    <div className="mt-4 p-5 pr-8 pl-8 bg-white rounded-xl">
-                        <p className="mb-3 font-bold text-red-500 text-xl">Đăng xuất</p>
+                    <div className="mt-4 p-5 sm:px-8 bg-white rounded-xl shadow-2xs">
+                        <p className="mb-2 font-bold text-red-500 text-lg sm:text-xl">Đăng xuất</p>
 
-                        <p className="mb-3 text-md text-gray-500">Bạn sẽ cần đăng nhập lại để tiếp tục mua sắm.</p>
+                        <p className="mb-4 text-sm sm:text-base text-gray-500">Bạn sẽ cần đăng nhập lại để tiếp tục mua sắm.</p>
 
-                        <Link to='/login' className="mt-3 bg-red-500 rounded-xl p-2 pr-3 pl-3 font-bold text-white">Đăng xuất</Link>
+                        <Link to='/login' className="inline-block bg-red-500 hover:bg-red-600 rounded-xl px-5 py-2.5 font-bold text-white">Đăng xuất</Link>
                     </div>
                 </div>
             </div>

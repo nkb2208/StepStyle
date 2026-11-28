@@ -79,24 +79,24 @@ function CustomerInfo({ info, setInfo }) {
             <form onSubmit={handleNext}>
                 <p className="font-bold">Thông tin giao hàng</p>
 
-                <div className="flex justify-between items-start mt-4">
-                    <div className="w-[49%]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                    <div>
                         <label className={`text-xs ${errors.ten_nguoi_nhan ? 'text-red-500 font-bold' : ''}`} htmlFor="">Họ và tên *</label> <br />
                         <input 
                             value={info.ten_nguoi_nhan} 
                             onChange={e => handleChange('ten_nguoi_nhan', e.target.value)} 
-                            className={`border rounded-xl w-full p-2 outline-none transition-colors ${errors.ten_nguoi_nhan ? 'border-red-500 bg-red-50 ring-1 ring-red-500' : 'border-gray-600 focus:border-orange-400'}`} 
+                            className={`mt-1 border rounded-xl w-full p-2.5 text-sm outline-none transition-colors ${errors.ten_nguoi_nhan ? 'border-red-500 bg-red-50 ring-1 ring-red-500' : 'border-gray-300 focus:border-orange-400'}`} 
                             type="text" 
                         />
                         {errors.ten_nguoi_nhan && <p className="text-red-500 text-xs mt-1">{errors.ten_nguoi_nhan}</p>}
                     </div>
 
-                    <div className="w-[49%]">
+                    <div>
                         <label className={`text-xs ${errors.so_dien_thoai_nhan ? 'text-red-500 font-bold' : ''}`} htmlFor="">Số điện thoại *</label> <br />
                         <input 
                             value={info.so_dien_thoai_nhan} 
                             onChange={e => handleChange('so_dien_thoai_nhan', e.target.value)} 
-                            className={`border rounded-xl w-full p-2 outline-none transition-colors ${errors.so_dien_thoai_nhan ? 'border-red-500 bg-red-50 ring-1 ring-red-500' : 'border-gray-600 focus:border-orange-400'}`} 
+                            className={`mt-1 border rounded-xl w-full p-2.5 text-sm outline-none transition-colors ${errors.so_dien_thoai_nhan ? 'border-red-500 bg-red-50 ring-1 ring-red-500' : 'border-gray-300 focus:border-orange-400'}`} 
                             type="text" 
                         />
                         {errors.so_dien_thoai_nhan && <p className="text-red-500 text-xs mt-1">{errors.so_dien_thoai_nhan}</p>}
@@ -193,9 +193,9 @@ function Purchase({ paymentMethod, setPaymentMethod, paymentOptions }) {
                     </div>
                 )}
 
-                <div className="flex mt-4 gap-3">
-                    <Link to='/checkout/info' className="w-1/2 flex items-center justify-center p-3 border border-gray-300 rounded-xl font-bold">Quay lại </Link>
-                    <button onClick={handleToGoCheckOut} className="cursor-pointer w-1/2 flex items-center justify-center p-3 bg-orange-400 rounded-xl text-white font-bold">Tiếp tục</button>
+                <div className="flex flex-col-reverse sm:flex-row mt-5 gap-3">
+                    <Link to='/checkout/info' className="w-full sm:w-1/2 flex items-center justify-center p-3 border border-gray-300 rounded-xl font-bold">Quay lại</Link>
+                    <button onClick={handleToGoCheckOut} className="cursor-pointer w-full sm:w-1/2 flex items-center justify-center p-3 bg-orange-400 hover:bg-orange-500 rounded-xl text-white font-bold">Tiếp tục</button>
                 </div>
             </div>
         </>
@@ -211,35 +211,35 @@ function Confirmation({ info, paymentMethod, paymentOptions, cartItems, handleCh
                 {cartItems.map((item, index) => {
                     const meta = getMeta(item.ma_bien_the);
                     return (
-                        <div key={index} className="mt-4 border-b border-gray-200 pb-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3">   
-                                <img className="w-20 h-20 rounded-xl" src={meta.hinh_anh} alt="" />
-                                <div>
-                                    <p className="font-bold">{meta.ten_san_pham}</p>
+                        <div key={index} className="mt-4 border-b border-gray-200 pb-4 flex items-start sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <img className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0" src={meta.hinh_anh} alt="" />
+                                <div className="min-w-0">
+                                    <p className="font-bold text-sm sm:text-base line-clamp-2">{meta.ten_san_pham}</p>
                                     <p className="text-xs text-gray-500">Size {meta.kich_co} - <span>{meta.mau_sac}</span> x{item.so_luong}</p>
                                 </div>
                             </div>
 
-                            <div>
+                            <div className="shrink-0 font-semibold text-sm sm:text-base">
                                 {(item.so_luong * item.don_gia).toLocaleString('vi-VN')} đ
                             </div>
                         </div>
                     );
                 })}
 
-                <div className="mt-4 border-b border-gray-200 pb-4 flex items-center justify-between">
-                    <p>Giao đến</p>
-                    <p className="font-bold text-right">{info.ten_nguoi_nhan} - {info.so_dien_thoai_nhan}<br/>{info.dia_chi_giao_hang || "Chưa nhập địa chỉ"}</p>
+                <div className="mt-4 border-b border-gray-200 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-sm sm:text-base">
+                    <p className="text-gray-500">Giao đến</p>
+                    <p className="font-bold text-left sm:text-right">{info.ten_nguoi_nhan} - {info.so_dien_thoai_nhan}<br/>{info.dia_chi_giao_hang || "Chưa nhập địa chỉ"}</p>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between">
-                    <p>Thanh toán</p>
+                <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-sm sm:text-base">
+                    <p className="text-gray-500">Thanh toán</p>
                     <p className="font-bold">{paymentName}</p>
-                </div> 
+                </div>
 
-                <div className="flex mt-4 gap-3">
-                    <Link to='/checkout/purchase' className="w-1/2 flex items-center justify-center p-3 border border-gray-300 rounded-xl font-bold"> Quay lại </Link>
-                    <button onClick={handleCheckout} className="w-1/2 hover:cursor-pointer flex items-center justify-center p-3 bg-orange-400 rounded-xl text-white font-bold">Đặt hàng</button>
+                <div className="flex flex-col-reverse sm:flex-row mt-5 gap-3">
+                    <Link to='/checkout/purchase' className="w-full sm:w-1/2 flex items-center justify-center p-3 border border-gray-300 rounded-xl font-bold">Quay lại</Link>
+                    <button onClick={handleCheckout} className="w-full sm:w-1/2 hover:cursor-pointer flex items-center justify-center p-3 bg-orange-400 hover:bg-orange-500 rounded-xl text-white font-bold">Đặt hàng</button>
                 </div>
             </div>
         </>
@@ -373,12 +373,12 @@ function CheckOut(){
                 <NavBar/>
             </div>
 
-            <div className="p-10">
-                <div className="p-10 mr-10 ml-10">
-                    <p className="text-3xl font-bold">Thanh toán</p>
+            <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 lg:px-10 py-6 sm:py-10 flex-1">
+                <div>
+                    <p className="text-2xl sm:text-3xl font-bold">Thanh toán</p>
 
-                    <div className="flex gap-4 mt-4">
-                        <div className="w-2/3 bg-white p-3 rounded-xl">
+                    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mt-4 sm:mt-6">
+                        <div className="w-full lg:w-2/3 bg-white p-4 sm:p-6 rounded-xl shadow-2xs">
                             <Routes>
                                 <Route path="/" element={<CustomerInfo info={info} setInfo={setInfo} />} />
                                 <Route path="/info" element={<CustomerInfo info={info} setInfo={setInfo} />} />
@@ -387,40 +387,40 @@ function CheckOut(){
                             </Routes>
                         </div>
 
-                        <div className="w-1/3 bg-white rounded-xl p-5 size-fit">
+                        <div className="w-full lg:w-1/3 bg-white rounded-xl p-4 sm:p-5 h-fit shadow-2xs">
                             <p className="font-bold">Đơn hàng (<span>{totalItems}</span> sản phẩm)</p>
 
-                            <div className="pb-4 border-b mt-4 text-xs w-full flex flex-col gap-2">
+                            <div className="pb-4 border-b mt-4 text-xs sm:text-sm w-full flex flex-col gap-2">
                                 {cartItems.map((item, idx) => {
                                     const meta = getMeta(item.ma_bien_the);
                                     return (
-                                        <div key={idx} className="flex items-center justify-between">
-                                            <p>{meta.ten_san_pham} x<span>{item.so_luong}</span></p>
-                                            <p>{(item.so_luong * item.don_gia).toLocaleString('vi-VN')} đ</p>
+                                        <div key={idx} className="flex items-center justify-between gap-2">
+                                            <p className="truncate">{meta.ten_san_pham} x<span>{item.so_luong}</span></p>
+                                            <p className="shrink-0">{(item.so_luong * item.don_gia).toLocaleString('vi-VN')} đ</p>
                                         </div>
                                     );
                                 })}
                             </div>
 
-                            <div className="mt-4 text-xs w-full flex items-center justify-between">
+                            <div className="mt-4 text-xs sm:text-sm w-full flex items-center justify-between">
                                 <p>Tạm tính</p>
                                 <p>{totalPrice.toLocaleString('vi-VN')} đ</p>
                             </div>
 
-                            <div className="mt-4 text-xs w-full flex items-center justify-between">
+                            <div className="mt-3 text-xs sm:text-sm w-full flex items-center justify-between">
                                 <p>Vận chuyển</p>
-                                <p className={shippingFee === 0 ? 'text-green-500' : ''}>
+                                <p className={shippingFee === 0 ? 'text-green-500 font-semibold' : ''}>
                                     {shippingFee === 0 ? 'Miễn phí' : `${shippingFee.toLocaleString('vi-VN')} đ`}
                                 </p>
                             </div>
 
-                            <div className="text-md mt-4 w-full flex items-center justify-between">
+                            <div className="text-base mt-4 pt-3 border-t border-gray-100 w-full flex items-center justify-between">
                                 <p className="font-bold">Tổng cộng</p>
                                 <p className="font-bold text-orange-400">{orderTotal.toLocaleString('vi-VN')} đ</p>
                             </div>
                         </div>
                     </div>
-                </div >
+                </div>
             </div>
 
             <div className="mt-auto">

@@ -201,13 +201,13 @@ function ProDuctDetail() {
             </div>
 
             {/* Body */}
-            <div className="p-10 flex-1">
+            <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 lg:px-10 py-6 sm:py-10 flex-1">
                 {fetching ? (
                     <div className="py-20 text-center text-gray-500">
                         Đang tải thông tin sản phẩm...
                     </div>
                 ) : notFound || !product ? (
-                    <div className="py-20 text-center bg-white rounded-2xl">
+                    <div className="py-20 px-4 text-center bg-white rounded-2xl">
                         <p className="text-xl font-bold text-gray-800">Không tìm thấy sản phẩm</p>
                         <Link
                             to="/products"
@@ -218,16 +218,16 @@ function ProDuctDetail() {
                     </div>
                 ) : (
                     <>
-                        <p className="text-gray-500">
+                        <p className="text-xs sm:text-sm text-gray-500 break-words">
                             <Link to="/home" className="hover:underline">Trang chủ</Link> /{" "}
                             <Link to="/products" className="hover:underline">Sản phẩm</Link> /{" "}
                             <span className="text-black font-medium">{product.ten_san_pham}</span>
                         </p>
 
-                        <div className="mt-4 flex gap-6 bg-white p-6 rounded-2xl">
-                            <div className="w-1/2">
+                        <div className="mt-4 flex flex-col lg:flex-row gap-6 bg-white p-4 sm:p-6 rounded-2xl">
+                            <div className="w-full lg:w-1/2">
                                 <img
-                                    className="rounded-xl w-full h-[460px] object-cover"
+                                    className="rounded-xl w-full h-72 sm:h-96 lg:h-[460px] object-cover"
                                     src={displayImage}
                                     alt={product.ten_san_pham}
                                     onError={(e) => {
@@ -236,18 +236,18 @@ function ProDuctDetail() {
                                 />
                             </div>
 
-                            <div className="pl-5 pr-5 w-1/2">
+                            <div className="w-full lg:w-1/2 lg:px-5">
                                 {/* Category */}
-                                <p className="p-1 pr-3 pl-3 bg-blue-100 text-blue-500 w-fit rounded-xl font-bold text-sm">
+                                <p className="px-3 py-1 bg-blue-100 text-blue-500 w-fit rounded-xl font-bold text-xs sm:text-sm">
                                     {product.danh_muc?.ten_danh_muc || "StepStyle"}
                                 </p>
 
                                 {/* Product name */}
-                                <p className="text-3xl font-bold mt-4">{product.ten_san_pham}</p>
+                                <p className="text-2xl sm:text-3xl font-bold mt-3 sm:mt-4">{product.ten_san_pham}</p>
 
                                 {/* Rating */}
                                 <div className="flex items-center gap-3 mt-2">
-                                    <svg className="w-24 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 24" fill="#FFC107">
+                                    <svg className="w-20 sm:w-24 h-4 sm:h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 24" fill="#FFC107">
                                         <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.399 8.168-7.333-3.854-7.333 3.854 1.399-8.168-5.934-5.787 8.2-1.192z"/>
                                         <path d="M36 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.399 8.168-7.333-3.854-7.333 3.854 1.399-8.168-5.934-5.787 8.2-1.192z"/>
                                         <path d="M60 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.399 8.168-7.333-3.854-7.333 3.854 1.399-8.168-5.934-5.787 8.2-1.192z"/>
@@ -260,18 +260,18 @@ function ProDuctDetail() {
                                 </div>
 
                                 {/* Price */}
-                                <div className="flex items-center gap-3 mt-4">
-                                    <p className="text-4xl font-bold text-orange-500">
+                                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4">
+                                    <p className="text-2xl sm:text-4xl font-bold text-orange-500">
                                         {effectivePrice.toLocaleString("vi-VN")}đ
                                         {hasDiscount && (
-                                            <span className="ml-3 text-xl text-gray-400 line-through">
+                                            <span className="ml-2 sm:ml-3 text-base sm:text-xl text-gray-400 line-through">
                                                 {origPrice.toLocaleString("vi-VN")}đ
                                             </span>
                                         )}
                                     </p>
 
                                     {hasDiscount && (
-                                        <p className="p-1 pr-2 pl-2 bg-orange-100 text-orange-500 w-fit rounded-xl font-bold text-sm">
+                                        <p className="px-2 py-1 bg-orange-100 text-orange-500 w-fit rounded-xl font-bold text-xs sm:text-sm">
                                             -{discountPercent}%
                                         </p>
                                     )}
@@ -279,13 +279,13 @@ function ProDuctDetail() {
 
                                 {/* Color */}
                                 <div className="mt-5">
-                                    <p className="font-bold">
+                                    <p className="font-bold text-sm sm:text-base">
                                         Màu sắc:
                                         <span className="ml-2 text-orange-500">
                                             {selectedColor || "Chưa có màu"}
                                         </span>
                                     </p>
-                                    <div className="mt-2 flex flex-wrap gap-3 items-center">
+                                    <div className="mt-2 flex flex-wrap gap-2 sm:gap-3 items-center">
                                         {colors.length === 0 ? (
                                             <span className="text-sm text-gray-400">Chưa có biến thể màu</span>
                                         ) : (
@@ -296,8 +296,8 @@ function ProDuctDetail() {
                                                     onClick={() => handleSelectColor(c)}
                                                     className={
                                                         selectedColor === c
-                                                            ? "border border-orange-500 rounded-xl bg-orange-400 px-4 py-2 text-white font-bold cursor-pointer"
-                                                            : "font-bold border border-gray-300 rounded-xl px-4 py-2 hover:border-orange-400 cursor-pointer"
+                                                            ? "border border-orange-500 rounded-xl bg-orange-400 px-3.5 py-2 text-sm sm:text-base text-white font-bold cursor-pointer"
+                                                            : "font-bold border border-gray-300 rounded-xl px-3.5 py-2 text-sm sm:text-base hover:border-orange-400 cursor-pointer"
                                                     }
                                                 >
                                                     {c}
@@ -309,13 +309,13 @@ function ProDuctDetail() {
 
                                 {/* Size */}
                                 <div className="mt-5">
-                                    <p className="font-bold">
+                                    <p className="font-bold text-sm sm:text-base">
                                         Size:
                                         <span className="ml-2 text-orange-500">
                                             {selectedSize || "Chưa có size"}
                                         </span>
                                     </p>
-                                    <div className="mt-2 flex flex-wrap gap-3 items-center">
+                                    <div className="mt-2 flex flex-wrap gap-2 sm:gap-3 items-center">
                                         {sizesForColor.length === 0 ? (
                                             <span className="text-sm text-gray-400">Chưa có biến thể size</span>
                                         ) : (
@@ -329,8 +329,8 @@ function ProDuctDetail() {
                                                     }}
                                                     className={
                                                         String(selectedSize) === String(s)
-                                                            ? "border border-orange-500 rounded-xl bg-orange-400 px-4 py-2 text-white font-bold cursor-pointer"
-                                                            : "font-bold border border-gray-300 rounded-xl px-4 py-2 hover:border-orange-400 cursor-pointer"
+                                                            ? "border border-orange-500 rounded-xl bg-orange-400 px-3.5 py-2 text-sm sm:text-base text-white font-bold cursor-pointer"
+                                                            : "font-bold border border-gray-300 rounded-xl px-3.5 py-2 text-sm sm:text-base hover:border-orange-400 cursor-pointer"
                                                     }
                                                 >
                                                     {s}
@@ -340,8 +340,8 @@ function ProDuctDetail() {
                                     </div>
 
                                     {/* Quantity */}
-                                    <div className="mt-5 flex items-center gap-3">
-                                        <p className="font-bold">Số lượng:</p>
+                                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                                        <p className="font-bold text-sm sm:text-base">Số lượng:</p>
 
                                         <div className="w-28 flex items-center gap-2 border border-gray-300 rounded-md p-2 font-bold">
                                             <button type="button" onClick={handleReduceQuantity} className="border-r w-1/4 cursor-pointer">-</button>
@@ -359,12 +359,12 @@ function ProDuctDetail() {
                                     </div>
 
                                     {/* Btn add to cart and purchase */}
-                                    <div className="mt-5 flex items-center gap-3">
+                                    <div className="mt-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                                         <button
                                             type="button"
                                             onClick={handleAddToCart}
                                             disabled={loading || !selectedVariant || maxStock <= 0}
-                                            className="w-1/2 bg-orange-500 rounded-xl hover:bg-orange-600 text-white font-bold text-lg p-4 disabled:opacity-50 cursor-pointer"
+                                            className="w-full sm:w-1/2 bg-orange-500 rounded-xl hover:bg-orange-600 text-white font-bold text-base sm:text-lg py-3.5 px-4 disabled:opacity-50 cursor-pointer"
                                         >
                                             Thêm vào giỏ hàng
                                         </button>
@@ -373,7 +373,7 @@ function ProDuctDetail() {
                                             type="button"
                                             onClick={handleBuyNow}
                                             disabled={loading || !selectedVariant || maxStock <= 0}
-                                            className="text-orange-500 border border-orange-500 w-1/2 font-bold text-lg p-4 rounded-xl hover:bg-orange-50 disabled:opacity-50 cursor-pointer"
+                                            className="w-full sm:w-1/2 text-orange-500 border border-orange-500 font-bold text-base sm:text-lg py-3.5 px-4 rounded-xl hover:bg-orange-50 disabled:opacity-50 cursor-pointer"
                                         >
                                             Mua ngay
                                         </button>
@@ -392,7 +392,7 @@ function ProDuctDetail() {
 
                         {relatedProducts.length > 0 && (
                             <div className="mt-8">
-                                <p className="text-2xl font-bold mb-2">Sản phẩm liên quan</p>
+                                <p className="text-xl sm:text-2xl font-bold mb-2">Sản phẩm liên quan</p>
                                 <div>
                                     <AllProduct products={relatedProducts} loading={false} />
                                 </div>

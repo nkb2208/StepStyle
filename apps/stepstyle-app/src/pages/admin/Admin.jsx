@@ -27,6 +27,7 @@ const maxRev = Math.max(...MONTHLY.map(r => r.rev));
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const [session] = useState(() => {
     try {
@@ -68,24 +69,49 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen flex bg-slate-50 font-sans text-slate-800">
+      {/* Mobile Sidebar Backdrop */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-slate-900/50 z-30 lg:hidden"
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200/80 flex flex-col fixed h-full z-30 shadow-xs">
+      <aside
+        className={`w-64 bg-white border-r border-slate-200/80 flex flex-col fixed inset-y-0 left-0 h-full z-40 shadow-xs transition-transform duration-200 ease-out lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         {/* Brand Header */}
-        <div className="h-16 flex items-center px-5 border-b border-slate-100 gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-xs">
-            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 16.5C5 17.8 8 18.2 11.5 17.8C15.5 17.4 19 17.9 21.2 16.7C21.8 16.3 22 15.5 21.6 14.8C20.2 13.2 17.5 12.5 13 13C9 13.5 6 15 4 16.5Z" fill="currentColor" fillOpacity="0.25" />
-              <path d="M6 14.2C7 11.2 9.5 7.8 12.5 6.2C14 5.4 15.5 6.2 16 7.8C16.5 9 15.8 10.2 14.5 11C17 10.7 19.5 11.7 21 13.7" />
-              <path d="M10 11.5c2-.5 4.5-.3 7 1" />
-            </svg>
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-base text-slate-900 tracking-tight">Step<span className="text-indigo-600">Style</span></span>
-              <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">Hub</span>
+        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-100 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-xs">
+              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 16.5C5 17.8 8 18.2 11.5 17.8C15.5 17.4 19 17.9 21.2 16.7C21.8 16.3 22 15.5 21.6 14.8C20.2 13.2 17.5 12.5 13 13C9 13.5 6 15 4 16.5Z" fill="currentColor" fillOpacity="0.25" />
+                <path d="M6 14.2C7 11.2 9.5 7.8 12.5 6.2C14 5.4 15.5 6.2 16 7.8C16.5 9 15.8 10.2 14.5 11C17 10.7 19.5 11.7 21 13.7" />
+                <path d="M10 11.5c2-.5 4.5-.3 7 1" />
+              </svg>
             </div>
-            <p className="text-[11px] text-slate-500 font-normal truncate">Quản trị & Vận hành</p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-base text-slate-900 tracking-tight">Step<span className="text-indigo-600">Style</span></span>
+                <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">Hub</span>
+              </div>
+              <p className="text-[11px] text-slate-500 font-normal truncate">Quản trị & Vận hành</p>
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Đóng menu"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         {/* User Profile Card */}
@@ -114,7 +140,10 @@ export default function Admin() {
             return (
               <button 
                 key={item.id} 
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setSidebarOpen(false);
+                }}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   isActive 
                     ? 'bg-indigo-600 text-white shadow-xs' 
@@ -145,18 +174,28 @@ export default function Admin() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 ml-64 min-w-0">
-        <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 h-16 flex items-center justify-between px-8 sticky top-0 z-20">
-          <div className="flex items-center gap-3">
-            <h1 className="text-base font-bold text-slate-900 tracking-tight">
+      <div className="flex-1 lg:ml-64 min-w-0">
+        <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-20 gap-2">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Mở menu quản trị"
+              className="lg:hidden p-2 -ml-1 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 shrink-0"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate">
               {navItems.find(i => i.id === activeTab)?.label}
             </h1>
-            <span className="text-xs text-slate-300">|</span>
-            <span className="text-xs text-slate-500 font-normal">Bảng điều khiển StepStyle</span>
+            <span className="hidden sm:inline text-xs text-slate-300">|</span>
+            <span className="hidden sm:inline text-xs text-slate-500 font-normal truncate">Bảng điều khiển StepStyle</span>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-xs font-medium text-emerald-700">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-xs font-medium text-emerald-700">
               <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
               Hệ thống ổn định
             </div>
@@ -164,17 +203,17 @@ export default function Admin() {
               href="/home" 
               target="_blank" 
               rel="noreferrer" 
-              className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-200 bg-white transition-all shadow-2xs"
+              className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-200 bg-white transition-all shadow-2xs whitespace-nowrap"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
-              Xem cửa hàng
+              <span className="hidden sm:inline">Xem cửa hàng</span>
             </a>
           </div>
         </header>
 
-        <main className="p-8">
+        <main className="p-4 sm:p-6 lg:p-8">
           {activeTab === 'dashboard' && <Dashboard MONTHLY={MONTHLY} maxRev={maxRev} />}
           {activeTab === 'products' && <Products />}
           {activeTab === 'users' && <Users />}

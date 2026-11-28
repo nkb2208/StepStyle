@@ -65,14 +65,14 @@ function AllProduct({ products: propProducts, loading: propLoading }) {
 
     if (!products || products.length === 0) {
         return (
-            <div className='mt-8 text-center text-gray-500 py-10 bg-white rounded-xl mx-10'>
+            <div className='mt-6 text-center text-gray-500 py-10 bg-white rounded-xl'>
                 Không tìm thấy sản phẩm phù hợp.
             </div>
         );
     }
 
     return (
-        <div className='gap-4 mt-4 grid grid-cols-4 pl-10 pr-10'>
+        <div className='gap-3 sm:gap-4 mt-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4'>
             {products.map((product) => {
                 const effectivePrice = getEffectivePrice(product);
                 const origPrice = Number(product.gia_goc || 0);
@@ -84,37 +84,37 @@ function AllProduct({ products: propProducts, loading: propLoading }) {
                     <div
                         key={product.ma_san_pham}
                         onClick={() => navigate(`/detail/${product.ma_san_pham}`)}
-                        className='hover:shadow-md hover:scale-105 transition duration-300 col-span-1 rounded-xl bg-white cursor-pointer flex flex-col overflow-hidden'
+                        className='hover:shadow-md sm:hover:scale-105 transition duration-300 col-span-1 rounded-xl bg-white cursor-pointer flex flex-col overflow-hidden border border-gray-100'
                     >
                         <img
-                            className='rounded-t-xl w-full h-48 object-cover'
+                            className='rounded-t-xl w-full h-36 sm:h-48 object-cover'
                             src={imageUrl}
                             alt={product.ten_san_pham}
                             onError={(e) => {
                                 e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
                             }}
                         />
-                        <div className='mt-2 p-3 flex flex-col flex-1 justify-between'>
+                        <div className='mt-1 p-2.5 sm:p-3 flex flex-col flex-1 justify-between'>
                             <div>
                                 {/* Brand / Category */}
-                                <p className='text-xs font-bold text-blue-500 bg-blue-100 rounded-xl w-fit px-2.5 py-1'>
+                                <p className='text-[11px] sm:text-xs font-bold text-blue-500 bg-blue-100 rounded-xl w-fit px-2 py-0.5 sm:px-2.5 sm:py-1'>
                                     {categoryName}
                                 </p>
-                                <div className='mt-3'>
+                                <div className='mt-2 sm:mt-3'>
                                     {/* Product Name */}
-                                    <p className='font-medium text-gray-900 line-clamp-2 min-h-[2.5rem]'>
+                                    <p className='text-sm sm:text-base font-medium text-gray-900 line-clamp-2 min-h-[2.5rem]'>
                                         {product.ten_san_pham}
                                     </p>
                                     {/* Rate */}
-                                    <div className='flex items-center gap-2 mt-1'>
-                                        <svg className='w-16 h-4' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 24" fill="#FFC107">
+                                    <div className='flex items-center gap-1.5 sm:gap-2 mt-1 flex-wrap'>
+                                        <svg className='w-14 sm:w-16 h-3.5 sm:h-4 shrink-0' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 24" fill="#FFC107">
                                             <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.399 8.168-7.333-3.854-7.333 3.854 1.399-8.168-5.934-5.787 8.2-1.192z"/>
                                             <path d="M36 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.399 8.168-7.333-3.854-7.333 3.854 1.399-8.168-5.934-5.787 8.2-1.192z"/>
                                             <path d="M60 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.399 8.168-7.333-3.854-7.333 3.854 1.399-8.168-5.934-5.787 8.2-1.192z"/>
                                             <path d="M84 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.399 8.168-7.333-3.854-7.333 3.854 1.399-8.168-5.934-5.787 8.2-1.192z"/>
                                             <path d="M108 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.399 8.168-7.333-3.854-7.333 3.854 1.399-8.168-5.934-5.787 8.2-1.192z"/>
                                         </svg>
-                                        <p className='text-xs text-gray-500'>
+                                        <p className='text-[11px] sm:text-xs text-gray-500'>
                                             ({product.danh_sach_bien_the?.length || 0} phiên bản)
                                         </p>
                                     </div>
@@ -122,13 +122,13 @@ function AllProduct({ products: propProducts, loading: propLoading }) {
                             </div>
 
                             {/* Price and button add to cart */}
-                            <div className='mt-4 flex items-center justify-between gap-2'>
+                            <div className='mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2'>
                                 <div className='min-w-0'>
-                                    <div className='text-lg font-bold text-orange-400 truncate'>
+                                    <div className='text-sm sm:text-lg font-bold text-orange-400 truncate'>
                                         {effectivePrice.toLocaleString('vi-VN')}đ
                                     </div>
                                     {hasDiscount && (
-                                        <div className='text-xs text-gray-400 line-through'>
+                                        <div className='text-[11px] sm:text-xs text-gray-400 line-through'>
                                             {origPrice.toLocaleString('vi-VN')}đ
                                         </div>
                                     )}
@@ -139,7 +139,7 @@ function AllProduct({ products: propProducts, loading: propLoading }) {
                                         e.stopPropagation();
                                         handleQuickAdd(product);
                                     }}
-                                    className='shrink-0 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center px-3 py-1.5 text-sm text-white font-bold rounded-md'
+                                    className='w-full sm:w-auto shrink-0 bg-orange-400 hover:bg-orange-500 hover:cursor-pointer flex items-center justify-center px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm text-white font-bold rounded-md'
                                 >
                                     + Giỏ
                                 </button>

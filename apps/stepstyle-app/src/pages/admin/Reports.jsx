@@ -348,14 +348,14 @@ export default function Reports() {
       </div>
 
       {/* Top 5 Best-Selling Products */}
-      <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-5">
+      <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-5">
           <h3 className="font-bold text-slate-900 text-lg">Top 5 đôi giày bán chạy nhất</h3>
           <span className="text-xs text-slate-400 font-normal">Xếp hạng theo số lượng bán</span>
         </div>
         <div className="space-y-4">
           {topProducts.map((p, idx) => (
-            <div key={p.product_name + idx} className="flex items-center gap-4">
+            <div key={p.product_name + idx} className="flex items-center gap-3 sm:gap-4">
               <span
                 className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-semibold text-white shrink-0 ${
                   idx === 0 ? 'bg-amber-500' : idx === 1 ? 'bg-slate-400' : idx === 2 ? 'bg-amber-700' : 'bg-slate-200 text-slate-600'
@@ -364,9 +364,9 @@ export default function Reports() {
                 {idx + 1}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-0.5 mb-1">
                   <p className="text-sm font-medium text-slate-900 truncate">{p.product_name}</p>
-                  <div className="text-right shrink-0 ml-3">
+                  <div className="sm:text-right shrink-0">
                     <span className="text-sm font-semibold text-indigo-600">{formatPrice(p.total_revenue)}</span>
                     <span className="text-xs text-slate-400 ml-2 font-normal">({p.total_sold} đôi)</span>
                   </div>

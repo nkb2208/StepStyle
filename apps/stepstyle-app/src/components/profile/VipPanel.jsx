@@ -70,11 +70,11 @@ function VipPanel({ onChanged }) {
     };
 
     return (
-        <div className="mt-4 p-5 pr-8 pl-8 bg-white rounded-xl">
+        <div className="mt-4 p-5 sm:px-8 bg-white rounded-xl shadow-2xs">
             <p className="font-bold">Gói VIP</p>
 
             {membership && (
-                <p className="mt-2 text-gray-600">
+                <p className="mt-2 text-sm text-gray-600 leading-relaxed">
                     Hạng hiện tại: <b>{membership.ten_hang}</b>
                     {membership.phan_tram_giam > 0 && ` · giảm ${membership.phan_tram_giam}%`}
                     {membership.mien_phi_van_chuyen && " · miễn phí vận chuyển"}
@@ -86,20 +86,20 @@ function VipPanel({ onChanged }) {
 
             <div className="mt-4 grid grid-cols-1 gap-3">
                 {packages.map((p) => (
-                    <div key={p.id} className="p-4 border border-gray-300 rounded-xl flex items-center justify-between">
+                    <div key={p.id} className="p-4 border border-gray-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <p className="font-bold">{p.ten_goi}</p>
                             <p className="text-sm text-gray-500">
                                 Hạng {p.ma_hang} · {p.so_ngay} ngày
                             </p>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-between sm:justify-end gap-4">
                             <p className="font-bold text-orange-400">{fmtMoney(p.gia)}</p>
                             <button
                                 type="button"
                                 disabled={busyId !== null}
                                 onClick={() => buy(p)}
-                                className="bg-orange-400 rounded-xl p-2 pr-3 pl-3 font-bold text-white disabled:opacity-50"
+                                className="bg-orange-400 hover:bg-orange-500 rounded-xl px-4 py-2 text-sm font-bold text-white disabled:opacity-50 cursor-pointer"
                             >
                                 {busyId === p.id ? "Đang xử lý..." : "Mua"}
                             </button>
@@ -112,17 +112,19 @@ function VipPanel({ onChanged }) {
 
             {txns.length > 0 && (
                 <div className="mt-6">
-                    <p className="font-bold">Lịch sử giao dịch</p>
-                    {txns.map((t) => (
-                        <div key={t.ma_giao_dich} className="mt-2 flex justify-between text-sm text-gray-600">
-                            <span>
-                                {fmtDate(t.ngay_tao)} · {t.ma_giao_dich}
-                            </span>
-                            <span>
-                                {fmtMoney(t.so_tien)} · {STATUS_LABEL[t.trang_thai] || t.trang_thai}
-                            </span>
-                        </div>
-                    ))}
+                    <p className="font-bold mb-2">Lịch sử giao dịch</p>
+                    <div className="divide-y divide-gray-100">
+                        {txns.map((t) => (
+                            <div key={t.ma_giao_dich} className="py-2 flex flex-col sm:flex-row sm:justify-between gap-1 text-xs sm:text-sm text-gray-600">
+                                <span className="break-all">
+                                    {fmtDate(t.ngay_tao)} · {t.ma_giao_dich}
+                                </span>
+                                <span className="font-medium shrink-0">
+                                    {fmtMoney(t.so_tien)} · {STATUS_LABEL[t.trang_thai] || t.trang_thai}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

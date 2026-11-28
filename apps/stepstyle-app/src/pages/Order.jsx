@@ -162,84 +162,82 @@ function Order() {
                     <NavBar/>
                 </div>
                 
-                <div  className="mt-10 w-full flex items-center justify-center">
-                    <div className="w-1/2 m-10">
-                        <p className="text-3xl font-bold">Đơn hàng của tôi</p>
+                <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+                    <div>
+                        <p className="text-2xl sm:text-3xl font-bold">Đơn hàng của tôi</p>
                         
-                        <div>
-                            {loading ? <p>Đang tải...</p> : orders.length === 0 ? <p>Chưa có đơn hàng nào.</p> : orders.map(order => (
+                        <div className="mt-4">
+                            {loading ? <p className="bg-white rounded-xl p-6 text-gray-500">Đang tải...</p> : orders.length === 0 ? <p className="bg-white rounded-xl p-6 text-gray-500">Chưa có đơn hàng nào.</p> : orders.map(order => (
                                 <div key={order.ma_don_hang} className="relative mt-4">
-                                    <button onClick={() => handleToggleOrder(order.ma_don_hang)} className="w-full flex items-center justify-between bg-white rounded-xl  rounded-b-none p-3 pl-5 pr-5">
-                                        <div>
-                                            <div className="flex items-center gap-3">
-                                                <p className="text-md font-bold">ORDER-{order.ma_don_hang}</p>
-                                                <div className={`p-1 pr-2 pl-2 rounded-xl text-xs font-bold ${getOrderStatusColor(order.trang_thai_don_hang)}`}>{getOrderStatusText(order.trang_thai_don_hang)}</div>
+                                    <button onClick={() => handleToggleOrder(order.ma_don_hang)} className={`w-full flex items-center justify-between gap-3 bg-white rounded-xl ${openOrderId === order.ma_don_hang ? 'rounded-b-none' : ''} p-4 sm:px-5 text-left cursor-pointer shadow-2xs`}>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                                <p className="text-sm sm:text-base font-bold">ORDER-{order.ma_don_hang}</p>
+                                                <div className={`px-2.5 py-0.5 rounded-xl text-xs font-bold ${getOrderStatusColor(order.trang_thai_don_hang)}`}>{getOrderStatusText(order.trang_thai_don_hang)}</div>
                                             </div>
 
-                                            <div className="mt-3 flex items-center gap-3 text-gray-500 font-bold text-md">
+                                            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-gray-500 font-semibold text-xs sm:text-sm">
                                                 <p>{new Date(order.ngay_dat).toLocaleDateString('vi-VN')}</p>
                                                 <p>{order.items?.length || 0} sản phẩm</p>
                                                 <p className="font-bold text-orange-400">{Number(order.tong_thanh_toan).toLocaleString('vi-VN')} đ</p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-3">
-
-
+                                        <div className="flex items-center shrink-0 text-gray-500">
                                             {openOrderId !== order.ma_don_hang ? (
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">                                            
-                                                    <polyline points="5 12 12 5 19 12"></polyline>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="6 9 12 15 18 9"></polyline>
                                                 </svg>
                                             ) : (
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <polyline points="19 12 12 19 5 12"></polyline>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="18 15 12 9 6 15"></polyline>
                                                 </svg>
                                             )}
                                         </div>
-                                    </button>                            
+                                    </button>
 
                                     {openOrderId === order.ma_don_hang && (
-                                        <div className=" w-full p-3 bg-white flex flex-col gap-2 border-t border-gray-100  rounded-xl rounded-t-none shadow-lg">
+                                        <div className="w-full p-4 sm:p-5 bg-white flex flex-col gap-3 border-t border-gray-100 rounded-xl rounded-t-none shadow-lg">
                                             {order.items?.map((item, idx) => (
-                                                <div key={item.ma_chi_tiet || item.ma_bien_the || idx} className="flex items-center justify-between border-b border-gray-100 pb-2">
-                                                    <div className=" flex items-center gap-3">
-                                                        <img className="w-20 h-20 rounded-xl" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format" alt="" />
-                                                        <div>
-                                                            <p>{item.ten_san_pham}</p>
+                                                <div key={item.ma_chi_tiet || item.ma_bien_the || idx} className="flex items-start sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <img className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&fit=crop&auto=format" alt="" />
+                                                        <div className="min-w-0">
+                                                            <p className="font-medium text-sm sm:text-base line-clamp-2">{item.ten_san_pham}</p>
                                                             <p className="text-xs text-gray-500">Size {item.kich_co} • {item.mau_sac} • x{item.so_luong}</p>
                                                         </div>
                                                     </div>
-                                                    <p className="font-bold">{Number(item.don_gia).toLocaleString('vi-VN')} đ</p>
+                                                    <p className="font-bold text-sm sm:text-base shrink-0">{Number(item.don_gia).toLocaleString('vi-VN')} đ</p>
                                                 </div>
                                             ))}
 
-                                            <div className="mt-4 flex items-center justify-between ">
-                                                <div>
-                                                    <p className="text-gray-500">Giao đến: { order.dia_chi_giao_hang}</p>
-                                                    <p className="text-gray-500">
-                                                        Thanh toán: {getPaymentName(order.payment?.ma_phuong_thuc)}
-                                                        <span className={`ml-2 text-xs font-bold px-2 py-0.5 rounded-md ${order.payment?.trang_thai_thanh_toan === 'SUCCESS' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-500'}`}>
+                                            <div className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
+                                                <div className="space-y-1">
+                                                    <p className="text-gray-500 break-words">Giao đến: {order.dia_chi_giao_hang}</p>
+                                                    <p className="text-gray-500 flex flex-wrap items-center gap-2">
+                                                        <span>Thanh toán: {getPaymentName(order.payment?.ma_phuong_thuc)}</span>
+                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${order.payment?.trang_thai_thanh_toan === 'SUCCESS' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-500'}`}>
                                                             {order.payment?.trang_thai_thanh_toan === 'SUCCESS' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                                                         </span>
                                                     </p>
                                                 </div>
 
-                                                <div>
-                                                    <p className="flex items-center justify-end text-md text-gray-500">Tổng cộng</p>
-                                                    <p className="text-xl font-bold text-orange-400">{Number(order.tong_thanh_toan).toLocaleString('vi-VN')}đ</p>
+                                                <div className="sm:text-right shrink-0">
+                                                    <p className="text-xs sm:text-sm text-gray-500">Tổng cộng</p>
+                                                    <p className="text-lg sm:text-xl font-bold text-orange-400">{Number(order.tong_thanh_toan).toLocaleString('vi-VN')}đ</p>
                                                 </div>
                                             </div>
 
                                             {order.payment?.ma_phuong_thuc === 3 && order.payment?.trang_thai_thanh_toan !== 'SUCCESS' && order.trang_thai_don_hang === 'PENDING' && (
-                                                <button onClick={(e) => { e.stopPropagation(); handlePayMomo(order.ma_don_hang); }} className="cursor-pointer mt-4 w-full font-bold p-3 bg-pink-500 hover:bg-pink-600 text-white text-md rounded-xl">Thanh toán MoMo ngay</button>
+                                                <button onClick={(e) => { e.stopPropagation(); handlePayMomo(order.ma_don_hang); }} className="cursor-pointer mt-2 w-full font-bold p-3 bg-pink-500 hover:bg-pink-600 text-white text-sm sm:text-base rounded-xl">Thanh toán MoMo ngay</button>
                                             )}
 
                                             {order.payment?.ma_phuong_thuc === 5 && order.payment?.trang_thai_thanh_toan !== 'SUCCESS' && order.trang_thai_don_hang === 'PENDING' && (
-                                                <button onClick={(e) => { e.stopPropagation(); handlePayVnpay(order.ma_don_hang); }} className="cursor-pointer mt-4 w-full font-bold p-3 bg-blue-600 hover:bg-blue-700 text-white text-md rounded-xl">Thanh toán VNPAY ngay</button>
+                                                <button onClick={(e) => { e.stopPropagation(); handlePayVnpay(order.ma_don_hang); }} className="cursor-pointer mt-2 w-full font-bold p-3 bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base rounded-xl">Thanh toán VNPAY ngay</button>
                                             )}
 
                                             {order.trang_thai_don_hang === 'PENDING' && (
-                                                <button onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.ma_don_hang); }} className="cursor-pointer mt-2 w-full font-bold p-4 bg-red-400 text-white text-md hover:cursor-pointer hover:bg-red-500 rounded-xl">Hủy đơn</button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.ma_don_hang); }} className="cursor-pointer mt-1 w-full font-bold p-3.5 bg-red-400 text-white text-sm sm:text-base hover:bg-red-500 rounded-xl">Hủy đơn</button>
                                             )}
                                         </div>
                                     )}

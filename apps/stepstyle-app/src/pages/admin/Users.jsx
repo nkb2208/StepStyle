@@ -325,8 +325,8 @@ export default function Users() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 text-sm">
-              <div className="grid grid-cols-2 gap-4 bg-slate-50 rounded-2xl p-4">
+            <div className="p-5 sm:p-6 space-y-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 rounded-2xl p-4">
                 <div>
                   <p className="text-xs text-slate-400 font-normal">Họ và tên</p>
                   <p className="font-medium text-slate-900 mt-0.5">{selectedCustomer.name || 'Chưa cập nhật'}</p>
@@ -347,7 +347,7 @@ export default function Users() {
                   <p className="text-xs text-slate-400 font-normal">Số điện thoại</p>
                   <p className="font-medium text-slate-800 mt-0.5">{selectedCustomer.phone || 'Chưa cập nhật'}</p>
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <p className="text-xs text-slate-400 font-normal">Địa chỉ giao hàng</p>
                   <p className="font-medium text-slate-800 mt-0.5">{selectedCustomer.address || 'Chưa cập nhật địa chỉ'}</p>
                 </div>
@@ -364,7 +364,7 @@ export default function Users() {
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="p-5 sm:p-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50">
               <button
                 onClick={() => handleToggleLockCustomer(selectedCustomer)}
                 disabled={lockingId === selectedCustomer.id}
@@ -413,7 +413,7 @@ export default function Users() {
       </div>
 
       {/* Bảng 1: Nhân sự hệ thống (Quản trị viên) */}
-      <div className="bg-white rounded-2xl border border-slate-100 p-6 mt-3">
+      <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-6 mt-3">
         <h3 className="font-bold text-slate-900 text-lg mb-4">Nhân sự quản trị ({staffList.length})</h3>
         
         {loading ? (
@@ -421,7 +421,8 @@ export default function Users() {
         ) : error ? (
           <div className="text-center py-10 text-red-500">{error}</div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
                 <th className="text-left py-3 px-4 text-slate-500 font-medium rounded-tl-xl">Người dùng</th>
@@ -478,11 +479,12 @@ export default function Users() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
       {/* Bảng 2: Quản lý tài khoản khách hàng */}
-      <div className="bg-white rounded-2xl border border-slate-100 p-6">
+      <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
             <h3 className="font-bold text-slate-900 text-lg">Danh sách khách hàng ({customerList.length})</h3>
@@ -502,7 +504,8 @@ export default function Users() {
         ) : error ? (
           <div className="text-center py-10 text-red-500">{error}</div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[660px] text-sm">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
                 <th className="text-left py-3 px-4 text-slate-500 font-medium rounded-tl-xl">Khách hàng</th>
@@ -563,6 +566,7 @@ export default function Users() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

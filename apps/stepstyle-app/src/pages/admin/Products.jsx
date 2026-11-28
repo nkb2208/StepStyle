@@ -451,7 +451,7 @@ export default function Products() {
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Tên sản phẩm</label>
                     <input name="name" value={newProduct?.name || ''} onChange={handleInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="Nhập tên sản phẩm..." />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Danh mục</label>
                       <select name="category_id" value={newProduct?.category_id || ''} onChange={handleInputChange} className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none bg-white">
@@ -466,7 +466,7 @@ export default function Products() {
                       <input name="image" value={newProduct?.image || ''} onChange={handleInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="https://..." />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Giá bán gốc (VNĐ)</label>
                       <input name="original_price" value={newProduct?.original_price || ''} onChange={handleInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="VD: 1.500.000" />
@@ -508,7 +508,7 @@ export default function Products() {
                       </div>
                     ) : (
                       <div className="space-y-2.5">
-                        <div className="grid grid-cols-12 gap-2 px-1 text-xs font-medium text-slate-500">
+                        <div className="hidden sm:grid grid-cols-12 gap-2 px-1 text-xs font-medium text-slate-500">
                           <div className="col-span-2">Kích cỡ</div>
                           <div className="col-span-3">Màu sắc</div>
                           <div className="col-span-2">Số lượng kho</div>
@@ -516,45 +516,45 @@ export default function Products() {
                           <div className="col-span-1 text-center">Xóa</div>
                         </div>
                         {variants.map((variant, index) => (
-                          <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                            <div className="col-span-2">
+                          <div key={index} className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-center p-2.5 sm:p-0 border sm:border-0 border-slate-200 rounded-xl">
+                            <div className="col-span-1 sm:col-span-2">
                               <input
                                 type="text"
                                 value={variant.size}
                                 onChange={(e) => handleVariantChange(index, 'size', e.target.value)}
-                                placeholder="VD: 39, 40"
+                                placeholder="Size: 39, 40"
                                 className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
                               />
                             </div>
-                            <div className="col-span-3">
+                            <div className="col-span-1 sm:col-span-3">
                               <input
                                 type="text"
                                 value={variant.color}
                                 onChange={(e) => handleVariantChange(index, 'color', e.target.value)}
-                                placeholder="VD: Đen, Trắng"
+                                placeholder="Màu: Đen, Trắng"
                                 className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
                               />
                             </div>
-                            <div className="col-span-2">
+                            <div className="col-span-1 sm:col-span-2">
                               <input
                                 type="number"
                                 min="0"
                                 value={variant.stock}
                                 onChange={(e) => handleVariantChange(index, 'stock', e.target.value)}
-                                placeholder="0"
+                                placeholder="Kho"
                                 className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
                               />
                             </div>
-                            <div className="col-span-4">
+                            <div className="col-span-1 sm:col-span-4">
                               <input
                                 type="text"
                                 value={variant.image || ''}
                                 onChange={(e) => handleVariantChange(index, 'image', e.target.value)}
-                                placeholder="https://..."
+                                placeholder="Link ảnh..."
                                 className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
                               />
                             </div>
-                            <div className="col-span-1 flex justify-center">
+                            <div className="col-span-2 sm:col-span-1 flex justify-end sm:justify-center">
                               <button
                                 type="button"
                                 onClick={() => setVariants(variants.filter((_, i) => i !== index))}
@@ -574,7 +574,7 @@ export default function Products() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Hình ảnh sản phẩm</label>
-                  <div className="border-2 border-dashed border-slate-200 rounded-2xl h-100 flex flex-col items-center justify-center text-slate-400 text-sm cursor-pointer hover:bg-slate-50 transition-colors overflow-hidden">
+                  <div className="border-2 border-dashed border-slate-200 rounded-2xl h-52 md:h-80 flex flex-col items-center justify-center text-slate-400 text-sm cursor-pointer hover:bg-slate-50 transition-colors overflow-hidden">
                     {newProduct?.image ? (
                       <img src={newProduct.image} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
@@ -616,7 +616,7 @@ export default function Products() {
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Tên sản phẩm</label>
                     <input name="name" value={editingProduct.name} onChange={handleEditInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="Nhập tên sản phẩm..." />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Danh mục</label>
                       <select name="category_id" value={editingProduct.category_id} onChange={handleEditInputChange} className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none bg-white">
@@ -631,7 +631,7 @@ export default function Products() {
                       <input name="image" value={editingProduct.image} onChange={handleEditInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="https://..." />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Giá bán gốc (VNĐ)</label>
                       <input name="original_price" value={editingProduct.original_price} onChange={handleEditInputChange} type="text" className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="VD: 1.500.000" />
@@ -673,7 +673,7 @@ export default function Products() {
                       </div>
                     ) : (
                       <div className="space-y-2.5">
-                        <div className="grid grid-cols-12 gap-2 px-1 text-xs font-medium text-slate-500">
+                        <div className="hidden sm:grid grid-cols-12 gap-2 px-1 text-xs font-medium text-slate-500">
                           <div className="col-span-2">Kích cỡ</div>
                           <div className="col-span-3">Màu sắc</div>
                           <div className="col-span-2">Số lượng kho</div>
@@ -681,45 +681,45 @@ export default function Products() {
                           <div className="col-span-1 text-center">Xóa</div>
                         </div>
                         {editVariants.map((variant, index) => (
-                          <div key={variant.ma_bien_the || index} className="grid grid-cols-12 gap-2 items-center">
-                            <div className="col-span-2">
+                          <div key={variant.ma_bien_the || index} className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-center p-2.5 sm:p-0 border sm:border-0 border-slate-200 rounded-xl">
+                            <div className="col-span-1 sm:col-span-2">
                               <input
                                 type="text"
                                 value={variant.size}
                                 onChange={(e) => handleEditVariantChange(index, 'size', e.target.value)}
-                                placeholder="VD: 39, 40"
+                                placeholder="Size: 39, 40"
                                 className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
                               />
                             </div>
-                            <div className="col-span-3">
+                            <div className="col-span-1 sm:col-span-3">
                               <input
                                 type="text"
                                 value={variant.color}
                                 onChange={(e) => handleEditVariantChange(index, 'color', e.target.value)}
-                                placeholder="VD: Đen, Trắng"
+                                placeholder="Màu: Đen, Trắng"
                                 className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
                               />
                             </div>
-                            <div className="col-span-2">
+                            <div className="col-span-1 sm:col-span-2">
                               <input
                                 type="number"
                                 min="0"
                                 value={variant.stock}
                                 onChange={(e) => handleEditVariantChange(index, 'stock', e.target.value)}
-                                placeholder="0"
+                                placeholder="Kho"
                                 className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
                               />
                             </div>
-                            <div className="col-span-4">
+                            <div className="col-span-1 sm:col-span-4">
                               <input
                                 type="text"
                                 value={variant.image || ''}
                                 onChange={(e) => handleEditVariantChange(index, 'image', e.target.value)}
-                                placeholder="https://..."
+                                placeholder="Link ảnh..."
                                 className="w-full border border-slate-200 focus:border-purple-500 rounded-xl px-3 py-2 text-sm outline-none"
                               />
                             </div>
-                            <div className="col-span-1 flex justify-center">
+                            <div className="col-span-2 sm:col-span-1 flex justify-end sm:justify-center">
                               <button
                                 type="button"
                                 onClick={() => setEditVariants(editVariants.filter((_, i) => i !== index))}
@@ -932,8 +932,8 @@ export default function Products() {
               {/* Danh sách danh mục */}
               <div>
                 <h4 className="font-bold text-slate-800 text-sm mb-3">Danh sách danh mục ({categories.length})</h4>
-                <div className="border border-slate-100 rounded-xl overflow-hidden">
-                  <table className="w-full text-sm">
+                <div className="border border-slate-100 rounded-xl overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-sm">
                     <thead className="bg-slate-50 border-b border-slate-100">
                       <tr>
                         <th className="text-left py-2.5 px-4 text-slate-500 font-semibold">ID</th>
@@ -987,7 +987,7 @@ export default function Products() {
       )}
 
       {/* Body */}
-      <div className='w-full flex items-center justify-end gap-3 mb-3'>
+      <div className='w-full flex flex-wrap items-center justify-end gap-2 sm:gap-3 mb-3'>
         <button onClick={() => setShowCategoryModal(true)} className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
           Quản lý danh mục
         </button>
@@ -996,13 +996,13 @@ export default function Products() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 p-6">
+      <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
             <h3 className="font-bold text-slate-900 text-lg">Danh sách sản phẩm ({products.length})</h3>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3">
             <input
               type="text"
               value={searchName}
@@ -1012,7 +1012,7 @@ export default function Products() {
                 handleFindProducts(val, filterCategory, filterStatus);
               }}
               placeholder="Tìm kiếm sản phẩm..."
-              className="border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2 text-sm w-full md:w-64 outline-none"
+              className="border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2 text-sm w-full sm:w-56 md:w-64 outline-none"
             />
             <select
               value={filterCategory}
@@ -1021,7 +1021,7 @@ export default function Products() {
                 setFilterCategory(val);
                 handleFindProducts(searchName, val, filterStatus);
               }}
-              className="border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2 text-sm text-slate-600 outline-none bg-white"
+              className="w-full sm:w-auto border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2 text-sm text-slate-600 outline-none bg-white"
             >
               <option value="">Tất cả danh mục</option>
               {categories.map(cat => (
@@ -1035,7 +1035,7 @@ export default function Products() {
                 setFilterStatus(val);
                 handleFindProducts(searchName, filterCategory, val);
               }}
-              className="border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2 text-sm text-slate-600 outline-none bg-white"
+              className="w-full sm:w-auto border border-slate-200 focus:border-purple-500 rounded-xl px-4 py-2 text-sm text-slate-600 outline-none bg-white"
             >
               <option value="">Trạng thái: Tất cả</option>
               <option value="ACTIVE">Hoạt động</option>
@@ -1044,7 +1044,8 @@ export default function Products() {
           </div>
         </div>
 
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[700px] text-sm">
           <thead className="bg-slate-50 border-b border-slate-100">
             <tr>
               <th className="text-left py-3 px-4 text-slate-500 font-semibold rounded-tl-xl">Sản phẩm</th>
@@ -1218,6 +1219,7 @@ export default function Products() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
