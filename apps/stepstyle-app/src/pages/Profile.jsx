@@ -135,10 +135,6 @@ function Profile(){
                                 <input className="mt-2 border border-gray-300 rounded-xl p-3 text-sm sm:text-base w-full outline-none focus:border-orange-400" type="text" value={form.so_dien_thoai} onChange={(e) => setForm({ ...form, so_dien_thoai: e.target.value })} placeholder="0912345678" />
                             </div>
 
-                            <div className='mt-4'>
-                                <label className="font-bold text-sm" htmlFor="">Địa chỉ</label>
-                                <input className="mt-2 border border-gray-300 rounded-xl p-3 text-sm sm:text-base w-full outline-none focus:border-orange-400" type="text" name="" id="" placeholder="789 Hai Bà Trưng, Q3, TP.HCM" />
-                            </div>
                             {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
                             <button className="mt-4 w-full sm:w-auto bg-orange-400 hover:bg-orange-500 rounded-xl px-5 py-2.5 font-bold text-white cursor-pointer">Lưu thay đổi</button>
                         </form>
