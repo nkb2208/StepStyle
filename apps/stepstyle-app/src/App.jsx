@@ -10,6 +10,7 @@ import CheckOut from './pages/Checkout';
 import ProDuctDetail from './pages/Product-Detail';
 import Admin from './pages/admin/Admin';
 import AdminLogin from './pages/admin/AdminLogin';
+import Rating from './pages/Rating';
 
 export default function App() {
   return (
@@ -26,7 +27,7 @@ export default function App() {
         <Route path='/checkout/*' element={<CheckOut/>}/>
         <Route path='/detail' element={<ProDuctDetail/>}/>
         <Route path='/detail/:id' element={<ProDuctDetail/>}/>
-        
+        <Route path='/rating' element={<Rating/>}/>
         <Route path='/admin/login' element={<AdminLogin/>}/>
         <Route path='/admin/*' element={<Admin/>}/>
       </Routes>

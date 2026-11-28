@@ -374,6 +374,79 @@ function ProDuctDetail() {
                                 </div>
                             </div>
                         </div>
+                        
+                        {/* Rating */}
+                        <div className="mt-4 bg-white p-5 rounded-xl">
+                            <p className="text-xl sm:text-2xl font-bold mb-2">Đánh giá</p>
+
+                            <div className="mt-4 ">
+                                {/* Search */}
+                                <div className="border-b border-gray-300 pb-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                    <form className="flex-1" onSubmit={(e) => e.preventDefault()}>
+                                        <div className="flex items-center">
+                                            <div className="rounded-l-xl border-t border-b border-l border-gray-300 px-3 py-2.5 bg-white text-gray-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <circle cx="11" cy="11" r="8"></circle>
+                                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                                </svg>
+                                            </div>
+                                            <input
+                                                className="w-full px-3 py-2 text-sm sm:text-base border-gray-300 rounded-r-xl border-r border-b border-t bg-white outline-none"
+                                                type="text"
+                                                placeholder="Tìm đánh giá..."
+                                            />
+                                        </div>
+                                    </form>
+                                    <div className="w-full sm:w-48 shrink-0">
+                                        <select
+                                            className="bg-white rounded-xl  border px-3 py-2 text-sm sm:text-base w-full outline-none"
+                                        >
+                                            <option value="all">Tất cả đánh giá</option>
+                                            <option value="price_desc">Đánh giá tốt nhất</option>
+                                            <option value="price_asc">Đánh giá tệ nhất</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="w-full sm:w-48 shrink-0">
+                                        <select
+                                            className="bg-white rounded-xl  border px-3 py-2 text-sm sm:text-base w-full outline-none"
+                                        >
+                                            <option value="five_rating">5 sao</option>
+                                            <option value="four_rating">4 sao</option>
+                                            <option value="three_rating">3 sao</option>
+                                            <option value="two_rating">2 sao</option>
+                                            <option value="one_rating">1 sao</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="w-full sm:w-48 shrink-0">
+                                        <button
+                                            className="cursor-pointer bg-white rounded-xl  border px-3 py-2 text-sm sm:text-base w-full outline-none"
+                                        >
+                                            Có ảnh
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4">
+                                    <div className="w-full flex items-center gap-3">
+                                        <svg xmlns="http://w3.org" viewBox="0 0 120 22" width="120" height="22" fill="#FBBF24" aria-label="5 out of 5 stars" role="img">
+                                            <polygon points="11,1 13.9,7.1 20.5,8 15.7,12.6 16.9,19.2 11,16 5.1,19.2 6.3,12.6 1.5,8 8.1,7.1" />
+                                            <polygon points="35,1 37.9,7.1 44.5,8 39.7,12.6 40.9,19.2 35,16 29.1,19.2 30.3,12.6 25.5,8 32.1,7.1" />
+                                            <polygon points="59,1 61.9,7.1 68.5,8 63.7,12.6 64.9,19.2 59,16 53.1,19.2 54.3,12.6 49.5,8 56.1,7.1" />
+                                            <polygon points="83,1 85.9,7.1 92.5,8 87.7,12.6 88.9,19.2 83,16 77.1,19.2 78.3,12.6 73.5,8 80.1,7.1" />
+                                            <polygon points="107,1 109.9,7.1 116.5,8 111.7,12.6 112.9,19.2 107,16 101.1,19.2 102.3,12.6 97.5,8 104.1,7.1" />
+                                        </svg>
+                                        <p className="font-bold">2 years ago</p>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <p className="text-xs">Nguyễn Văn A</p>
+                                        <p className="mt-2">Sản phẩm tốt, đi rất êm chân. Shop tư vấn và hỗ trợ nhiệt tình</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         {relatedProducts.length > 0 && (
                             <div className="mt-8">
