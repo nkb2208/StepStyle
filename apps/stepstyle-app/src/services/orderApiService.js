@@ -139,6 +139,11 @@ export const cancelOrder = async (orderId) => {
   return response.data;
 };
 
+export const confirmOrderReceived = async (orderId) => {
+  const response = await orderApiClient.put(`/orders/${orderId}/confirm-received`);
+  return response.data;
+};
+
 export const createMomoPayment = async (orderId) => {
   const response = await orderApiClient.post(`/orders/${orderId}/momo`);
   return response.data;

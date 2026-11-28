@@ -496,6 +496,8 @@ class OrderController extends Controller
             ->orderBy('ngay_dat', 'desc')
             ->get();
 
+        $this->enrichOrdersWithProductInfo($orders);
+
         return response()->json([
             'data' => $orders,
         ], 200);
@@ -525,6 +527,8 @@ class OrderController extends Controller
             ->orderBy('ngay_dat', 'desc')
             ->get();
 
+        $this->enrichOrdersWithProductInfo($orders);
+
         return response()->json([
             'data' => $orders,
         ], 200);
@@ -548,9 +552,154 @@ class OrderController extends Controller
             return $denied;
         }
 
+        $this->enrichOrdersWithProductInfo(collect([$order]));
+
         return response()->json([
             'data' => $order,
         ], 200);
+    }
+
+    /**
+     * Khách hàng xác nhận đã nhận hàng: chuyển trạng thái nguyên tử SHIPPED -> DELIVERED.
+     * PUT /api/orders/{orderId}/confirm-received
+     */
+    public function confirmReceived(Request $request, $orderID)
+    {
+        $auth = $this->iamAuth->authenticate($request);
+        if (!$auth['ok']) {
+            return $this->iamAuth->errorResponse($auth);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $order = Order::with(['items', 'payment'])
+                ->where('ma_don_hang', $orderID)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$order) {
+                DB::rollBack();
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Không tìm thấy đơn hàng.',
+                ], 404);
+            }
+
+            if ($denied = $this->iamAuth->authorizeOwner($auth['user'], (int) $order->ma_nguoi_dung)) {
+                DB::rollBack();
+                return $denied;
+            }
+
+            $updated = DB::table('donhang')
+                ->where('ma_don_hang', $order->ma_don_hang)
+                ->where('trang_thai_don_hang', 'SHIPPED')
+                ->update([
+                    'trang_thai_don_hang' => 'DELIVERED',
+                    'ngay_cap_nhat'       => now(),
+                ]);
+
+            if ($updated !== 1) {
+                DB::rollBack();
+                $message = $order->trang_thai_don_hang === 'DELIVERED'
+                    ? 'Đơn hàng đã được xác nhận giao thành công trước đó.'
+                    : "Chỉ đơn hàng đang giao hàng mới có thể xác nhận đã nhận hàng (trạng thái hiện tại: {$order->trang_thai_don_hang}).";
+
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => $message,
+                ], 409);
+            }
+
+            if ($order->payment && $order->payment->trang_thai_thanh_toan !== 'SUCCESS') {
+                $order->payment->update([
+                    'trang_thai_thanh_toan' => 'SUCCESS',
+                    'ngay_thanh_toan'       => now(),
+                ]);
+            }
+
+            DB::commit();
+
+            $freshOrder = $order->fresh(['items', 'payment']);
+            $this->enrichOrdersWithProductInfo(collect([$freshOrder]));
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Xác nhận đã nhận hàng thành công!',
+                'data'    => $freshOrder,
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            Log::error('Confirm received failed', [
+                'order_id' => $orderID,
+                'error'    => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Không thể xác nhận đã nhận hàng.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Bổ sung ma_san_pham và hinh_anh từ bienthesanpham + sanpham cho các item của đơn hàng
+     * để Frontend hiển thị đúng ảnh và điều hướng đánh giá sang After-Sales Service.
+     */
+    private function enrichOrdersWithProductInfo($orders): void
+    {
+        if (!Schema::hasTable('bienthesanpham') || !Schema::hasTable('sanpham')) {
+            return;
+        }
+
+        $variantIds = [];
+        foreach ($orders as $order) {
+            foreach ($order->items ?? [] as $item) {
+                if (!empty($item->ma_bien_the)) {
+                    $variantIds[] = (int) $item->ma_bien_the;
+                }
+            }
+        }
+        $variantIds = array_values(array_unique($variantIds));
+        if (empty($variantIds)) {
+            return;
+        }
+
+        $hasVariantImg = Schema::hasColumn('bienthesanpham', 'hinh_anh_bien_the');
+        $hasProductImg = Schema::hasColumn('sanpham', 'hinh_anh_dai_dien');
+
+        $selectCols = [
+            'bienthesanpham.ma_bien_the',
+            'bienthesanpham.ma_san_pham',
+        ];
+        if ($hasVariantImg) {
+            $selectCols[] = 'bienthesanpham.hinh_anh_bien_the';
+        }
+        if ($hasProductImg) {
+            $selectCols[] = 'sanpham.hinh_anh_dai_dien';
+        }
+
+        $rows = DB::table('bienthesanpham')
+            ->leftJoin('sanpham', 'bienthesanpham.ma_san_pham', '=', 'sanpham.ma_san_pham')
+            ->whereIn('bienthesanpham.ma_bien_the', $variantIds)
+            ->select($selectCols)
+            ->get()
+            ->keyBy('ma_bien_the');
+
+        foreach ($orders as $order) {
+            foreach ($order->items ?? [] as $item) {
+                $info = $rows->get((int) $item->ma_bien_the);
+                if ($info) {
+                    $item->setAttribute('ma_san_pham', (int) $info->ma_san_pham);
+                    $img = ($hasVariantImg ? ($info->hinh_anh_bien_the ?? null) : null)
+                        ?: ($hasProductImg ? ($info->hinh_anh_dai_dien ?? null) : null);
+                    if ($img) {
+                        $item->setAttribute('hinh_anh', $img);
+                    }
+                }
+            }
+        }
     }
 
     /**

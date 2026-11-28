@@ -632,4 +632,41 @@ class CheckoutSecurityAndPaymentTest extends TestCase
             ->assertStatus(200)
             ->assertJsonCount(1, 'data');
     }
+
+    public function test_customer_can_confirm_received_only_for_own_shipped_order(): void
+    {
+        $this->fakeIamAndLoyalty('customer3@example.com', 'CUSTOMER');
+
+        $checkout = $this->withToken('token-c3')->postJson('/api/orders/checkout', [
+            'ma_nguoi_dung'      => 3,
+            'ten_nguoi_nhan'     => 'Nguyễn Văn A',
+            'so_dien_thoai_nhan' => '0901234567',
+            'dia_chi_giao_hang'  => 'TP.HCM',
+            'ma_phuong_thuc'     => 1,
+            'items'              => [['ma_bien_the' => 1, 'so_luong' => 1]],
+        ])->assertStatus(200);
+
+        $orderId = (int) $checkout->json('data.ma_don_hang');
+
+        // Cannot confirm while still PENDING -> 409
+        $this->withToken('token-c3')
+            ->putJson("/api/orders/{$orderId}/confirm-received")
+            ->assertStatus(409);
+
+        // Move order to SHIPPED
+        DB::table('donhang')->where('ma_don_hang', $orderId)->update(['trang_thai_don_hang' => 'SHIPPED']);
+
+        // Owner confirms received -> 200, DELIVERED, payment SUCCESS, item enriched with ma_san_pham
+        $this->withToken('token-c3')
+            ->putJson("/api/orders/{$orderId}/confirm-received")
+            ->assertStatus(200)
+            ->assertJsonPath('data.trang_thai_don_hang', 'DELIVERED')
+            ->assertJsonPath('data.payment.trang_thai_thanh_toan', 'SUCCESS')
+            ->assertJsonPath('data.items.0.ma_san_pham', 1);
+
+        // Second confirm -> 409 (idempotent guard)
+        $this->withToken('token-c3')
+            ->putJson("/api/orders/{$orderId}/confirm-received")
+            ->assertStatus(409);
+    }
 }
