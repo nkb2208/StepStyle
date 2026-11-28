@@ -2,8 +2,10 @@ import Footer from "../layouts/Footer";
 import NavBar from "../layouts/NavBar";
 import { Link, Route, Routes, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-import { getCart, checkout, createMomoPayment, createVnpayPayment } from "../services/orderApiService";
+import { checkout, createMomoPayment, createVnpayPayment } from "../services/orderApiService";
 import { getPublicSettings } from "../services/storefrontSettingsService";
+import { getProfile as getLoyaltyProfile, listAddresses } from "../services/loyaltyService";
+import { clearGuestCart, isCustomerLoggedIn, loadActiveCart } from "../utils/cartHelper";
 
 const DEFAULT_PAYMENT_OPTIONS = [
     { code: 'cod', name: 'Thanh toán khi nhận hàng (COD)', description: null },
@@ -105,7 +107,13 @@ function CustomerInfo({ info, setInfo }) {
 
                 <div className="mt-4">
                     <label className="text-xs" htmlFor="">Email</label> <br />
-                    <input className="border border-gray-600 rounded-xl w-full p-2" type="text" />
+                    <input
+                        value={info.email || ''}
+                        onChange={e => handleChange('email', e.target.value)}
+                        className="mt-1 border border-gray-300 focus:border-orange-400 rounded-xl w-full p-2.5 text-sm outline-none transition-colors"
+                        placeholder="email@example.com"
+                        type="email"
+                    />
                 </div>
 
                 <div className="mt-4">
@@ -113,7 +121,7 @@ function CustomerInfo({ info, setInfo }) {
                     <input 
                         value={info.dia_chi_giao_hang} 
                         onChange={e => handleChange('dia_chi_giao_hang', e.target.value)} 
-                        className={`border rounded-xl w-full p-2 outline-none transition-colors ${errors.dia_chi_giao_hang ? 'border-red-500 bg-red-50 ring-1 ring-red-500' : 'border-gray-600 focus:border-orange-400'}`} 
+                        className={`mt-1 border rounded-xl w-full p-2.5 text-sm outline-none transition-colors ${errors.dia_chi_giao_hang ? 'border-red-500 bg-red-50 ring-1 ring-red-500' : 'border-gray-300 focus:border-orange-400'}`} 
                         placeholder="Số nhà, tên đường, phường/xã" 
                         type="text" 
                     />
@@ -122,14 +130,14 @@ function CustomerInfo({ info, setInfo }) {
 
                 <div className="mt-4">
                     <label className="text-xs" htmlFor="">Thành phố</label> <br />
-                    <select className="border border-gray-600 rounded-xl w-full p-2" name="" id="">
+                    <select className="mt-1 border border-gray-300 focus:border-orange-400 rounded-xl w-full p-2.5 text-sm outline-none bg-white" name="" id="">
                         <option value="">TP. Hồ Chí Minh</option>
                     </select>
                 </div>
 
                 <div className="mt-4">
                     <label className="text-xs" htmlFor="">Ghi chú(Tùy chọn)</label> <br />
-                    <textarea value={info.ghi_chu} onChange={e => setInfo({...info, ghi_chu: e.target.value})} className="border border-gray-600 rounded-xl w-full p-2 text-xs h-20" placeholder="Yêu cầu đặc biệt..."></textarea>
+                    <textarea value={info.ghi_chu} onChange={e => setInfo({...info, ghi_chu: e.target.value})} className="mt-1 border border-gray-300 focus:border-orange-400 rounded-xl w-full p-2.5 text-xs sm:text-sm h-20 outline-none" placeholder="Yêu cầu đặc biệt..."></textarea>
                 </div>
 
                 <button type="submit" className="mt-4 p-3 bg-orange-400 hover:bg-orange-500 rounded-xl text-white font-bold flex justify-center items-center w-full">Tiếp tục</button>
@@ -138,13 +146,18 @@ function CustomerInfo({ info, setInfo }) {
     );
 }
 
-function Purchase({ paymentMethod, setPaymentMethod, paymentOptions }) {
+function Purchase({ info, paymentMethod, setPaymentMethod, paymentOptions }) {
     const navigate = useNavigate();
     const handleToGoCheckOut = () =>{
         const token = localStorage.getItem('token');
         const user = localStorage.getItem('user');
 
         if(!token || !user){
+            sessionStorage.setItem(
+                'pending_checkout_state',
+                JSON.stringify({ info, paymentMethod })
+            );
+            sessionStorage.setItem('post_login_redirect', '/checkout/confirm');
             alert('Bạn cần đăng nhập trước khi thanh toán');
             navigate("/login");
             return;
@@ -248,18 +261,115 @@ function Confirmation({ info, paymentMethod, paymentOptions, cartItems, handleCh
 
 function CheckOut(){
     const [cart, setCart] = useState(null);
-    const [info, setInfo] = useState({ ten_nguoi_nhan: '', so_dien_thoai_nhan: '', dia_chi_giao_hang: '', ghi_chu: '' });
+    const [info, setInfo] = useState(() => {
+        let initial = {
+            ten_nguoi_nhan: '',
+            so_dien_thoai_nhan: '',
+            email: '',
+            dia_chi_giao_hang: '',
+            ghi_chu: '',
+        };
+
+        // Tự động điền sẵn từ thông tin tài khoản đang đăng nhập trong localStorage
+        if (isCustomerLoggedIn()) {
+            try {
+                const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+                if (storedUser) {
+                    initial.ten_nguoi_nhan = storedUser.name || storedUser.ho_ten || '';
+                    initial.so_dien_thoai_nhan = storedUser.phone || storedUser.so_dien_thoai || '';
+                    initial.email = storedUser.email || '';
+                    initial.dia_chi_giao_hang = storedUser.address || storedUser.dia_chi || '';
+                }
+            } catch {}
+        }
+
+        // Ưu tiên khôi phục dữ liệu người dùng vừa nhập trước khi chuyển qua đăng nhập
+        try {
+            const saved = JSON.parse(sessionStorage.getItem('pending_checkout_state') || 'null');
+            if (saved?.info) {
+                initial = {
+                    ...initial,
+                    ...Object.fromEntries(
+                        Object.entries(saved.info).filter(([, v]) => typeof v === 'string' && v.trim() !== '')
+                    ),
+                };
+            }
+        } catch {}
+
+        return initial;
+    });
     const [storeSettings, setStoreSettings] = useState(null);
-    const [selectedPayment, setSelectedPayment] = useState('');
+    const [selectedPayment, setSelectedPayment] = useState(() => {
+        try {
+            const saved = JSON.parse(sessionStorage.getItem('pending_checkout_state') || 'null');
+            if (saved?.paymentMethod) return saved.paymentMethod;
+        } catch {}
+        return '';
+    });
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchCart = async () => {
-            const userId = localStorage.getItem("userId") || 1;
-            const data = await getCart(userId);
-            if (data && data.data) setCart(data.data);
+            try {
+                const data = await loadActiveCart();
+                if (data && data.data) setCart(data.data);
+                else setCart(null);
+            } catch (error) {
+                console.error("Không tải được giỏ hàng:", error);
+            }
         };
         fetchCart();
+    }, []);
+
+    useEffect(() => {
+        if (!isCustomerLoggedIn()) return;
+        let active = true;
+
+        const fetchLoggedInProfile = async () => {
+            const [profileRes, addressesRes] = await Promise.allSettled([
+                getLoyaltyProfile(),
+                listAddresses(),
+            ]);
+            if (!active) return;
+
+            const profile = profileRes.status === 'fulfilled' ? profileRes.value : null;
+            const addresses =
+                addressesRes.status === 'fulfilled' && Array.isArray(addressesRes.value)
+                    ? addressesRes.value
+                    : [];
+            const defaultAddr = addresses.find((a) => a.mac_dinh) || addresses[0] || null;
+            const formattedAddr = defaultAddr
+                ? [
+                      defaultAddr.dia_chi_chi_tiet,
+                      defaultAddr.phuong_xa,
+                      defaultAddr.quan_huyen,
+                      defaultAddr.tinh_thanh,
+                  ]
+                      .filter(Boolean)
+                      .join(', ')
+                : '';
+
+            setInfo((prev) => ({
+                ...prev,
+                ten_nguoi_nhan:
+                    prev.ten_nguoi_nhan ||
+                    defaultAddr?.ten_nguoi_nhan ||
+                    profile?.ho_ten ||
+                    '',
+                so_dien_thoai_nhan:
+                    prev.so_dien_thoai_nhan ||
+                    defaultAddr?.so_dien_thoai ||
+                    profile?.so_dien_thoai ||
+                    '',
+                email: prev.email || profile?.email || '',
+                dia_chi_giao_hang: prev.dia_chi_giao_hang || formattedAddr || '',
+            }));
+        };
+
+        fetchLoggedInProfile();
+        return () => {
+            active = false;
+        };
     }, []);
 
     useEffect(() => {
@@ -297,13 +407,25 @@ function CheckOut(){
     const orderTotal = totalPrice + shippingFee;
 
     const handleCheckout = async () => {
+        const token = localStorage.getItem('token');
+        const user = localStorage.getItem('user');
+        if (!token || !user) {
+            sessionStorage.setItem(
+                'pending_checkout_state',
+                JSON.stringify({ info, paymentMethod })
+            );
+            sessionStorage.setItem('post_login_redirect', '/checkout/confirm');
+            alert('Bạn cần đăng nhập trước khi thanh toán');
+            navigate('/login');
+            return;
+        }
+
         if (cartItems.length === 0) {
             alert("Giỏ hàng trống");
             return;
         }
         
         try {
-            const userId = localStorage.getItem("userId") || 1;
             const ma_phuong_thuc = PAYMENT_METHOD_IDS[paymentMethod] ?? 1;
 
             const items = cartItems.map(i => { 
@@ -319,7 +441,6 @@ function CheckOut(){
             });
 
             const payload = {
-                ma_nguoi_dung: userId,
                 ten_nguoi_nhan: info.ten_nguoi_nhan || 'Khách hàng',
                 so_dien_thoai_nhan: info.so_dien_thoai_nhan || '0123456789',
                 dia_chi_giao_hang: info.dia_chi_giao_hang || 'Tại nhà',
@@ -333,6 +454,8 @@ function CheckOut(){
 
             const res = await checkout(payload);
             const createdOrder = res?.data;
+            sessionStorage.removeItem('pending_checkout_state');
+            clearGuestCart();
 
             if(paymentMethod === 'momo' && createdOrder?.ma_don_hang){
                 try{
@@ -382,7 +505,7 @@ function CheckOut(){
                             <Routes>
                                 <Route path="/" element={<CustomerInfo info={info} setInfo={setInfo} />} />
                                 <Route path="/info" element={<CustomerInfo info={info} setInfo={setInfo} />} />
-                                <Route path="/purchase" element={<Purchase paymentMethod={paymentMethod} setPaymentMethod={setSelectedPayment} paymentOptions={paymentOptions} />} />
+                                <Route path="/purchase" element={<Purchase info={info} paymentMethod={paymentMethod} setPaymentMethod={setSelectedPayment} paymentOptions={paymentOptions} />} />
                                 <Route path="/confirm" element={<Confirmation info={info} paymentMethod={paymentMethod} paymentOptions={paymentOptions} cartItems={cartItems} handleCheckout={handleCheckout} />} />
                             </Routes>
                         </div>

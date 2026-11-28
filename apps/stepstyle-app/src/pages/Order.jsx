@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Footer from "../layouts/Footer";
 import NavBar from "../layouts/NavBar";
-import { getUserOrders, cancelOrder, createMomoPayment, createVnpayPayment, updatePaymentStatus } from "../services/orderApiService";
+import { getMyOrders, cancelOrder, createMomoPayment, createVnpayPayment } from "../services/orderApiService";
+import { isCustomerLoggedIn } from "../utils/cartHelper";
 
 
     const getPaymentName = (methodId) => {
@@ -42,66 +44,39 @@ import { getUserOrders, cancelOrder, createMomoPayment, createVnpayPayment, upda
     };
 
 function Order() {
+    const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [openOrderId, setOpenOrderId] = useState(null);
     const dropdownRef = useRef(null);
 
     const loadOrders = async () => {
+        if (!isCustomerLoggedIn()) {
+            setOrders([]);
+            setLoading(false);
+            navigate('/login');
+            return;
+        }
         try {
             setLoading(true);
-            const userId = localStorage.getItem("userId") || 1;
-            const data = await getUserOrders(userId);
+            const data = await getMyOrders();
             if (data && data.data) setOrders(data.data);
         } catch (error) {
             console.error("Lỗi tải đơn hàng:", error);
+            if (error?.response?.status === 401) {
+                navigate('/login');
+            }
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        const checkPaymentReturn = async () => {
-            const params = new URLSearchParams(window.location.search);
-            
-            // Check MoMo callback
-            const resultCode = params.get('resultCode');
-            const momoOrderId = params.get('orderId');
-            const momoTransId = params.get('transId');
-
-            if (momoOrderId && resultCode !== null) {
-                const realOrderId = momoOrderId.split('_')[0];
-                if (resultCode === '0') {
-                    try {
-                        await updatePaymentStatus(realOrderId, 'SUCCESS', momoTransId);
-                    } catch (e) {
-                        console.error("Lỗi cập nhật trạng thái thanh toán MoMo:", e);
-                    }
-                }
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-
-            // Check VNPAY callback
-            const vnpResponseCode = params.get('vnp_ResponseCode');
-            const vnpTxnRef = params.get('vnp_TxnRef');
-            const vnpTransactionNo = params.get('vnp_TransactionNo');
-
-            if (vnpTxnRef && vnpResponseCode !== null) {
-                const realOrderId = vnpTxnRef.split('_')[0];
-                if (vnpResponseCode === '00') {
-                    try {
-                        await updatePaymentStatus(realOrderId, 'SUCCESS', vnpTransactionNo);
-                    } catch (e) {
-                        console.error("Lỗi cập nhật trạng thái thanh toán VNPAY:", e);
-                    }
-                }
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-
-            loadOrders();
-        };
-
-        checkPaymentReturn();
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('gateway') || params.has('paymentStatus') || params.has('resultCode') || params.has('vnp_ResponseCode')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        loadOrders();
     }, []);
 
     const handleToggleOrder = (orderId) => {

@@ -10,6 +10,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::prefix('cart')->group(function () {
+    Route::get('/me', [CartController::class, 'getMyCart']);
     Route::post('/add', [CartController::class, 'addToCart']);
     Route::get('/{userID}', [CartController::class, 'getCart']);
     Route::put('/update', [CartController::class, 'updateQuantity']);
@@ -18,6 +19,7 @@ Route::prefix('cart')->group(function () {
 
 Route::prefix('orders')->group(function () {
     Route::get('/', [OrderController::class, 'getAllOrders']);
+    Route::get('/me', [OrderController::class, 'getMyOrders']);
     Route::post('/checkout', [OrderController::class, 'checkout']);
     Route::get('/user/{userId}', [OrderController::class, 'getOrders']);
     Route::get('/{orderId}', [OrderController::class, 'getOrderDetail']);

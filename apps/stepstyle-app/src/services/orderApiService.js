@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { refreshToken as requestRefreshToken } from './authService';
 
 const orderApiClient = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',
+  baseURL: import.meta.env.VITE_ORDER_API_URL || 'http://127.0.0.1:8000/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -19,36 +20,89 @@ orderApiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+let refreshPromise = null;
+
+orderApiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalConfig = error.config;
+    if (error.response?.status === 401 && originalConfig && !originalConfig._retry) {
+      const storedRefresh = localStorage.getItem('refreshToken');
+      if (storedRefresh) {
+        originalConfig._retry = true;
+        try {
+          if (!refreshPromise) {
+            refreshPromise = requestRefreshToken().finally(() => {
+              refreshPromise = null;
+            });
+          }
+          const refreshed = await refreshPromise;
+          if (refreshed?.accessToken) {
+            localStorage.setItem('token', refreshed.accessToken);
+            if (refreshed.refreshToken) {
+              localStorage.setItem('refreshToken', refreshed.refreshToken);
+            }
+            originalConfig.headers = originalConfig.headers || {};
+            originalConfig.headers.Authorization = `Bearer ${refreshed.accessToken}`;
+            return orderApiClient(originalConfig);
+          }
+        } catch {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const addToCart = async (userId, productId, variantId, quantity, price) => {
-  const response = await orderApiClient.post('/cart/add', {
-    ma_nguoi_dung: userId,
+  const payload = {
     ma_san_pham: productId,
     ma_bien_the: variantId,
     so_luong: quantity,
-    gia: price
-  });
+    gia: price,
+  };
+  if (userId !== null && userId !== undefined && userId !== '') {
+    payload.ma_nguoi_dung = userId;
+  }
+  const response = await orderApiClient.post('/cart/add', payload);
+  return response.data;
+};
+
+export const getMyCart = async () => {
+  const response = await orderApiClient.get('/cart/me');
   return response.data;
 };
 
 export const getCart = async (userId) => {
+  if (userId === null || userId === undefined || userId === '') {
+    return getMyCart();
+  }
   const response = await orderApiClient.get(`/cart/${userId}`);
   return response.data;
 };
 
 export const updateCartItem = async (userId, variantId, quantity, extra = {}) => {
-  const response = await orderApiClient.put('/cart/update', {
-    ma_nguoi_dung: userId,
+  const payload = {
     ma_bien_the: variantId,
     so_luong: quantity,
-    ...extra
-  });
+    ...extra,
+  };
+  if (userId !== null && userId !== undefined && userId !== '') {
+    payload.ma_nguoi_dung = userId;
+  }
+  const response = await orderApiClient.put('/cart/update', payload);
   return response.data;
 };
 
 export const removeCartItem = async (userId, variantId) => {
-  const response = await orderApiClient.delete('/cart/remove', {
-    data: { ma_nguoi_dung: userId, ma_bien_the: variantId }
-  });
+  const data = { ma_bien_the: variantId };
+  if (userId !== null && userId !== undefined && userId !== '') {
+    data.ma_nguoi_dung = userId;
+  }
+  const response = await orderApiClient.delete('/cart/remove', { data });
   return response.data;
 };
 
@@ -57,13 +111,26 @@ export const checkout = async (checkoutData) => {
   return response.data;
 };
 
+export const getMyOrders = async () => {
+  const response = await orderApiClient.get('/orders/me');
+  return response.data;
+};
+
 export const getUserOrders = async (userId) => {
+  if (userId === null || userId === undefined || userId === '') {
+    return getMyOrders();
+  }
   const response = await orderApiClient.get(`/orders/user/${userId}`);
   return response.data;
 };
 
 export const getOrderDetails = async (orderId) => {
   const response = await orderApiClient.get(`/orders/${orderId}`);
+  return response.data;
+};
+
+export const getOrderPaymentStatus = async (orderId) => {
+  const response = await orderApiClient.get(`/orders/${orderId}/payment-status`);
   return response.data;
 };
 
@@ -85,7 +152,7 @@ export const createVnpayPayment = async (orderId) => {
 export const updatePaymentStatus = async (orderId, status, transId = null) => {
   const response = await orderApiClient.put(`/orders/${orderId}/payment`, {
     trang_thai_thanh_toan: status,
-    ma_giao_dich_thanh_cong: transId
+    ma_giao_dich_thanh_cong: transId,
   });
   return response.data;
 };

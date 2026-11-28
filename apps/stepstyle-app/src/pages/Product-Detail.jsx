@@ -3,8 +3,7 @@ import Footer from "../layouts/Footer";
 import NavBar from "../layouts/NavBar";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import AllProduct from "./products/AllProduct";
-import { addToCart } from "../services/orderApiService";
-import { showToast } from "../utils/cartHelper";
+import { quickAddToCart, showToast } from "../utils/cartHelper";
 import {
     getPublicProductById,
     getPublicProducts,
@@ -152,34 +151,20 @@ function ProDuctDetail() {
 
         try {
             setLoading(true);
-            const userId = localStorage.getItem("userId") || 1;
-
-            let metadata = {};
-            try {
-                const stored = localStorage.getItem("variant_metadata");
-                if (stored) metadata = JSON.parse(stored);
-            } catch (e) {}
-
-            metadata[selectedVariant.ma_bien_the] = {
-                ma_san_pham: product.ma_san_pham,
-                ten_san_pham: product.ten_san_pham,
-                thuong_hieu: product.danh_muc?.ten_danh_muc || "StepStyle",
-                don_gia: effectivePrice,
-                kich_co: String(selectedVariant.kich_co || "38"),
-                mau_sac: selectedVariant.mau_sac || "Trắng",
-                hinh_anh: displayImage,
-            };
-            localStorage.setItem("variant_metadata", JSON.stringify(metadata));
-
-            await addToCart(
-                userId,
-                product.ma_san_pham,
-                selectedVariant.ma_bien_the,
-                quantity,
-                effectivePrice
+            const result = await quickAddToCart(
+                {
+                    ma_san_pham: product.ma_san_pham,
+                    ma_bien_the: selectedVariant.ma_bien_the,
+                    ten_san_pham: product.ten_san_pham,
+                    thuong_hieu: product.danh_muc?.ten_danh_muc || "StepStyle",
+                    don_gia: effectivePrice,
+                    kich_co: String(selectedVariant.kich_co || "38"),
+                    mau_sac: selectedVariant.mau_sac || "Trắng",
+                    hinh_anh: displayImage,
+                },
+                quantity
             );
-            showToast("Đã thêm vào giỏ hàng");
-            return true;
+            return Boolean(result);
         } catch (error) {
             console.error("Lỗi thêm giỏ hàng:", error);
             showToast("Có lỗi xảy ra!", "error");

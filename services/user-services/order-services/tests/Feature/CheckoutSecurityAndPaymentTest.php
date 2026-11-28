@@ -598,4 +598,38 @@ class CheckoutSecurityAndPaymentTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('RspCode', '02');
     }
+
+    public function test_newly_registered_iam_user_is_auto_synced_and_keeps_ownership_isolation(): void
+    {
+        // Email not present in seeded nguoidung table, MongoDB string id
+        $this->fakeIamAndLoyalty('newbuyer@example.com', 'CUSTOMER');
+
+        // Can add to own cart without passing ma_nguoi_dung
+        $this->withToken('token-newbuyer')->postJson('/api/cart/add', [
+            'ma_bien_the' => 1,
+            'so_luong'    => 1,
+        ])->assertStatus(200);
+
+        // Can fetch own cart via /api/cart/me
+        $this->withToken('token-newbuyer')->getJson('/api/cart/me')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'data.items');
+
+        // Still CANNOT access Customer 3's cart or orders (403 Forbidden)
+        $this->withToken('token-newbuyer')->getJson('/api/cart/3')->assertStatus(403);
+        $this->withToken('token-newbuyer')->getJson('/api/orders/user/3')->assertStatus(403);
+
+        // Can checkout own order and view via /api/orders/me
+        $this->withToken('token-newbuyer')->postJson('/api/orders/checkout', [
+            'ten_nguoi_nhan'     => 'Người mua mới',
+            'so_dien_thoai_nhan' => '0911222333',
+            'dia_chi_giao_hang'  => 'TP.HCM',
+            'ma_phuong_thuc'     => 1,
+            'items'              => [['ma_bien_the' => 1, 'so_luong' => 1]],
+        ])->assertStatus(200);
+
+        $this->withToken('token-newbuyer')->getJson('/api/orders/me')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'data');
+    }
 }

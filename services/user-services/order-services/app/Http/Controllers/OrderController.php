@@ -477,6 +477,30 @@ class OrderController extends Controller
         }
     }
 
+    public function getMyOrders(Request $request)
+    {
+        $auth = $this->iamAuth->authenticate($request);
+        if (!$auth['ok']) {
+            return $this->iamAuth->errorResponse($auth);
+        }
+
+        $targetUserId = $auth['user']['ma_nguoi_dung'] ?? null;
+        if ($targetUserId === null) {
+            return response()->json([
+                'data' => [],
+            ], 200);
+        }
+
+        $orders = Order::with(['items', 'payment'])
+            ->where('ma_nguoi_dung', (int) $targetUserId)
+            ->orderBy('ngay_dat', 'desc')
+            ->get();
+
+        return response()->json([
+            'data' => $orders,
+        ], 200);
+    }
+
     public function getOrders(Request $request, $userID)
     {
         $auth = $this->iamAuth->authenticate($request);

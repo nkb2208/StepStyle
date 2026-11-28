@@ -99,6 +99,39 @@ class CartController extends Controller
         ], 200);
     }
 
+    // Lấy giỏ hàng của người dùng đang đăng nhập
+    public function getMyCart(Request $request)
+    {
+        $auth = $this->iamAuth->authenticate($request);
+        if (!$auth['ok']) {
+            return $this->iamAuth->errorResponse($auth);
+        }
+
+        $targetUserId = $auth['user']['ma_nguoi_dung'] ?? null;
+        if ($targetUserId === null) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Gio hang trong',
+                'data'    => null,
+            ], 200);
+        }
+
+        $cart = Cart::with('items')->where('ma_nguoi_dung', (int) $targetUserId)->first();
+
+        if (!$cart) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Gio hang trong',
+                'data'    => null,
+            ], 200);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => $cart,
+        ], 200);
+    }
+
     // Lấy giỏ hàng
     public function getCart(Request $request, $userID)
     {

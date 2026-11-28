@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register, apiErrorMessage } from "../services/authService";
+import { syncGuestCartToServer } from "../utils/cartHelper";
 
 function Register(){
     const navigate = useNavigate();
@@ -43,8 +44,13 @@ function Register(){
             if (user) {
                 localStorage.setItem("user", JSON.stringify(user));
             }
+            if (accessToken) {
+                await syncGuestCartToServer();
+            }
 
-            navigate("/home");
+            const redirectTo = sessionStorage.getItem("post_login_redirect") || "/home";
+            sessionStorage.removeItem("post_login_redirect");
+            navigate(redirectTo);
         } catch (err) {
             setError(apiErrorMessage(err));
         } finally {

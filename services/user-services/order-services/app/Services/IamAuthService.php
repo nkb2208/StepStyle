@@ -167,6 +167,38 @@ class IamAuthService
                 ->whereRaw('LOWER(email) = ?', [$email])
                 ->first(['ma_nguoi_dung', 'vai_tro']);
 
+            if (!$row) {
+                // Tự động đồng bộ bản ghi ánh xạ người dùng đã xác thực từ IAM (MongoDB) sang bảng nguoidung (MySQL)
+                $dbRole = match ($role) {
+                    'ADMIN' => 'ADMIN',
+                    'STAFF', 'SELLER' => 'STAFF',
+                    default => 'CUSTOMER',
+                };
+                $displayName = trim((string) ($payload['name'] ?? $payload['ho_ten'] ?? ''));
+                if ($displayName === '') {
+                    $displayName = explode('@', $email)[0] ?: 'Customer';
+                }
+
+                try {
+                    DB::table('nguoidung')->insertOrIgnore([
+                        'ho_ten'     => mb_substr($displayName, 0, 255),
+                        'email'      => $email,
+                        'mat_khau'   => 'IAM_MANAGED',
+                        'vai_tro'    => $dbRole,
+                        'trang_thai' => 1,
+                    ]);
+
+                    $row = DB::table('nguoidung')
+                        ->whereRaw('LOWER(email) = ?', [$email])
+                        ->first(['ma_nguoi_dung', 'vai_tro']);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to auto-sync IAM user into nguoidung', [
+                        'email' => $email,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             if ($row) {
                 $localUserId = (int) $row->ma_nguoi_dung;
                 if (empty($payload['role']) && empty($payload['vai_tro']) && !empty($row->vai_tro)) {
