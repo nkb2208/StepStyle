@@ -23,7 +23,7 @@ class OrderController extends Controller
 
     public function checkout(Request $request)
     {
-        // Kết nối với Service 1 (IAM) theo cơ chế fail-closed
+        // Kết nối với Service 1 (IAM) 
         $auth = $this->iamAuth->authenticate($request);
         if (!$auth['ok']) {
             return $this->iamAuth->errorResponse($auth);
@@ -80,7 +80,6 @@ class OrderController extends Controller
             }
         }
 
-        // Gộp các item trùng ma_bien_the và sắp xếp tăng dần để tránh deadlock khi khóa dòng tồn kho
         $requestedQuantities = [];
         foreach ($request->input('items', []) as $item) {
             $variantId = (int) $item['ma_bien_the'];
@@ -89,7 +88,7 @@ class OrderController extends Controller
         }
         ksort($requestedQuantities);
 
-        // Lấy quyền lợi VIP từ Service 2 (User & Loyalty) trước khi mở transaction DB
+        // Lấy quyền lợi VIP từ Service 2 (User & Loyalty) 
         $vipBenefits = $this->getVipBenefits($request, $ownerUserId);
 
         DB::beginTransaction();
@@ -133,7 +132,6 @@ class OrderController extends Controller
                     ], 422);
                 }
 
-                // Đơn giá luôn tính từ DB (bỏ qua mọi giá trị don_gia gửi từ Frontend)
                 $basePrice = (int) round((float) $variant->gia_goc);
                 $promoPrice = $variant->gia_khuyen_mai !== null
                     ? (int) round((float) $variant->gia_khuyen_mai)
@@ -142,7 +140,6 @@ class OrderController extends Controller
                     ? $promoPrice
                     : $basePrice;
 
-                // Trừ tồn kho có điều kiện nguyên tử VÀ kiểm tra chặt số dòng bị ảnh hưởng
                 $affected = DB::table('bienthesanpham')
                     ->where('ma_bien_the', $variantId)
                     ->where('so_luong_kho', '>=', $qty)
@@ -169,14 +166,14 @@ class OrderController extends Controller
                 ];
             }
 
-            // Phí vận chuyển luôn tính từ cấu hình cửa hàng (caidatcuahang) + quyền lợi VIP, bỏ qua phi_van_chuyen từ Frontend
+           
             $shipCost = $this->calculateShippingFee($totalProductCost, $vipBenefits);
 
             // Tiền giảm giá VIP tính từ Service 2
             $vipPercent = max(0.0, min(100.0, (float) ($vipBenefits['discount_percent'] ?? 0)));
             $vipDiscountAmount = (int) round(($totalProductCost * $vipPercent) / 100);
 
-            // Tiền giảm giá Voucher luôn tính từ bảng magiamgia, bỏ qua tien_giam_gia từ Frontend
+            
             $voucherResult = $this->applyVoucherFromDatabase($request, $totalProductCost);
             if (!$voucherResult['ok']) {
                 DB::rollBack();
@@ -189,8 +186,6 @@ class OrderController extends Controller
             $appliedVoucherId = $voucherResult['ma_giam_gia'];
             $voucherDiscountAmount = $voucherResult['discount'];
 
-            // Đảm bảo tien_giam_gia không vượt quá tong_tien_hang và thỏa ràng buộc chk_dh_tong:
-            // tong_thanh_toan = tong_tien_hang - tien_giam_gia + phi_van_chuyen
             $saleCost = min($totalProductCost, max(0, $vipDiscountAmount + $voucherDiscountAmount));
             $totalCost = $totalProductCost - $saleCost + $shipCost;
 
@@ -240,7 +235,7 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // Kết nối với Service 3 (Catalog & Search) sau khi commit thành công
+            // Kết nối với Service 3 (Catalog & Search) 
             $this->syncCatalogAfterCheckout($order->ma_don_hang, $resolvedItems);
 
             return response()->json([
@@ -356,7 +351,6 @@ class OrderController extends Controller
             ];
         }
 
-        // Tăng lượt sử dụng nguyên tử và kiểm tra còn lượt
         $voucherUpdated = DB::table('magiamgia')
             ->where('ma_giam_gia', $voucher->ma_giam_gia)
             ->whereColumn('so_luong_da_dung', '<', 'so_luong')
@@ -414,7 +408,7 @@ class OrderController extends Controller
         return ['discount_percent' => 0, 'free_shipping' => false, 'tier' => 'STANDARD'];
     }
 
-    // Kết nối với Service 3 (Catalog & Search) sau khi đặt hàng
+    // Kết nối với Service 3 (Catalog & Search) 
     private function syncCatalogAfterCheckout($orderId, array $items): void
     {
         $catalogUrl = rtrim((string) env('CATALOG_SERVICE_URL', ''), '/');
@@ -447,12 +441,12 @@ class OrderController extends Controller
                     ]);
                 }
             } catch (\Throwable $e) {
-                // Best-effort sync to Catalog Service
+
             }
         }
     }
 
-    // Đồng bộ best-effort sang Service 3 (Catalog & Search) sau khi tồn kho DB đã được hoàn nguyên tử
+
     private function notifyCatalogReleaseInventory(Order $order): void
     {
         $catalogUrl = rtrim((string) env('CATALOG_SERVICE_URL', ''), '/');
@@ -472,7 +466,7 @@ class OrderController extends Controller
                     'action'        => 'RELEASE',
                 ]);
             } catch (\Throwable $e) {
-                // Best-effort sync to Catalog Service
+
             }
         }
     }
@@ -559,10 +553,6 @@ class OrderController extends Controller
         ], 200);
     }
 
-    /**
-     * Khách hàng xác nhận đã nhận hàng: chuyển trạng thái nguyên tử SHIPPED -> DELIVERED.
-     * PUT /api/orders/{orderId}/confirm-received
-     */
     public function confirmReceived(Request $request, $orderID)
     {
         $auth = $this->iamAuth->authenticate($request);
@@ -643,10 +633,6 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * Bổ sung ma_san_pham và hinh_anh từ bienthesanpham + sanpham cho các item của đơn hàng
-     * để Frontend hiển thị đúng ảnh và điều hướng đánh giá sang After-Sales Service.
-     */
     private function enrichOrdersWithProductInfo($orders): void
     {
         if (!Schema::hasTable('bienthesanpham') || !Schema::hasTable('sanpham')) {
@@ -702,9 +688,6 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * Endpoint để Frontend truy vấn trạng thái thanh toán xác thực từ Backend sau khi cổng thanh toán redirect về.
-     */
     public function getPaymentStatus(Request $request, $orderID)
     {
         $auth = $this->iamAuth->authenticate($request);
@@ -752,7 +735,7 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            // Khóa dòng đơn hàng để đảm bảo tính nguyên tử và chống hủy lặp khi có request đồng thời
+            
             $order = Order::with('items')
                 ->where('ma_don_hang', $orderID)
                 ->lockForUpdate()
@@ -770,7 +753,7 @@ class OrderController extends Controller
                 return $denied;
             }
 
-            // Chuyển trạng thái nguyên tử có điều kiện: chỉ chuyển từ PENDING -> CANCELLED đúng 1 lần
+            
             $updated = DB::table('donhang')
                 ->where('ma_don_hang', $order->ma_don_hang)
                 ->where('trang_thai_don_hang', 'PENDING')
@@ -791,7 +774,7 @@ class OrderController extends Controller
                 ], 409);
             }
 
-            // Hoàn tồn kho trong cùng transaction DB (sắp xếp theo ma_bien_the để tránh deadlock)
+            
             $sortedItems = $order->items->sortBy('ma_bien_the');
             foreach ($sortedItems as $item) {
                 DB::table('bienthesanpham')
@@ -799,7 +782,6 @@ class OrderController extends Controller
                     ->increment('so_luong_kho', (int) $item->so_luong);
             }
 
-            // Hoàn lượt sử dụng voucher nếu đơn hàng có áp mã giảm giá
             if (!empty($order->ma_giam_gia) && Schema::hasTable('magiamgia')) {
                 DB::table('magiamgia')
                     ->where('ma_giam_gia', (int) $order->ma_giam_gia)
@@ -824,7 +806,7 @@ class OrderController extends Controller
             ], 500);
         }
 
-        // Đồng bộ best-effort sang Service 3 (Catalog) sau khi transaction DB đã commit
+       
         $this->notifyCatalogReleaseInventory($cancelledOrder);
 
         return response()->json([
@@ -1748,17 +1730,6 @@ class OrderController extends Controller
             ->exists();
     }
 
-    /**
-     * Internal API Contract cho After-Sales Service:
-     * Xác minh đúng chủ đơn hàng, trạng thái đơn hàng và sản phẩm/biến thể có thuộc đơn hàng hay không.
-     *
-     * GET /api/internal/orders/{orderId}/verify-purchase
-     * Query params:
-     *   - ma_nguoi_dung (required|integer|min:1)
-     *   - ma_san_pham (nullable|integer|min:1)
-     *   - ma_bien_the (nullable|integer|min:1)
-     *   - require_delivered (nullable|boolean, default: true)
-     */
     public function verifyPurchase(Request $request, $orderID)
     {
         $configuredKey = env('INTERNAL_API_KEY');
